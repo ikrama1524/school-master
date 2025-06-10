@@ -78,6 +78,42 @@ export const notices = pgTable("notices", {
   isActive: boolean("is_active").default(true),
 });
 
+export const subjects = pgTable("subjects", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  code: text("code").notNull().unique(),
+  description: text("description"),
+  teacherId: integer("teacher_id").references(() => teachers.id),
+  class: text("class").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const assignments = pgTable("assignments", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  subjectId: integer("subject_id").references(() => subjects.id).notNull(),
+  teacherId: integer("teacher_id").references(() => teachers.id).notNull(),
+  class: text("class").notNull(),
+  dueDate: timestamp("due_date").notNull(),
+  totalMarks: integer("total_marks").notNull(),
+  status: text("status").notNull().default("active"), // active, closed, archived
+  attachments: text("attachments").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const submissions = pgTable("submissions", {
+  id: serial("id").primaryKey(),
+  assignmentId: integer("assignment_id").references(() => assignments.id).notNull(),
+  studentId: integer("student_id").references(() => students.id).notNull(),
+  content: text("content"),
+  attachments: text("attachments").array(),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  grade: integer("grade"),
+  feedback: text("feedback"),
+  status: text("status").notNull().default("submitted"), // submitted, graded, returned
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -115,6 +151,23 @@ export const insertNoticeSchema = createInsertSchema(notices).omit({
   createdAt: true,
 });
 
+export const insertSubjectSchema = createInsertSchema(subjects).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAssignmentSchema = createInsertSchema(assignments).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  dueDate: z.string().transform((str) => new Date(str)),
+});
+
+export const insertSubmissionSchema = createInsertSchema(submissions).omit({
+  id: true,
+  submittedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -133,3 +186,12 @@ export type InsertFee = z.infer<typeof insertFeeSchema>;
 
 export type Notice = typeof notices.$inferSelect;
 export type InsertNotice = z.infer<typeof insertNoticeSchema>;
+
+export type Subject = typeof subjects.$inferSelect;
+export type InsertSubject = z.infer<typeof insertSubjectSchema>;
+
+export type Assignment = typeof assignments.$inferSelect;
+export type InsertAssignment = z.infer<typeof insertAssignmentSchema>;
+
+export type Submission = typeof submissions.$inferSelect;
+export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
