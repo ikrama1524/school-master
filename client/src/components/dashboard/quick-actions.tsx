@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserPlus, GraduationCap, DollarSign, BarChart, ChevronRight } from "lucide-react";
+import { UserPlus, GraduationCap, DollarSign, BarChart, ChevronRight, PlayCircle } from "lucide-react";
 import { Notice } from "@shared/schema";
 import StudentModal from "@/components/modals/student-modal";
 import TeacherModal from "@/components/modals/teacher-modal";
+import OnboardingWizard from "@/components/onboarding-wizard";
 
 interface QuickActionsProps {
   notices: Notice[];
@@ -15,8 +16,17 @@ interface QuickActionsProps {
 export default function QuickActions({ notices, isLoading }: QuickActionsProps) {
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
+  const [isWorkflowOpen, setIsWorkflowOpen] = useState(false);
 
   const quickActions = [
+    {
+      title: "Setup Workflow",
+      icon: PlayCircle,
+      bgColor: "bg-purple-50",
+      iconBgColor: "bg-purple-600",
+      hoverColor: "hover:bg-purple-100",
+      onClick: () => setIsWorkflowOpen(true),
+    },
     {
       title: "Add Student",
       icon: UserPlus,
@@ -32,14 +42,6 @@ export default function QuickActions({ notices, isLoading }: QuickActionsProps) 
       iconBgColor: "bg-[var(--edu-secondary)]",
       hoverColor: "hover:bg-green-100",
       onClick: () => setIsTeacherModalOpen(true),
-    },
-    {
-      title: "Collect Fees",
-      icon: DollarSign,
-      bgColor: "bg-[var(--edu-light-orange)]",
-      iconBgColor: "bg-[var(--edu-accent)]",
-      hoverColor: "hover:bg-orange-100",
-      onClick: () => {}, // Navigate to fees page
     },
     {
       title: "Generate Report",
@@ -139,6 +141,10 @@ export default function QuickActions({ notices, isLoading }: QuickActionsProps) 
       <TeacherModal 
         isOpen={isTeacherModalOpen} 
         onClose={() => setIsTeacherModalOpen(false)} 
+      />
+      <OnboardingWizard 
+        isOpen={isWorkflowOpen} 
+        onClose={() => setIsWorkflowOpen(false)} 
       />
     </>
   );

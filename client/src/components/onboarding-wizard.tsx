@@ -126,9 +126,11 @@ export default function OnboardingWizard({ isOpen, onClose }: OnboardingWizardPr
               </div>
               <CardTitle className="text-xl">{currentStepData.title}</CardTitle>
               {currentStepData.completed && (
-                <Badge className="mx-auto bg-[var(--edu-secondary)] text-white">
-                  Completed
-                </Badge>
+                <div className="flex justify-center">
+                  <Badge className="bg-[var(--edu-secondary)] text-white">
+                    Completed
+                  </Badge>
+                </div>
               )}
             </CardHeader>
             <CardContent className="text-center space-y-4">

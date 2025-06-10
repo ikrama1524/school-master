@@ -3,6 +3,7 @@ import StatsGrid from "@/components/dashboard/stats-grid";
 import RecentStudents from "@/components/dashboard/recent-students";
 import QuickActions from "@/components/dashboard/quick-actions";
 import AttendanceOverview from "@/components/dashboard/attendance-overview";
+import WorkflowAssistant from "@/components/workflow-assistant";
 import { Student, Notice } from "@shared/schema";
 
 export default function Dashboard() {
