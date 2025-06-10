@@ -59,7 +59,7 @@ export default function Attendance() {
     queryKey: ["/api/students"],
   });
 
-  const { data: attendance = [], isLoading: attendanceLoading } = useQuery<Attendance[]>({
+  const { data: attendance = [], isLoading: attendanceLoading } = useQuery<AttendanceType[]>({
     queryKey: ["/api/attendance"],
   });
 

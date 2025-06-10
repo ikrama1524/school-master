@@ -121,7 +121,7 @@ export default function Fees() {
   const overdueAmount = fees.filter(fee => fee.status === "overdue").reduce((sum, fee) => sum + parseFloat(fee.amount.toString()), 0);
   const collectionRate = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
 
-  const uniqueClasses = [...new Set(students.map(s => s.class))];
+  const uniqueClasses = Array.from(new Set(students.map(s => s.class)));
 
   const getStatusIcon = (status: string) => {
     switch (status) {

@@ -142,7 +142,7 @@ export default function Admissions() {
     return matchesSearch && matchesStatus && matchesClass;
   });
 
-  const uniqueClasses = [...new Set(applications.map(app => app.class))];
+  const uniqueClasses = Array.from(new Set(applications.map(app => app.class)));
 
   const statusStats = {
     pending: applications.filter(app => app.status === "pending").length,
