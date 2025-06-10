@@ -28,39 +28,51 @@ export default function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <aside className="w-64 bg-white shadow-lg hidden md:block fixed h-full z-30">
-      <div className="p-6 border-b border-gray-200">
+    <aside className="w-64 bg-card border-r border-border hidden md:block fixed h-full z-30 animate-fade-in">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-[var(--edu-primary)] rounded-lg flex items-center justify-center">
-            <GraduationCap className="text-white text-lg" />
+          <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center shadow-lg">
+            <GraduationCap className="text-white text-xl" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[var(--edu-primary)]">EduManage</h1>
-            <p className="text-sm text-gray-500">School Management</p>
+            <h1 className="text-xl font-bold text-gradient">EduManage</h1>
+            <p className="text-sm text-muted-foreground">School Management</p>
           </div>
         </div>
       </div>
       
       <nav className="mt-6 px-4">
-        <div className="space-y-2">
-          {navigationItems.map((item) => {
+        <div className="space-y-1">
+          {navigationItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = location === item.href || 
               (item.href !== "/" && location.startsWith(item.href));
             
             return (
               <Link key={item.href} href={item.href}>
-                <a
+                <div
                   className={cn(
-                    "flex items-center px-4 py-3 rounded-lg font-medium transition-colors",
+                    "flex items-center px-4 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer group",
+                    "hover:bg-muted/60 hover:shadow-sm hover:translate-x-1",
                     isActive
-                      ? "text-[var(--edu-primary)] bg-[var(--edu-light-blue)]"
-                      : "text-gray-600 hover:text-[var(--edu-primary)] hover:bg-gray-50"
+                      ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
+                  style={{
+                    animationDelay: `${index * 50}ms`,
+                  }}
                 >
-                  <Icon className="mr-3 h-5 w-5" />
-                  {item.label}
-                </a>
+                  <Icon className={cn(
+                    "mr-3 h-5 w-5 transition-all duration-200",
+                    isActive ? "text-primary" : "group-hover:text-primary/80"
+                  )} />
+                  <span className="transition-all duration-200">
+                    {item.label}
+                  </span>
+                  {isActive && (
+                    <div className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  )}
+                </div>
               </Link>
             );
           })}
