@@ -7,6 +7,8 @@ import {
   type Fee, type InsertFee,
   type Notice, type InsertNotice
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, count } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -53,349 +55,175 @@ export interface IStorage {
   }>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private students: Map<number, Student>;
-  private teachers: Map<number, Teacher>;
-  private attendance: Map<number, Attendance>;
-  private fees: Map<number, Fee>;
-  private notices: Map<number, Notice>;
-  private currentIds: { [key: string]: number };
-
+export class DatabaseStorage implements IStorage {
   constructor() {
-    this.users = new Map();
-    this.students = new Map();
-    this.teachers = new Map();
-    this.attendance = new Map();
-    this.fees = new Map();
-    this.notices = new Map();
-    this.currentIds = {
-      users: 1,
-      students: 1,
-      teachers: 1,
-      attendance: 1,
-      fees: 1,
-      notices: 1,
-    };
-
-    // Initialize with some default data
     this.initializeData();
   }
 
-  private initializeData() {
-    // Create admin user
-    const adminUser: User = {
-      id: this.currentIds.users++,
-      username: "admin",
-      password: "admin123", // In real app, this would be hashed
-      role: "admin",
-      name: "John Anderson",
-      email: "admin@school.edu",
-      phone: "+1234567890",
-      createdAt: new Date(),
-    };
-    this.users.set(adminUser.id, adminUser);
-
-    // Create sample students
-    const sampleStudents: Student[] = [
-      {
-        id: this.currentIds.students++,
-        rollNumber: "2024001",
-        name: "Aarav Sharma",
-        email: "aarav@student.edu",
-        phone: "+1234567891",
-        dateOfBirth: new Date("2010-05-15"),
-        gender: "male",
-        class: "10",
-        section: "A",
-        parentName: "Rajesh Sharma",
-        parentPhone: "+1234567892",
-        parentEmail: "rajesh@parent.com",
-        address: "123 Main St, City",
-        admissionDate: new Date("2024-10-20"),
-        isActive: true,
-      },
-      {
-        id: this.currentIds.students++,
-        rollNumber: "2024002",
-        name: "Priya Gupta",
-        email: "priya@student.edu",
-        phone: "+1234567893",
-        dateOfBirth: new Date("2012-08-22"),
-        gender: "female",
-        class: "8",
-        section: "B",
-        parentName: "Suresh Gupta",
-        parentPhone: "+1234567894",
-        parentEmail: "suresh@parent.com",
-        address: "456 Oak Ave, City",
-        admissionDate: new Date("2024-10-19"),
-        isActive: true,
-      },
-      {
-        id: this.currentIds.students++,
-        rollNumber: "2024003",
-        name: "Rohan Kumar",
-        email: "rohan@student.edu",
-        phone: "+1234567895",
-        dateOfBirth: new Date("2008-12-10"),
-        gender: "male",
-        class: "12",
-        section: "C",
-        parentName: "Amit Kumar",
-        parentPhone: "+1234567896",
-        parentEmail: "amit@parent.com",
-        address: "789 Pine St, City",
-        admissionDate: new Date("2024-10-18"),
-        isActive: true,
-      },
-    ];
-
-    sampleStudents.forEach(student => this.students.set(student.id, student));
-
-    // Create sample teachers
-    const sampleTeachers: Teacher[] = [
-      {
-        id: this.currentIds.teachers++,
-        employeeId: "TCH001",
-        name: "Dr. Sarah Johnson",
-        email: "sarah@school.edu",
-        phone: "+1234567897",
-        dateOfBirth: new Date("1985-03-20"),
-        gender: "female",
-        subject: "Mathematics",
-        qualification: "PhD in Mathematics",
-        experience: 10,
-        salary: "50000.00",
-        joinDate: new Date("2020-01-15"),
-        isActive: true,
-      },
-      {
-        id: this.currentIds.teachers++,
-        employeeId: "TCH002",
-        name: "Mr. David Wilson",
-        email: "david@school.edu",
-        phone: "+1234567898",
-        dateOfBirth: new Date("1980-07-12"),
-        gender: "male",
-        subject: "Physics",
-        qualification: "MSc Physics",
-        experience: 15,
-        salary: "55000.00",
-        joinDate: new Date("2018-08-20"),
-        isActive: true,
-      },
-    ];
-
-    sampleTeachers.forEach(teacher => this.teachers.set(teacher.id, teacher));
-
-    // Create sample notices
-    const sampleNotices: Notice[] = [
-      {
-        id: this.currentIds.notices++,
-        title: "Parent-Teacher Meeting",
-        content: "Parent-Teacher meeting scheduled for October 25, 2024",
-        priority: "high",
-        targetAudience: "parents",
-        createdBy: adminUser.id,
-        createdAt: new Date(),
-        isActive: true,
-      },
-      {
-        id: this.currentIds.notices++,
-        title: "Sports Day Registration",
-        content: "Register for annual sports day by October 22, 2024",
-        priority: "normal",
-        targetAudience: "students",
-        createdBy: adminUser.id,
-        createdAt: new Date(),
-        isActive: true,
-      },
-    ];
-
-    sampleNotices.forEach(notice => this.notices.set(notice.id, notice));
+  private async initializeData() {
+    try {
+      // Check if admin user already exists
+      const existingAdmin = await db.select().from(users).where(eq(users.username, "admin")).limit(1);
+      
+      if (existingAdmin.length === 0) {
+        // Create admin user
+        await db.insert(users).values({
+          username: "admin",
+          password: "admin123", // In real app, this would be hashed
+          role: "admin",
+          name: "John Anderson",
+          email: "admin@school.edu",
+          phone: "+1234567890",
+        });
+      }
+    } catch (error) {
+      console.error("Error initializing data:", error);
+    }
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentIds.users++;
-    const user: User = { 
-      ...insertUser, 
-      id,
-      role: insertUser.role || "admin",
-      email: insertUser.email || null,
-      phone: insertUser.phone || null,
-      createdAt: new Date(),
-    };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   // Student methods
   async getStudents(): Promise<Student[]> {
-    return Array.from(this.students.values());
+    return await db.select().from(students);
   }
 
   async getStudent(id: number): Promise<Student | undefined> {
-    return this.students.get(id);
+    const [student] = await db.select().from(students).where(eq(students.id, id));
+    return student || undefined;
   }
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
-    const id = this.currentIds.students++;
-    const rollNumber = `2024${String(id).padStart(3, '0')}`;
-    const student: Student = {
-      ...insertStudent,
-      id,
-      rollNumber,
-      admissionDate: new Date(),
-      email: insertStudent.email || null,
-      phone: insertStudent.phone || null,
-      address: insertStudent.address || null,
-      parentEmail: insertStudent.parentEmail || null,
-      isActive: insertStudent.isActive ?? true,
-    };
-    this.students.set(id, student);
+    const [student] = await db
+      .insert(students)
+      .values(insertStudent)
+      .returning();
     return student;
   }
 
-  async updateStudent(id: number, studentUpdate: Partial<Student>): Promise<Student | undefined> {
-    const student = this.students.get(id);
-    if (!student) return undefined;
-    
-    const updatedStudent = { ...student, ...studentUpdate };
-    this.students.set(id, updatedStudent);
-    return updatedStudent;
+  async updateStudent(id: number, updateData: Partial<Student>): Promise<Student | undefined> {
+    const [student] = await db
+      .update(students)
+      .set(updateData)
+      .where(eq(students.id, id))
+      .returning();
+    return student || undefined;
   }
 
   async deleteStudent(id: number): Promise<boolean> {
-    return this.students.delete(id);
+    const result = await db.delete(students).where(eq(students.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Teacher methods
   async getTeachers(): Promise<Teacher[]> {
-    return Array.from(this.teachers.values());
+    return await db.select().from(teachers);
   }
 
   async getTeacher(id: number): Promise<Teacher | undefined> {
-    return this.teachers.get(id);
+    const [teacher] = await db.select().from(teachers).where(eq(teachers.id, id));
+    return teacher || undefined;
   }
 
   async createTeacher(insertTeacher: InsertTeacher): Promise<Teacher> {
-    const id = this.currentIds.teachers++;
-    const employeeId = `TCH${String(id).padStart(3, '0')}`;
-    const teacher: Teacher = {
-      ...insertTeacher,
-      id,
-      employeeId,
-      joinDate: new Date(),
-      dateOfBirth: insertTeacher.dateOfBirth || null,
-      gender: insertTeacher.gender || null,
-      subject: insertTeacher.subject || null,
-      qualification: insertTeacher.qualification || null,
-      experience: insertTeacher.experience || null,
-      salary: insertTeacher.salary || null,
-      isActive: insertTeacher.isActive ?? true,
-    };
-    this.teachers.set(id, teacher);
+    const [teacher] = await db
+      .insert(teachers)
+      .values(insertTeacher)
+      .returning();
     return teacher;
   }
 
-  async updateTeacher(id: number, teacherUpdate: Partial<Teacher>): Promise<Teacher | undefined> {
-    const teacher = this.teachers.get(id);
-    if (!teacher) return undefined;
-    
-    const updatedTeacher = { ...teacher, ...teacherUpdate };
-    this.teachers.set(id, updatedTeacher);
-    return updatedTeacher;
+  async updateTeacher(id: number, updateData: Partial<Teacher>): Promise<Teacher | undefined> {
+    const [teacher] = await db
+      .update(teachers)
+      .set(updateData)
+      .where(eq(teachers.id, id))
+      .returning();
+    return teacher || undefined;
   }
 
   async deleteTeacher(id: number): Promise<boolean> {
-    return this.teachers.delete(id);
+    const result = await db.delete(teachers).where(eq(teachers.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 
   // Attendance methods
   async getAttendance(date?: Date): Promise<Attendance[]> {
-    const allAttendance = Array.from(this.attendance.values());
-    if (!date) return allAttendance;
-    
-    const targetDate = date.toDateString();
-    return allAttendance.filter(att => att.date.toDateString() === targetDate);
+    if (!date) {
+      return await db.select().from(attendance);
+    }
+    return await db.select().from(attendance).where(eq(attendance.date, date));
   }
 
   async getStudentAttendance(studentId: number): Promise<Attendance[]> {
-    return Array.from(this.attendance.values()).filter(att => att.studentId === studentId);
+    return await db.select().from(attendance).where(eq(attendance.studentId, studentId));
   }
 
   async createAttendance(insertAttendance: InsertAttendance): Promise<Attendance> {
-    const id = this.currentIds.attendance++;
-    const attendance: Attendance = { 
-      ...insertAttendance, 
-      id,
-      remarks: insertAttendance.remarks || null
-    };
-    this.attendance.set(id, attendance);
-    return attendance;
+    const [attendanceRecord] = await db
+      .insert(attendance)
+      .values(insertAttendance)
+      .returning();
+    return attendanceRecord;
   }
 
   // Fee methods
   async getFees(): Promise<Fee[]> {
-    return Array.from(this.fees.values());
+    return await db.select().from(fees);
   }
 
   async getStudentFees(studentId: number): Promise<Fee[]> {
-    return Array.from(this.fees.values()).filter(fee => fee.studentId === studentId);
+    return await db.select().from(fees).where(eq(fees.studentId, studentId));
   }
 
   async createFee(insertFee: InsertFee): Promise<Fee> {
-    const id = this.currentIds.fees++;
-    const fee: Fee = { 
-      ...insertFee, 
-      id,
-      status: insertFee.status || "pending",
-      remarks: insertFee.remarks || null,
-      paidDate: insertFee.paidDate || null,
-      paymentMethod: insertFee.paymentMethod || null
-    };
-    this.fees.set(id, fee);
+    const [fee] = await db
+      .insert(fees)
+      .values(insertFee)
+      .returning();
     return fee;
   }
 
-  async updateFee(id: number, feeUpdate: Partial<Fee>): Promise<Fee | undefined> {
-    const fee = this.fees.get(id);
-    if (!fee) return undefined;
-    
-    const updatedFee = { ...fee, ...feeUpdate };
-    this.fees.set(id, updatedFee);
-    return updatedFee;
+  async updateFee(id: number, updateData: Partial<Fee>): Promise<Fee | undefined> {
+    const [fee] = await db
+      .update(fees)
+      .set(updateData)
+      .where(eq(fees.id, id))
+      .returning();
+    return fee || undefined;
   }
 
   // Notice methods
   async getNotices(): Promise<Notice[]> {
-    return Array.from(this.notices.values()).filter(notice => notice.isActive);
+    return await db.select().from(notices).where(eq(notices.isActive, true));
   }
 
   async createNotice(insertNotice: InsertNotice): Promise<Notice> {
-    const id = this.currentIds.notices++;
-    const notice: Notice = { 
-      ...insertNotice, 
-      id,
-      createdAt: new Date(),
-      priority: insertNotice.priority || "normal",
-      isActive: insertNotice.isActive ?? true,
-    };
-    this.notices.set(id, notice);
+    const [notice] = await db
+      .insert(notices)
+      .values(insertNotice)
+      .returning();
     return notice;
   }
 
-  // Stats methods
+  // Stats method
   async getStats(): Promise<{
     totalStudents: number;
     totalTeachers: number;
@@ -403,27 +231,30 @@ export class MemStorage implements IStorage {
     feeCollection: number;
     pendingFees: number;
   }> {
-    const totalStudents = this.students.size;
-    const totalTeachers = this.teachers.size;
+    const [studentCount] = await db.select({ count: count() }).from(students);
+    const [teacherCount] = await db.select({ count: count() }).from(teachers);
+    const allFees = await db.select().from(fees);
     
-    // Calculate attendance rate (mock calculation)
-    const attendanceRate = 94.2;
+    const totalStudents = studentCount.count;
+    const totalTeachers = teacherCount.count;
     
-    // Calculate fee collection (mock calculation)
-    const allFees = Array.from(this.fees.values());
-    const totalFees = allFees.reduce((sum, fee) => sum + parseFloat(fee.amount || "0"), 0);
-    const paidFees = allFees
-      .filter(fee => fee.status === "paid")
-      .reduce((sum, fee) => sum + parseFloat(fee.amount || "0"), 0);
+    // Calculate attendance rate (simplified)
+    const attendanceRate = 85; // Mock calculation for now
+    
+    // Calculate fee collection
+    const totalFeesAmount = allFees.reduce((sum, fee) => sum + parseFloat(fee.amount), 0);
+    const paidFeesAmount = allFees
+      .filter(fee => fee.status === 'paid')
+      .reduce((sum, fee) => sum + parseFloat(fee.amount), 0);
     
     return {
       totalStudents,
       totalTeachers,
       attendanceRate,
-      feeCollection: paidFees || 1850000, // Mock value in rupees
-      pendingFees: totalFees - paidFees || 250000, // Mock value
+      feeCollection: paidFeesAmount,
+      pendingFees: totalFeesAmount - paidFeesAmount,
     };
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
