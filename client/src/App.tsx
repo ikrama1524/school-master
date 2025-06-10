@@ -10,6 +10,8 @@ import Attendance from "@/pages/attendance";
 import Fees from "@/pages/fees";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
+import Admissions from "@/pages/admissions";
+import Payroll from "@/pages/payroll";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import MobileMenu from "@/components/layout/mobile-menu";
@@ -26,6 +28,8 @@ function Router() {
       <Route path="/fees" component={Fees} />
       <Route path="/reports" component={Reports} />
       <Route path="/settings" component={Settings} />
+      <Route path="/admissions" component={Admissions} />
+      <Route path="/payroll" component={Payroll} />
       <Route component={NotFound} />
     </Switch>
   );

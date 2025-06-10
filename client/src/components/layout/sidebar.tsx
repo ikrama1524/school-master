@@ -6,7 +6,9 @@ import {
   Calendar, 
   DollarSign, 
   BarChart, 
-  Settings 
+  Settings,
+  UserPlus,
+  Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +18,8 @@ const navigationItems = [
   { href: "/teachers", label: "Teachers", icon: GraduationCap },
   { href: "/attendance", label: "Attendance", icon: Calendar },
   { href: "/fees", label: "Fee Management", icon: DollarSign },
+  { href: "/admissions", label: "Admissions", icon: UserPlus },
+  { href: "/payroll", label: "Payroll", icon: Wallet },
   { href: "/reports", label: "Reports", icon: BarChart },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
