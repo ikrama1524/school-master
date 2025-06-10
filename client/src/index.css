@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(213, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(123, 38%, 57%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(16, 100%, 66%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Education specific colors */
+  --edu-primary: hsl(213, 90%, 54%);
+  --edu-secondary: hsl(123, 38%, 57%);
+  --edu-accent: hsl(16, 100%, 66%);
+  --edu-bg: hsl(0, 0%, 96.1%);
+  --edu-text: hsl(0, 0%, 12.9%);
+  --edu-error: hsl(4, 90%, 58%);
+  --edu-light-blue: hsl(213, 92%, 95%);
+  --edu-light-green: hsl(123, 43%, 96%);
+  --edu-light-orange: hsl(16, 100%, 95%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(213, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+  
+  /* Education specific colors for dark mode */
+  --edu-primary: hsl(213, 90%, 54%);
+  --edu-secondary: hsl(123, 38%, 57%);
+  --edu-accent: hsl(16, 100%, 66%);
+  --edu-bg: hsl(240, 10%, 3.9%);
+  --edu-text: hsl(0, 0%, 98%);
+  --edu-error: hsl(4, 90%, 58%);
+  --edu-light-blue: hsl(213, 90%, 8%);
+  --edu-light-green: hsl(123, 38%, 8%);
+  --edu-light-orange: hsl(16, 100%, 8%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Roboto', 'Open Sans', sans-serif;
+    background-color: var(--edu-bg);
+    color: var(--edu-text);
+  }
+}
+
+@layer utilities {
+  .edu-text-primary {
+    color: var(--edu-primary);
+  }
+  
+  .edu-text-secondary {
+    color: var(--edu-secondary);
+  }
+  
+  .edu-text-accent {
+    color: var(--edu-accent);
+  }
+  
+  .edu-bg-primary {
+    background-color: var(--edu-primary);
+  }
+  
+  .edu-bg-secondary {
+    background-color: var(--edu-secondary);
+  }
+  
+  .edu-bg-accent {
+    background-color: var(--edu-accent);
+  }
+  
+  .edu-bg-light-blue {
+    background-color: var(--edu-light-blue);
+  }
+  
+  .edu-bg-light-green {
+    background-color: var(--edu-light-green);
+  }
+  
+  .edu-bg-light-orange {
+    background-color: var(--edu-light-orange);
+  }
+}
