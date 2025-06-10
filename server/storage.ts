@@ -230,6 +230,9 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
+      role: insertUser.role || "admin",
+      email: insertUser.email || null,
+      phone: insertUser.phone || null,
       createdAt: new Date(),
     };
     this.users.set(id, user);
@@ -253,6 +256,11 @@ export class MemStorage implements IStorage {
       id,
       rollNumber,
       admissionDate: new Date(),
+      email: insertStudent.email || null,
+      phone: insertStudent.phone || null,
+      address: insertStudent.address || null,
+      parentEmail: insertStudent.parentEmail || null,
+      isActive: insertStudent.isActive ?? true,
     };
     this.students.set(id, student);
     return student;
@@ -288,6 +296,13 @@ export class MemStorage implements IStorage {
       id,
       employeeId,
       joinDate: new Date(),
+      dateOfBirth: insertTeacher.dateOfBirth || null,
+      gender: insertTeacher.gender || null,
+      subject: insertTeacher.subject || null,
+      qualification: insertTeacher.qualification || null,
+      experience: insertTeacher.experience || null,
+      salary: insertTeacher.salary || null,
+      isActive: insertTeacher.isActive ?? true,
     };
     this.teachers.set(id, teacher);
     return teacher;
@@ -321,7 +336,11 @@ export class MemStorage implements IStorage {
 
   async createAttendance(insertAttendance: InsertAttendance): Promise<Attendance> {
     const id = this.currentIds.attendance++;
-    const attendance: Attendance = { ...insertAttendance, id };
+    const attendance: Attendance = { 
+      ...insertAttendance, 
+      id,
+      remarks: insertAttendance.remarks || null
+    };
     this.attendance.set(id, attendance);
     return attendance;
   }
@@ -337,7 +356,14 @@ export class MemStorage implements IStorage {
 
   async createFee(insertFee: InsertFee): Promise<Fee> {
     const id = this.currentIds.fees++;
-    const fee: Fee = { ...insertFee, id };
+    const fee: Fee = { 
+      ...insertFee, 
+      id,
+      status: insertFee.status || "pending",
+      remarks: insertFee.remarks || null,
+      paidDate: insertFee.paidDate || null,
+      paymentMethod: insertFee.paymentMethod || null
+    };
     this.fees.set(id, fee);
     return fee;
   }
@@ -362,6 +388,8 @@ export class MemStorage implements IStorage {
       ...insertNotice, 
       id,
       createdAt: new Date(),
+      priority: insertNotice.priority || "normal",
+      isActive: insertNotice.isActive ?? true,
     };
     this.notices.set(id, notice);
     return notice;
