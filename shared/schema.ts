@@ -86,14 +86,16 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const insertStudentSchema = createInsertSchema(students).omit({
   id: true,
-  rollNumber: true,
   admissionDate: true,
+}).extend({
+  rollNumber: z.string().optional(),
 });
 
 export const insertTeacherSchema = createInsertSchema(teachers).omit({
   id: true,
-  employeeId: true,
   joinDate: true,
+}).extend({
+  employeeId: z.string().optional(),
 });
 
 export const insertAttendanceSchema = createInsertSchema(attendance).omit({

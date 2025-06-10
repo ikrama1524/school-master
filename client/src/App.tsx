@@ -8,6 +8,8 @@ import Students from "@/pages/students";
 import Teachers from "@/pages/teachers";
 import Attendance from "@/pages/attendance";
 import Fees from "@/pages/fees";
+import Reports from "@/pages/reports";
+import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import MobileMenu from "@/components/layout/mobile-menu";

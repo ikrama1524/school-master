@@ -111,9 +111,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
+    // Generate roll number if not provided
+    const rollNumber = insertStudent.rollNumber || `${new Date().getFullYear()}${String(Date.now()).slice(-3)}`;
+    
     const [student] = await db
       .insert(students)
-      .values(insertStudent)
+      .values({
+        ...insertStudent,
+        rollNumber,
+      })
       .returning();
     return student;
   }
@@ -143,9 +149,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTeacher(insertTeacher: InsertTeacher): Promise<Teacher> {
+    // Generate employee ID if not provided
+    const employeeId = insertTeacher.employeeId || `TCH${String(Date.now()).slice(-3)}`;
+    
     const [teacher] = await db
       .insert(teachers)
-      .values(insertTeacher)
+      .values({
+        ...insertTeacher,
+        employeeId,
+      })
       .returning();
     return teacher;
   }
