@@ -20,7 +20,11 @@ export default function Dashboard() {
   });
 
   const recentStudents = students
-    .sort((a, b) => new Date(b.admissionDate).getTime() - new Date(a.admissionDate).getTime())
+    .sort((a, b) => {
+      const dateA = a.admissionDate ? new Date(a.admissionDate).getTime() : 0;
+      const dateB = b.admissionDate ? new Date(b.admissionDate).getTime() : 0;
+      return dateB - dateA;
+    })
     .slice(0, 3);
 
   return (
@@ -34,7 +38,12 @@ export default function Dashboard() {
         <QuickActions notices={notices} isLoading={noticesLoading} />
       </div>
 
-      <AttendanceOverview stats={stats} isLoading={statsLoading} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <AttendanceOverview stats={stats} isLoading={statsLoading} />
+        </div>
+        <WorkflowAssistant />
+      </div>
     </div>
   );
 }
