@@ -89,6 +89,7 @@ export const insertStudentSchema = createInsertSchema(students).omit({
   admissionDate: true,
 }).extend({
   rollNumber: z.string().optional(),
+  dateOfBirth: z.string().transform((str) => new Date(str)),
 });
 
 export const insertTeacherSchema = createInsertSchema(teachers).omit({
@@ -96,6 +97,9 @@ export const insertTeacherSchema = createInsertSchema(teachers).omit({
   joinDate: true,
 }).extend({
   employeeId: z.string().optional(),
+  dateOfBirth: z.string().transform((str) => new Date(str)).optional(),
+  experience: z.string().transform((str) => parseInt(str)).optional(),
+  salary: z.string().optional(),
 });
 
 export const insertAttendanceSchema = createInsertSchema(attendance).omit({
