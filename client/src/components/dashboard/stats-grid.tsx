@@ -90,22 +90,30 @@ export default function StatsGrid({ stats, isLoading }: StatsGridProps) {
       {statsData.map((stat, index) => {
         const Icon = stat.icon;
         return (
-          <Card key={index} className="border border-gray-200 shadow-sm">
-            <CardContent className="p-6">
+          <Card 
+            key={index} 
+            className="card-modern group hover:border-primary/20 relative overflow-hidden"
+            style={{
+              animationDelay: `${index * 100}ms`,
+            }}
+          >
+            <CardContent className="p-6 relative z-10">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-[var(--edu-text)]">{stat.value}</p>
-                  <p className="text-xs text-[var(--edu-secondary)] mt-1 flex items-center">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <p className="text-3xl font-bold text-foreground tracking-tight">{stat.value}</p>
+                  <p className="text-xs text-green-600 font-medium flex items-center">
                     <TrendingUp className="mr-1 h-3 w-3" />
                     {stat.growth}
                   </p>
                 </div>
-                <div className={`w-12 h-12 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
-                  <Icon className={`text-xl ${stat.iconColor}`} />
+                <div className={`w-14 h-14 ${stat.bgColor} rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                  <Icon className={`h-7 w-7 ${stat.iconColor}`} />
                 </div>
               </div>
             </CardContent>
+            {/* Gradient overlay on hover */}
+            <div className={`absolute inset-0 bg-gradient-to-r ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
           </Card>
         );
       })}

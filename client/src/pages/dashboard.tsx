@@ -28,21 +28,27 @@ export default function Dashboard() {
     .slice(0, 3);
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <StatsGrid stats={stats} isLoading={statsLoading} />
+    <div className="p-4 md:p-6 space-y-8 animate-fade-in">
+      <div className="animate-slide-up">
+        <StatsGrid stats={stats} isLoading={statsLoading} />
+      </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
+        <div className="lg:col-span-2 space-y-6">
           <RecentStudents students={recentStudents} isLoading={studentsLoading} />
         </div>
-        <QuickActions notices={notices} isLoading={noticesLoading} />
+        <div className="space-y-6">
+          <QuickActions notices={notices} isLoading={noticesLoading} />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-slide-up" style={{ animationDelay: '400ms' }}>
         <div className="lg:col-span-2">
           <AttendanceOverview stats={stats} isLoading={statsLoading} />
         </div>
-        <WorkflowAssistant />
+        <div>
+          <WorkflowAssistant />
+        </div>
       </div>
     </div>
   );
