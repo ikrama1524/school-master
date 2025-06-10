@@ -8,7 +8,8 @@ import {
   BarChart, 
   Settings,
   UserPlus,
-  Wallet
+  Wallet,
+  BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ const navigationItems = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/students", label: "Students", icon: Users },
   { href: "/teachers", label: "Teachers", icon: GraduationCap },
+  { href: "/homework", label: "Homework", icon: BookOpen },
   { href: "/attendance", label: "Attendance", icon: Calendar },
   { href: "/fees", label: "Fee Management", icon: DollarSign },
   { href: "/admissions", label: "Admissions", icon: UserPlus },
