@@ -79,9 +79,16 @@ export default function TeacherModal({ isOpen, onClose, teacher }: TeacherModalP
   const createTeacherMutation = useMutation({
     mutationFn: async (data: TeacherFormData) => {
       const payload = {
-        ...data,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-        experience: data.experience ? parseInt(data.experience) : undefined,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        subject: data.subject || undefined,
+        qualification: data.qualification || undefined,
+        employeeId: data.employeeId || undefined,
+        dateOfBirth: data.dateOfBirth || undefined,
+        experience: data.experience || undefined,
+        salary: data.salary || undefined,
+        gender: data.gender || undefined,
       };
       return await apiRequest("POST", "/api/teachers", payload);
     },
@@ -106,9 +113,16 @@ export default function TeacherModal({ isOpen, onClose, teacher }: TeacherModalP
   const updateTeacherMutation = useMutation({
     mutationFn: async (data: TeacherFormData) => {
       const payload = {
-        ...data,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-        experience: data.experience ? parseInt(data.experience) : undefined,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        subject: data.subject || undefined,
+        qualification: data.qualification || undefined,
+        employeeId: data.employeeId || undefined,
+        dateOfBirth: data.dateOfBirth || undefined,
+        experience: data.experience || undefined,
+        salary: data.salary || undefined,
+        gender: data.gender || undefined,
       };
       return await apiRequest("PUT", `/api/teachers/${teacher!.id}`, payload);
     },
