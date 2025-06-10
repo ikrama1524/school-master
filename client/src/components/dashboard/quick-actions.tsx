@@ -2,11 +2,10 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserPlus, GraduationCap, DollarSign, BarChart, ChevronRight, PlayCircle } from "lucide-react";
+import { UserPlus, GraduationCap, DollarSign, BarChart, ChevronRight } from "lucide-react";
 import { Notice } from "@shared/schema";
 import StudentModal from "@/components/modals/student-modal";
 import TeacherModal from "@/components/modals/teacher-modal";
-import OnboardingWizard from "@/components/onboarding-wizard";
 
 interface QuickActionsProps {
   notices: Notice[];
@@ -16,40 +15,31 @@ interface QuickActionsProps {
 export default function QuickActions({ notices, isLoading }: QuickActionsProps) {
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
-  const [isWorkflowOpen, setIsWorkflowOpen] = useState(false);
 
   const quickActions = [
     {
-      title: "Setup Workflow",
-      icon: PlayCircle,
-      bgColor: "bg-purple-50",
-      iconBgColor: "bg-purple-600",
-      hoverColor: "hover:bg-purple-100",
-      onClick: () => setIsWorkflowOpen(true),
-    },
-    {
       title: "Add Student",
       icon: UserPlus,
-      bgColor: "bg-[var(--edu-light-blue)]",
-      iconBgColor: "bg-[var(--edu-primary)]",
-      hoverColor: "hover:bg-blue-100",
+      bgColor: "bg-primary/10",
+      iconBgColor: "bg-primary",
+      hoverColor: "hover:bg-primary/20",
       onClick: () => setIsStudentModalOpen(true),
     },
     {
       title: "Add Teacher",
       icon: GraduationCap,
-      bgColor: "bg-[var(--edu-light-green)]",
-      iconBgColor: "bg-[var(--edu-secondary)]",
-      hoverColor: "hover:bg-green-100",
+      bgColor: "bg-secondary/10",
+      iconBgColor: "bg-secondary",
+      hoverColor: "hover:bg-secondary/20",
       onClick: () => setIsTeacherModalOpen(true),
     },
     {
       title: "Generate Report",
       icon: BarChart,
-      bgColor: "bg-gray-50",
-      iconBgColor: "bg-gray-600",
-      hoverColor: "hover:bg-gray-100",
-      onClick: () => {}, // Navigate to reports page
+      bgColor: "bg-accent/10",
+      iconBgColor: "bg-accent",
+      hoverColor: "hover:bg-accent/20",
+      onClick: () => window.location.href = '/reports',
     },
   ];
 
@@ -142,10 +132,7 @@ export default function QuickActions({ notices, isLoading }: QuickActionsProps) 
         isOpen={isTeacherModalOpen} 
         onClose={() => setIsTeacherModalOpen(false)} 
       />
-      <OnboardingWizard 
-        isOpen={isWorkflowOpen} 
-        onClose={() => setIsWorkflowOpen(false)} 
-      />
+
     </>
   );
 }

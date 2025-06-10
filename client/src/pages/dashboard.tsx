@@ -3,7 +3,6 @@ import StatsGrid from "@/components/dashboard/stats-grid";
 import RecentStudents from "@/components/dashboard/recent-students";
 import QuickActions from "@/components/dashboard/quick-actions";
 import AttendanceOverview from "@/components/dashboard/attendance-overview";
-import WorkflowAssistant from "@/components/workflow-assistant";
 import { Student, Notice } from "@shared/schema";
 
 export default function Dashboard() {
@@ -42,13 +41,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-slide-up" style={{ animationDelay: '400ms' }}>
-        <div className="lg:col-span-2">
-          <AttendanceOverview stats={stats} isLoading={statsLoading} />
-        </div>
-        <div>
-          <WorkflowAssistant />
-        </div>
+      <div className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+        <AttendanceOverview stats={stats} isLoading={statsLoading} />
       </div>
     </div>
   );
