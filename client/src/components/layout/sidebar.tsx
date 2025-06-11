@@ -9,18 +9,21 @@ import {
   Settings,
   UserPlus,
   Wallet,
-  BookOpen
+  BookOpen,
+  Clock,
+  CalendarDays
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
   { href: "/", label: "Dashboard", icon: Home },
-
+  { href: "/admissions", label: "Admissions", icon: UserPlus },
+  { href: "/timetable", label: "Timetable", icon: Clock },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/teachers", label: "Teachers", icon: GraduationCap },
   { href: "/homework", label: "Homework", icon: BookOpen },
   { href: "/attendance", label: "Attendance", icon: Calendar },
   { href: "/fees", label: "Fee Management", icon: DollarSign },
-  { href: "/admissions", label: "Admissions", icon: UserPlus },
   { href: "/payroll", label: "Payroll", icon: Wallet },
   { href: "/reports", label: "Reports", icon: BarChart },
   { href: "/settings", label: "Settings", icon: Settings },
