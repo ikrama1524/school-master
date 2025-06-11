@@ -60,15 +60,46 @@ export default function Admissions() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const [newApplication, setNewApplication] = useState({
+    // Student Basic Information
     studentName: "",
     dateOfBirth: "",
+    gender: "",
+    bloodGroup: "",
+    nationality: "",
+    religion: "",
+    category: "",
+    class: "",
+    rollNumber: "",
+    
+    // Guardian Information
     parentName: "",
+    parentOccupation: "",
+    parentIncome: "",
     email: "",
     phone: "",
+    alternatePhone: "",
+    
+    // Address Information
     address: "",
+    city: "",
+    state: "",
+    pincode: "",
+    
+    // Previous Academic Information
     previousSchool: "",
-    class: "",
+    previousClass: "",
+    percentage: "",
+    
+    // Medical Information
+    allergies: "",
+    medicalConditions: "",
+    emergencyContact: "",
+    
+    // Documents
     documents: [] as File[],
+    
+    // Admission Specific
+    priority: "normal" as "normal" | "high" | "urgent",
   });
 
   // Mock data for demonstration - in real app this would come from API

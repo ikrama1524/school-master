@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 const navigationItems = [
   { href: "/", label: "Dashboard", icon: Home },
-  { href: "/students", label: "Students", icon: Users },
+
   { href: "/teachers", label: "Teachers", icon: GraduationCap },
   { href: "/attendance", label: "Attendance", icon: Calendar },
   { href: "/fees", label: "Fee Management", icon: DollarSign },
