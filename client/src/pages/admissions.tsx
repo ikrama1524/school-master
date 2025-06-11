@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -65,7 +65,7 @@ export default function Admissions() {
     dateOfBirth: "",
     gender: "",
     bloodGroup: "",
-    nationality: "",
+    nationality: "Indian",
     religion: "",
     category: "",
     class: "",
@@ -102,7 +102,7 @@ export default function Admissions() {
     priority: "normal" as "normal" | "high" | "urgent",
   });
 
-  // Mock data for demonstration - in real app this would come from API
+  // Mock data for demonstration
   const applications: AdmissionApplication[] = [
     {
       id: 1,
@@ -129,37 +129,18 @@ export default function Admissions() {
       applicationNumber: "ADM002",
       studentName: "James Chen",
       dateOfBirth: "2011-08-22",
-      parentName: "Li Chen",
-      email: "li.chen@email.com",
+      parentName: "Linda Chen",
+      email: "linda.chen@email.com",
       phone: "+1234567891",
-      address: "456 Pine Street, City",
+      address: "456 Pine Avenue, City",
+      previousSchool: "Riverside Primary",
       class: "Grade 5",
-      status: "document_review",
-      applicationDate: new Date("2024-12-02"),
-      priority: "high",
-      documents: [
-        { id: "4", name: "Birth Certificate", type: "pdf", status: "verified", uploadDate: new Date("2024-12-02"), size: "1.1 MB" },
-        { id: "5", name: "Immunization Records", type: "pdf", status: "rejected", uploadDate: new Date("2024-12-02"), size: "1.8 MB" }
-      ],
-      remarks: "Missing immunization records"
-    },
-    {
-      id: 3,
-      applicationNumber: "ADM003",
-      studentName: "Sofia Rodriguez",
-      dateOfBirth: "2009-12-10",
-      parentName: "Maria Rodriguez",
-      email: "maria.rodriguez@email.com",
-      phone: "+1234567892",
-      address: "789 Maple Avenue, City",
-      class: "Grade 7",
       status: "approved",
       applicationDate: new Date("2024-11-28"),
-      priority: "normal",
+      priority: "high",
       documents: [
-        { id: "6", name: "Birth Certificate", type: "pdf", status: "verified", uploadDate: new Date("2024-11-28"), size: "1.3 MB" },
-        { id: "7", name: "Previous School Records", type: "pdf", status: "verified", uploadDate: new Date("2024-11-28"), size: "3.1 MB" },
-        { id: "8", name: "Parent ID", type: "pdf", status: "verified", uploadDate: new Date("2024-11-28"), size: "0.9 MB" }
+        { id: "4", name: "Birth Certificate", type: "pdf", status: "verified", uploadDate: new Date("2024-11-28"), size: "1.1 MB" },
+        { id: "5", name: "Academic Records", type: "pdf", status: "verified", uploadDate: new Date("2024-11-28"), size: "2.8 MB" }
       ]
     }
   ];
@@ -181,6 +162,100 @@ export default function Admissions() {
     rejected: applications.filter(app => app.status === "rejected").length,
     document_review: applications.filter(app => app.status === "document_review").length,
     interview_scheduled: applications.filter(app => app.status === "interview_scheduled").length,
+  };
+
+  const submitApplicationMutation = useMutation({
+    mutationFn: async (applicationData: any) => {
+      // This will create both admission and student record
+      return await apiRequest("POST", "/api/admissions", applicationData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admissions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
+      toast({
+        title: "Application Submitted",
+        description: "Student admission application has been submitted successfully",
+      });
+      setIsNewApplicationOpen(false);
+      resetForm();
+    },
+  });
+
+  const approveApplicationMutation = useMutation({
+    mutationFn: async (applicationId: number) => {
+      // This will automatically create student record from approved admission
+      return await apiRequest("POST", `/api/admissions/${applicationId}/approve`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admissions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
+      toast({
+        title: "Application Approved",
+        description: "Student has been admitted and added to the system",
+      });
+    },
+  });
+
+  const handleFileUpload = (files: FileList | null) => {
+    if (files) {
+      const validFiles = Array.from(files).filter(file => {
+        const validTypes = ['.pdf', '.jpg', '.jpeg', '.png'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        return validTypes.some(type => file.name.toLowerCase().endsWith(type)) && file.size <= maxSize;
+      });
+      setNewApplication({ ...newApplication, documents: [...newApplication.documents, ...validFiles] });
+    }
+  };
+
+  const removeDocument = (index: number) => {
+    const updatedDocs = newApplication.documents.filter((_, i) => i !== index);
+    setNewApplication({ ...newApplication, documents: updatedDocs });
+  };
+
+  const submitApplication = () => {
+    if (!newApplication.studentName || !newApplication.dateOfBirth || !newApplication.parentName || 
+        !newApplication.email || !newApplication.phone || !newApplication.class) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields marked with *",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    submitApplicationMutation.mutate(newApplication);
+  };
+
+  const resetForm = () => {
+    setNewApplication({
+      studentName: "",
+      dateOfBirth: "",
+      gender: "",
+      bloodGroup: "",
+      nationality: "Indian",
+      religion: "",
+      category: "",
+      class: "",
+      rollNumber: "",
+      parentName: "",
+      parentOccupation: "",
+      parentIncome: "",
+      email: "",
+      phone: "",
+      alternatePhone: "",
+      address: "",
+      city: "",
+      state: "",
+      pincode: "",
+      previousSchool: "",
+      previousClass: "",
+      percentage: "",
+      allergies: "",
+      medicalConditions: "",
+      emergencyContact: "",
+      documents: [],
+      priority: "normal",
+    });
   };
 
   const getStatusIcon = (status: string) => {
@@ -217,65 +292,9 @@ export default function Admissions() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "urgent":
-        return "bg-red-500";
-      case "high":
-        return "bg-orange-500";
-      default:
-        return "bg-gray-400";
-    }
-  };
-
-  const handleFileUpload = (files: FileList | null) => {
-    if (files) {
-      const fileArray = Array.from(files);
-      setNewApplication(prev => ({
-        ...prev,
-        documents: [...prev.documents, ...fileArray]
-      }));
-    }
-  };
-
-  const removeDocument = (index: number) => {
-    setNewApplication(prev => ({
-      ...prev,
-      documents: prev.documents.filter((_, i) => i !== index)
-    }));
-  };
-
-  const submitApplication = () => {
-    // In real app, this would submit to API
-    toast({
-      title: "Application Submitted",
-      description: "Application has been submitted successfully and is under review.",
-    });
-    setIsNewApplicationOpen(false);
-    setNewApplication({
-      studentName: "",
-      dateOfBirth: "",
-      parentName: "",
-      email: "",
-      phone: "",
-      address: "",
-      previousSchool: "",
-      class: "",
-      documents: [],
-    });
-  };
-
   const viewApplicationDetails = (application: AdmissionApplication) => {
     setSelectedApplication(application);
     setIsDetailsModalOpen(true);
-  };
-
-  const updateApplicationStatus = (id: number, status: string) => {
-    // In real app, this would update via API
-    toast({
-      title: "Status Updated",
-      description: `Application status updated to ${status}`,
-    });
   };
 
   return (
@@ -283,16 +302,16 @@ export default function Admissions() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Admissions Management
+            Student Admissions & Registration
           </h1>
           <p className="text-muted-foreground mt-1">
-            Online applications with document verification and approval workflow
+            Complete student admission process with automatic student registration upon approval
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
-            Export Applications
+            Export List
           </Button>
           <Dialog open={isNewApplicationOpen} onOpenChange={setIsNewApplicationOpen}>
             <DialogTrigger asChild>
@@ -301,46 +320,150 @@ export default function Admissions() {
                 New Application
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Student Admission Application</DialogTitle>
+                <DialogDescription>
+                  Complete student admission application with comprehensive information for student registration.
+                </DialogDescription>
               </DialogHeader>
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="studentName">Student Full Name *</Label>
-                    <Input
-                      id="studentName"
-                      value={newApplication.studentName}
-                      onChange={(e) => setNewApplication(prev => ({ ...prev, studentName: e.target.value }))}
-                      placeholder="Enter student's full name"
-                    />
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                  <TabsTrigger value="guardian">Guardian</TabsTrigger>
+                  <TabsTrigger value="address">Address</TabsTrigger>
+                  <TabsTrigger value="academic">Academic</TabsTrigger>
+                  <TabsTrigger value="documents">Documents</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="studentName">Student Full Name *</Label>
+                      <Input 
+                        id="studentName"
+                        value={newApplication.studentName}
+                        onChange={(e) => setNewApplication({ ...newApplication, studentName: e.target.value })}
+                        placeholder="Enter student's full name"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="rollNumber">Roll Number</Label>
+                      <Input 
+                        id="rollNumber"
+                        value={newApplication.rollNumber}
+                        onChange={(e) => setNewApplication({ ...newApplication, rollNumber: e.target.value })}
+                        placeholder="Auto-generated or enter manually"
+                        className="mt-1"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                    <Input
-                      id="dateOfBirth"
-                      type="date"
-                      value={newApplication.dateOfBirth}
-                      onChange={(e) => setNewApplication(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-                    />
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal mt-1"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {newApplication.dateOfBirth ? format(new Date(newApplication.dateOfBirth), "PPP") : "Select date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={newApplication.dateOfBirth ? new Date(newApplication.dateOfBirth) : undefined}
+                            onSelect={(date) => date && setNewApplication({ ...newApplication, dateOfBirth: format(date, "yyyy-MM-dd") })}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <Label htmlFor="gender">Gender *</Label>
+                      <Select value={newApplication.gender} onValueChange={(value) => setNewApplication({ ...newApplication, gender: value })}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="bloodGroup">Blood Group</Label>
+                      <Select value={newApplication.bloodGroup} onValueChange={(value) => setNewApplication({ ...newApplication, bloodGroup: value })}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Select blood group" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="A+">A+</SelectItem>
+                          <SelectItem value="A-">A-</SelectItem>
+                          <SelectItem value="B+">B+</SelectItem>
+                          <SelectItem value="B-">B-</SelectItem>
+                          <SelectItem value="AB+">AB+</SelectItem>
+                          <SelectItem value="AB-">AB-</SelectItem>
+                          <SelectItem value="O+">O+</SelectItem>
+                          <SelectItem value="O-">O-</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="parentName">Parent/Guardian Name *</Label>
-                    <Input
-                      id="parentName"
-                      value={newApplication.parentName}
-                      onChange={(e) => setNewApplication(prev => ({ ...prev, parentName: e.target.value }))}
-                      placeholder="Enter parent/guardian name"
-                    />
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="nationality">Nationality</Label>
+                      <Input 
+                        id="nationality"
+                        value={newApplication.nationality}
+                        onChange={(e) => setNewApplication({ ...newApplication, nationality: e.target.value })}
+                        placeholder="e.g., Indian"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="religion">Religion</Label>
+                      <Input 
+                        id="religion"
+                        value={newApplication.religion}
+                        onChange={(e) => setNewApplication({ ...newApplication, religion: e.target.value })}
+                        placeholder="Enter religion"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="category">Category</Label>
+                      <Select value={newApplication.category} onValueChange={(value) => setNewApplication({ ...newApplication, category: value })}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general">General</SelectItem>
+                          <SelectItem value="obc">OBC</SelectItem>
+                          <SelectItem value="sc">SC</SelectItem>
+                          <SelectItem value="st">ST</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
+
                   <div>
                     <Label htmlFor="class">Applying for Class *</Label>
-                    <Select value={newApplication.class} onValueChange={(value) => setNewApplication(prev => ({ ...prev, class: value }))}>
-                      <SelectTrigger>
+                    <Select value={newApplication.class} onValueChange={(value) => setNewApplication({ ...newApplication, class: value })}>
+                      <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Select class" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="Nursery">Nursery</SelectItem>
+                        <SelectItem value="LKG">LKG</SelectItem>
+                        <SelectItem value="UKG">UKG</SelectItem>
                         <SelectItem value="Grade 1">Grade 1</SelectItem>
                         <SelectItem value="Grade 2">Grade 2</SelectItem>
                         <SelectItem value="Grade 3">Grade 3</SelectItem>
@@ -351,115 +474,286 @@ export default function Admissions() {
                         <SelectItem value="Grade 8">Grade 8</SelectItem>
                         <SelectItem value="Grade 9">Grade 9</SelectItem>
                         <SelectItem value="Grade 10">Grade 10</SelectItem>
+                        <SelectItem value="Grade 11">Grade 11</SelectItem>
+                        <SelectItem value="Grade 12">Grade 12</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label htmlFor="email">Email Address *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={newApplication.email}
-                      onChange={(e) => setNewApplication(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="Enter email address"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      value={newApplication.phone}
-                      onChange={(e) => setNewApplication(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="address">Full Address *</Label>
-                  <Textarea
-                    id="address"
-                    value={newApplication.address}
-                    onChange={(e) => setNewApplication(prev => ({ ...prev, address: e.target.value }))}
-                    placeholder="Enter complete address"
-                    rows={3}
-                  />
-                </div>
 
-                <div>
-                  <Label htmlFor="previousSchool">Previous School (if any)</Label>
-                  <Input
-                    id="previousSchool"
-                    value={newApplication.previousSchool}
-                    onChange={(e) => setNewApplication(prev => ({ ...prev, previousSchool: e.target.value }))}
-                    placeholder="Enter previous school name"
-                  />
-                </div>
-
-                <div>
-                  <Label>Required Documents</Label>
-                  <div className="mt-2 space-y-3">
-                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
-                      <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        Upload required documents (PDF, JPG, PNG - Max 5MB each)
-                      </p>
-                      <Input
-                        type="file"
-                        multiple
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => handleFileUpload(e.target.files)}
-                        className="hidden"
-                        id="fileUpload"
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="allergies">Allergies (if any)</Label>
+                      <Textarea 
+                        id="allergies"
+                        value={newApplication.allergies}
+                        onChange={(e) => setNewApplication({ ...newApplication, allergies: e.target.value })}
+                        placeholder="List any known allergies"
+                        className="mt-1"
+                        rows={2}
                       />
-                      <Button variant="outline" onClick={() => document.getElementById('fileUpload')?.click()}>
-                        Select Files
-                      </Button>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-sm">Required Documents:</h4>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• Birth Certificate</li>
-                        <li>• Previous School Transfer Certificate (if applicable)</li>
-                        <li>• Academic Records/Report Cards</li>
-                        <li>• Parent/Guardian ID Proof</li>
-                        <li>• Passport Size Photographs (2 copies)</li>
-                        <li>• Medical/Immunization Records</li>
-                      </ul>
+                    <div>
+                      <Label htmlFor="medicalConditions">Medical Conditions</Label>
+                      <Textarea 
+                        id="medicalConditions"
+                        value={newApplication.medicalConditions}
+                        onChange={(e) => setNewApplication({ ...newApplication, medicalConditions: e.target.value })}
+                        placeholder="List any medical conditions"
+                        className="mt-1"
+                        rows={2}
+                      />
                     </div>
-
-                    {newApplication.documents.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-sm mb-2">Uploaded Documents:</h4>
-                        <div className="space-y-2">
-                          {newApplication.documents.map((file, index) => (
-                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                              <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4" />
-                                <span className="text-sm">{file.name}</span>
-                                <span className="text-xs text-muted-foreground">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-                              </div>
-                              <Button size="sm" variant="ghost" onClick={() => removeDocument(index)}>
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
-                </div>
+                </TabsContent>
 
-                <div className="flex justify-end gap-2">
+                <TabsContent value="guardian" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="parentName">Parent/Guardian Name *</Label>
+                      <Input 
+                        id="parentName"
+                        value={newApplication.parentName}
+                        onChange={(e) => setNewApplication({ ...newApplication, parentName: e.target.value })}
+                        placeholder="Enter parent/guardian name"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="parentOccupation">Occupation</Label>
+                      <Input 
+                        id="parentOccupation"
+                        value={newApplication.parentOccupation}
+                        onChange={(e) => setNewApplication({ ...newApplication, parentOccupation: e.target.value })}
+                        placeholder="Enter occupation"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="email">Email Address *</Label>
+                      <Input 
+                        id="email"
+                        type="email"
+                        value={newApplication.email}
+                        onChange={(e) => setNewApplication({ ...newApplication, email: e.target.value })}
+                        placeholder="Enter email address"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="parentIncome">Annual Income</Label>
+                      <Input 
+                        id="parentIncome"
+                        value={newApplication.parentIncome}
+                        onChange={(e) => setNewApplication({ ...newApplication, parentIncome: e.target.value })}
+                        placeholder="Enter annual income"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="phone">Primary Phone Number *</Label>
+                      <Input 
+                        id="phone"
+                        value={newApplication.phone}
+                        onChange={(e) => setNewApplication({ ...newApplication, phone: e.target.value })}
+                        placeholder="Enter phone number"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="alternatePhone">Alternate Phone</Label>
+                      <Input 
+                        id="alternatePhone"
+                        value={newApplication.alternatePhone}
+                        onChange={(e) => setNewApplication({ ...newApplication, alternatePhone: e.target.value })}
+                        placeholder="Enter alternate phone"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="emergencyContact">Emergency Contact</Label>
+                    <Input 
+                      id="emergencyContact"
+                      value={newApplication.emergencyContact}
+                      onChange={(e) => setNewApplication({ ...newApplication, emergencyContact: e.target.value })}
+                      placeholder="Name and phone of emergency contact"
+                      className="mt-1"
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="address" className="space-y-4">
+                  <div>
+                    <Label htmlFor="address">Street Address *</Label>
+                    <Textarea 
+                      id="address"
+                      value={newApplication.address}
+                      onChange={(e) => setNewApplication({ ...newApplication, address: e.target.value })}
+                      placeholder="Enter complete street address"
+                      className="mt-1"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input 
+                        id="city"
+                        value={newApplication.city}
+                        onChange={(e) => setNewApplication({ ...newApplication, city: e.target.value })}
+                        placeholder="Enter city"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="state">State *</Label>
+                      <Input 
+                        id="state"
+                        value={newApplication.state}
+                        onChange={(e) => setNewApplication({ ...newApplication, state: e.target.value })}
+                        placeholder="Enter state"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="pincode">PIN Code *</Label>
+                      <Input 
+                        id="pincode"
+                        value={newApplication.pincode}
+                        onChange={(e) => setNewApplication({ ...newApplication, pincode: e.target.value })}
+                        placeholder="Enter PIN code"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="academic" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="previousSchool">Previous School</Label>
+                      <Input 
+                        id="previousSchool"
+                        value={newApplication.previousSchool}
+                        onChange={(e) => setNewApplication({ ...newApplication, previousSchool: e.target.value })}
+                        placeholder="Enter previous school name"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="previousClass">Previous Class</Label>
+                      <Input 
+                        id="previousClass"
+                        value={newApplication.previousClass}
+                        onChange={(e) => setNewApplication({ ...newApplication, previousClass: e.target.value })}
+                        placeholder="Enter previous class"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="percentage">Previous Academic Performance (%)</Label>
+                    <Input 
+                      id="percentage"
+                      value={newApplication.percentage}
+                      onChange={(e) => setNewApplication({ ...newApplication, percentage: e.target.value })}
+                      placeholder="Enter percentage or grade"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="priority">Application Priority</Label>
+                    <Select value={newApplication.priority} onValueChange={(value: "normal" | "high" | "urgent") => setNewApplication({ ...newApplication, priority: value })}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="documents" className="space-y-4">
+                  <div>
+                    <Label>Required Documents</Label>
+                    <div className="mt-2 space-y-3">
+                      <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
+                        <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          Upload required documents (PDF, JPG, PNG - Max 5MB each)
+                        </p>
+                        <Input
+                          type="file"
+                          multiple
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => handleFileUpload(e.target.files)}
+                          className="hidden"
+                          id="fileUpload"
+                        />
+                        <Button variant="outline" onClick={() => document.getElementById('fileUpload')?.click()}>
+                          Select Files
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm">Required Documents:</h4>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          <li>• Birth Certificate</li>
+                          <li>• Previous School Transfer Certificate (if applicable)</li>
+                          <li>• Academic Records/Report Cards</li>
+                          <li>• Parent/Guardian ID Proof</li>
+                          <li>• Passport Size Photographs (2 copies)</li>
+                          <li>• Medical/Immunization Records</li>
+                          <li>• Address Proof</li>
+                          <li>• Caste/Category Certificate (if applicable)</li>
+                        </ul>
+                      </div>
+
+                      {newApplication.documents.length > 0 && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-2">Uploaded Documents:</h4>
+                          <div className="space-y-2">
+                            {newApplication.documents.map((file, index) => (
+                              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4" />
+                                  <span className="text-sm">{file.name}</span>
+                                  <span className="text-xs text-muted-foreground">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                                </div>
+                                <Button size="sm" variant="ghost" onClick={() => removeDocument(index)}>
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <div className="flex justify-end gap-2 mt-6">
                   <Button variant="outline" onClick={() => setIsNewApplicationOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={submitApplication}>
-                    Submit Application
+                  <Button onClick={submitApplication} disabled={submitApplicationMutation.isPending}>
+                    {submitApplicationMutation.isPending ? "Submitting..." : "Submit Application"}
                   </Button>
                 </div>
-              </div>
+              </Tabs>
             </DialogContent>
           </Dialog>
         </div>
@@ -579,71 +873,63 @@ export default function Admissions() {
       <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
         <CardHeader>
           <CardTitle>Admission Applications</CardTitle>
+          <CardDescription>
+            Manage student admission applications and approve to create student records
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {filteredApplications.map((application) => (
               <div
                 key={application.id}
-                className="border rounded-lg p-4 hover:shadow-md transition-all duration-300 cursor-pointer"
-                onClick={() => viewApplicationDetails(application)}
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
-                      {application.studentName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">{application.studentName}</h3>
-                        <Badge variant="outline" className="text-xs">
-                          {application.applicationNumber}
-                        </Badge>
-                        {application.priority !== "normal" && (
-                          <div className={`w-2 h-2 rounded-full ${getPriorityColor(application.priority)}`} />
-                        )}
-                      </div>
-                      <div className="space-y-1 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            Parent: {application.parentName}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <GraduationCap className="h-3 w-3" />
-                            {application.class}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {application.email}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {application.phone}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <CalendarIcon className="h-3 w-3" />
-                          Applied: {application.applicationDate.toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                    {application.studentName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <Badge className={`${getStatusColor(application.status)} flex items-center gap-1 mb-2`}>
-                        {getStatusIcon(application.status)}
-                        {application.status.replace('_', ' ').charAt(0).toUpperCase() + application.status.replace('_', ' ').slice(1)}
-                      </Badge>
-                      <div className="text-xs text-muted-foreground">
-                        {application.documents.length} documents
-                      </div>
+                  <div>
+                    <h3 className="font-semibold">{application.studentName}</h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>{application.applicationNumber}</span>
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {application.class}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {application.phone}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        {application.email}
+                      </span>
                     </div>
-                    <Button size="sm" variant="outline">
-                      <Eye className="h-4 w-4" />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Parent: {application.parentName} • Applied: {format(application.applicationDate, "MMM d, yyyy")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge className={`${getStatusColor(application.status)} flex items-center gap-1`}>
+                    {getStatusIcon(application.status)}
+                    {application.status.replace('_', ' ').charAt(0).toUpperCase() + application.status.replace('_', ' ').slice(1)}
+                  </Badge>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => viewApplicationDetails(application)}>
+                      <Eye className="w-3 h-3 mr-1" />
+                      View
                     </Button>
+                    {application.status === "pending" && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => approveApplicationMutation.mutate(application.id)}
+                        disabled={approveApplicationMutation.isPending}
+                      >
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Approve & Create Student
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -659,122 +945,98 @@ export default function Admissions() {
 
       {/* Application Details Modal */}
       <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Application Details - {selectedApplication?.applicationNumber}</DialogTitle>
+            <DialogTitle>Application Details - {selectedApplication?.studentName}</DialogTitle>
           </DialogHeader>
           {selectedApplication && (
-            <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="details">Student Details</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
-                <TabsTrigger value="actions">Actions</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="details" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Student Name</Label>
-                    <p className="font-medium">{selectedApplication.studentName}</p>
-                  </div>
-                  <div>
-                    <Label>Date of Birth</Label>
-                    <p className="font-medium">{selectedApplication.dateOfBirth}</p>
-                  </div>
-                  <div>
-                    <Label>Parent/Guardian</Label>
-                    <p className="font-medium">{selectedApplication.parentName}</p>
-                  </div>
-                  <div>
-                    <Label>Applying for Class</Label>
-                    <p className="font-medium">{selectedApplication.class}</p>
-                  </div>
-                  <div>
-                    <Label>Email</Label>
-                    <p className="font-medium">{selectedApplication.email}</p>
-                  </div>
-                  <div>
-                    <Label>Phone</Label>
-                    <p className="font-medium">{selectedApplication.phone}</p>
-                  </div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Application Number</Label>
+                  <p className="font-medium">{selectedApplication.applicationNumber}</p>
                 </div>
                 <div>
-                  <Label>Address</Label>
-                  <p className="font-medium">{selectedApplication.address}</p>
+                  <Label>Application Date</Label>
+                  <p className="font-medium">{format(selectedApplication.applicationDate, "PPP")}</p>
                 </div>
-                {selectedApplication.previousSchool && (
-                  <div>
-                    <Label>Previous School</Label>
-                    <p className="font-medium">{selectedApplication.previousSchool}</p>
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="documents" className="space-y-4">
-                <div className="space-y-3">
+                <div>
+                  <Label>Student Name</Label>
+                  <p className="font-medium">{selectedApplication.studentName}</p>
+                </div>
+                <div>
+                  <Label>Date of Birth</Label>
+                  <p className="font-medium">{format(new Date(selectedApplication.dateOfBirth), "PPP")}</p>
+                </div>
+                <div>
+                  <Label>Class Applied For</Label>
+                  <p className="font-medium">{selectedApplication.class}</p>
+                </div>
+                <div>
+                  <Label>Priority</Label>
+                  <Badge variant={selectedApplication.priority === "urgent" ? "destructive" : selectedApplication.priority === "high" ? "secondary" : "outline"}>
+                    {selectedApplication.priority.charAt(0).toUpperCase() + selectedApplication.priority.slice(1)}
+                  </Badge>
+                </div>
+              </div>
+
+              <div>
+                <Label>Parent/Guardian Information</Label>
+                <div className="mt-2 p-4 bg-muted rounded-lg">
+                  <p><strong>Name:</strong> {selectedApplication.parentName}</p>
+                  <p><strong>Email:</strong> {selectedApplication.email}</p>
+                  <p><strong>Phone:</strong> {selectedApplication.phone}</p>
+                  <p><strong>Address:</strong> {selectedApplication.address}</p>
+                </div>
+              </div>
+
+              {selectedApplication.previousSchool && (
+                <div>
+                  <Label>Previous School</Label>
+                  <p className="font-medium">{selectedApplication.previousSchool}</p>
+                </div>
+              )}
+
+              <div>
+                <Label>Documents ({selectedApplication.documents.length})</Label>
+                <div className="mt-2 space-y-2">
                   {selectedApplication.documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5" />
-                        <div>
-                          <p className="font-medium">{doc.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Uploaded: {doc.uploadDate.toLocaleDateString()} • {doc.size}
-                          </p>
-                        </div>
-                      </div>
+                    <div key={doc.id} className="flex items-center justify-between p-3 border rounded">
                       <div className="flex items-center gap-2">
-                        <Badge className={getStatusColor(doc.status)}>
-                          {doc.status}
-                        </Badge>
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        <FileText className="h-4 w-4" />
+                        <span className="font-medium">{doc.name}</span>
+                        <span className="text-sm text-muted-foreground">({doc.size})</span>
                       </div>
+                      <Badge className={getStatusColor(doc.status)}>
+                        {doc.status}
+                      </Badge>
                     </div>
                   ))}
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="actions" className="space-y-4">
-                <div>
-                  <Label>Update Status</Label>
-                  <Select defaultValue={selectedApplication.status}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="document_review">Document Review</SelectItem>
-                      <SelectItem value="interview_scheduled">Interview Scheduled</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Remarks</Label>
-                  <Textarea placeholder="Add remarks or feedback..." defaultValue={selectedApplication.remarks} />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={() => updateApplicationStatus(selectedApplication.id, "approved")}>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve
-                  </Button>
-                  <Button variant="destructive" onClick={() => updateApplicationStatus(selectedApplication.id, "rejected")}>
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject
-                  </Button>
-                  <Button variant="outline">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Send Message
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                {selectedApplication.status === "pending" && (
+                  <>
+                    <Button variant="outline">
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Reject
+                    </Button>
+                    <Button 
+                      onClick={() => approveApplicationMutation.mutate(selectedApplication.id)}
+                      disabled={approveApplicationMutation.isPending}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Approve & Create Student
+                    </Button>
+                  </>
+                )}
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>

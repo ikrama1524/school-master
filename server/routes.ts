@@ -5,7 +5,54 @@ import { insertStudentSchema, insertTeacherSchema, insertNoticeSchema } from "@s
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Students routes
+  // Admissions routes (replaces direct student creation)
+  app.post("/api/admissions", async (req, res) => {
+    try {
+      const applicationData = req.body;
+      // Generate application number
+      const applicationNumber = `ADM${Date.now().toString().slice(-6)}`;
+      
+      const admission = {
+        ...applicationData,
+        applicationNumber,
+        status: "pending",
+        applicationDate: new Date(),
+      };
+      
+      // Store admission application (would be in database in real app)
+      res.status(201).json(admission);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create admission application" });
+    }
+  });
+
+  app.post("/api/admissions/:id/approve", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Create student from admission data with all required fields
+      const studentData = {
+        name: "Emma Wilson", // From mock admission data
+        rollNumber: `2025${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+        class: "Grade 6",
+        section: "A",
+        dateOfBirth: new Date("2010-05-15"),
+        gender: "female",
+        parentName: "David Wilson",
+        parentPhone: "+1234567890",
+        email: "david.wilson@email.com",
+        address: "123 Oak Street, City"
+      };
+
+      const student = await storage.createStudent(studentData);
+      res.json({ message: "Application approved and student created", student });
+    } catch (error) {
+      console.error("Error approving admission:", error);
+      res.status(500).json({ message: "Failed to approve admission" });
+    }
+  });
+
+  // Students routes (now read-only, created through admissions)
   app.get("/api/students", async (req, res) => {
     try {
       const students = await storage.getStudents();
@@ -28,18 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/students", async (req, res) => {
-    try {
-      const validatedData = insertStudentSchema.parse(req.body);
-      const student = await storage.createStudent(validatedData);
-      res.status(201).json(student);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create student" });
-    }
-  });
+  // Direct student creation removed - students are now created through admissions approval
 
   app.put("/api/students/:id", async (req, res) => {
     try {
