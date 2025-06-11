@@ -114,6 +114,37 @@ export const submissions = pgTable("submissions", {
   status: text("status").notNull().default("submitted"), // submitted, graded, returned
 });
 
+export const timetable = pgTable("timetable", {
+  id: serial("id").primaryKey(),
+  class: text("class").notNull(),
+  section: text("section").notNull(),
+  day: text("day").notNull(), // monday, tuesday, etc.
+  period: integer("period").notNull(), // 1, 2, 3, etc.
+  startTime: text("start_time").notNull(), // "09:00"
+  endTime: text("end_time").notNull(), // "09:45"
+  subjectId: integer("subject_id").references(() => subjects.id).notNull(),
+  teacherId: integer("teacher_id").references(() => teachers.id).notNull(),
+  room: text("room"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const calendarEvents = pgTable("calendar_events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  type: text("type").notNull(), // class, exam, holiday, meeting, event
+  class: text("class"), // null for school-wide events
+  subjectId: integer("subject_id").references(() => subjects.id),
+  teacherId: integer("teacher_id").references(() => teachers.id),
+  location: text("location"),
+  color: text("color").default("#3b82f6"),
+  isAllDay: boolean("is_all_day").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -168,6 +199,19 @@ export const insertSubmissionSchema = createInsertSchema(submissions).omit({
   submittedAt: true,
 });
 
+export const insertTimetableSchema = createInsertSchema(timetable).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  startDate: z.string().transform((str) => new Date(str)),
+  endDate: z.string().transform((str) => new Date(str)),
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -195,3 +239,9 @@ export type InsertAssignment = z.infer<typeof insertAssignmentSchema>;
 
 export type Submission = typeof submissions.$inferSelect;
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
+
+export type Timetable = typeof timetable.$inferSelect;
+export type InsertTimetable = z.infer<typeof insertTimetableSchema>;
+
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;
