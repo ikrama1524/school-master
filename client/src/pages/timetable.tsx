@@ -133,7 +133,7 @@ export default function Timetable() {
     const timetableEntries: InsertTimetable[] = [];
     Object.entries(localTimetable).forEach(([day, periods]) => {
       Object.entries(periods).forEach(([periodLabel, data]) => {
-        if (data.subjectId) {
+        if (data.subjectId && data.teacherId) {
           const timeSlot = timeSlots.find(slot => slot.label === periodLabel);
           if (timeSlot) {
             timetableEntries.push({
@@ -144,7 +144,7 @@ export default function Timetable() {
               startTime: timeSlot.startTime,
               endTime: timeSlot.endTime,
               subjectId: data.subjectId,
-              teacherId: data.teacherId || null,
+              teacherId: data.teacherId,
             });
           }
         }
