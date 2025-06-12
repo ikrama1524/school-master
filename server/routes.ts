@@ -5,24 +5,39 @@ import { insertStudentSchema, insertTeacherSchema, insertNoticeSchema, insertTim
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // In-memory storage for admissions (temporary until proper database implementation)
+  const admissionsStore = new Map();
+
   // Admissions routes (replaces direct student creation)
   app.post("/api/admissions", async (req, res) => {
     try {
       const applicationData = req.body;
-      // Generate application number
+      // Generate application number and ID
       const applicationNumber = `ADM${Date.now().toString().slice(-6)}`;
+      const id = Date.now();
       
       const admission = {
+        id,
         ...applicationData,
         applicationNumber,
         status: "pending",
         applicationDate: new Date(),
       };
       
-      // Store admission application (would be in database in real app)
+      // Store admission application
+      admissionsStore.set(id, admission);
       res.status(201).json(admission);
     } catch (error) {
       res.status(500).json({ message: "Failed to create admission application" });
+    }
+  });
+
+  app.get("/api/admissions", async (req, res) => {
+    try {
+      const admissions = Array.from(admissionsStore.values());
+      res.json(admissions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch admissions" });
     }
   });
 
@@ -30,22 +45,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       
-      // Create student from admission data with all required fields
+      // Get the admission application from storage
+      const admission = admissionsStore.get(id);
+      if (!admission) {
+        return res.status(404).json({ message: "Admission application not found" });
+      }
+      
+      // Create student from the actual admission data
       const studentData = {
-        name: "Emma Wilson", // From mock admission data
+        name: admission.studentName,
         rollNumber: `2025${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-        class: "Grade 6",
-        section: "A",
-        dateOfBirth: new Date("2010-05-15"),
-        gender: "female",
-        parentName: "David Wilson",
-        parentPhone: "+1234567890",
-        email: "david.wilson@email.com",
-        address: "123 Oak Street, City"
+        class: admission.class,
+        section: admission.section || "A",
+        dateOfBirth: new Date(admission.dateOfBirth),
+        gender: admission.gender || "male",
+        parentName: admission.parentName,
+        parentPhone: admission.phone,
+        email: admission.email,
+        address: admission.address,
+        previousSchool: admission.previousSchool || null,
+        admissionDate: new Date()
       };
 
       const student = await storage.createStudent(studentData);
-      res.json({ message: "Application approved and student created", student });
+      
+      // Update admission status to approved
+      admission.status = "approved";
+      admission.approvedDate = new Date();
+      admissionsStore.set(id, admission);
+      
+      res.json({ message: "Application approved and student created", student, admission });
     } catch (error) {
       console.error("Error approving admission:", error);
       res.status(500).json({ message: "Failed to approve admission" });
