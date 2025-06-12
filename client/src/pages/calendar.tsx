@@ -16,7 +16,10 @@ import {
   ChevronLeft, ChevronRight, Download, Filter, Search, MapPin,
   GraduationCap, AlertCircle, Bell, Eye, MoreHorizontal
 } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isToday } from "date-fns";
+import { 
+  format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isToday,
+  startOfWeek, endOfWeek, addWeeks, subWeeks, addDays, startOfDay, endOfDay, isSameWeek
+} from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CalendarEvent, Subject, Teacher } from "@shared/schema";
@@ -31,6 +34,7 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
+  const [selectedWeekStart, setSelectedWeekStart] = useState<Date>(new Date());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventWithDetails | null>(null);
   const [filterType, setFilterType] = useState("all");
@@ -201,10 +205,60 @@ export default function CalendarPage() {
   };
 
   const getEventsForDate = (date: Date): EventWithDetails[] => {
-    return events.filter((event: EventWithDetails) => 
+    return Array.isArray(events) ? events.filter((event: EventWithDetails) => 
       isSameDay(new Date(event.startDate), date) ||
       (new Date(event.startDate) <= date && new Date(event.endDate) >= date)
-    );
+    ) : [];
+  };
+
+  const getWeekDays = (startDate: Date): Date[] => {
+    const start = startOfWeek(startDate, { weekStartsOn: 1 }); // Monday start
+    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  };
+
+  const getCurrentViewDates = (): Date[] => {
+    switch (viewMode) {
+      case "day":
+        return [selectedDate || currentDate];
+      case "week":
+        return getWeekDays(selectedDate || currentDate);
+      case "month":
+        return eachDayOfInterval({ start: startOfMonth(currentDate), end: endOfMonth(currentDate) });
+      default:
+        return [];
+    }
+  };
+
+  const navigateDate = (direction: "prev" | "next") => {
+    switch (viewMode) {
+      case "day":
+        const newDay = direction === "next" ? addDays(currentDate, 1) : addDays(currentDate, -1);
+        setCurrentDate(newDay);
+        break;
+      case "week":
+        const newWeek = direction === "next" ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1);
+        setCurrentDate(newWeek);
+        break;
+      case "month":
+        const newMonth = direction === "next" ? addMonths(currentDate, 1) : subMonths(currentDate, 1);
+        setCurrentDate(newMonth);
+        break;
+    }
+  };
+
+  const getViewTitle = (): string => {
+    switch (viewMode) {
+      case "day":
+        return format(currentDate, "EEEE, MMMM d, yyyy");
+      case "week":
+        const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+        return `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+      case "month":
+        return format(currentDate, "MMMM yyyy");
+      default:
+        return "";
+    }
   };
 
   const getEventTypeColor = (type: string): string => {
@@ -438,17 +492,17 @@ export default function CalendarPage() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+                  onClick={() => navigateDate("prev")}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <h2 className="text-xl font-semibold min-w-48 text-center">
-                  {format(currentDate, "MMMM yyyy")}
+                <h2 className="text-xl font-semibold min-w-64 text-center">
+                  {getViewTitle()}
                 </h2>
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+                  onClick={() => navigateDate("next")}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -462,6 +516,32 @@ export default function CalendarPage() {
               </Button>
             </div>
             <div className="flex gap-2">
+              <div className="flex gap-1 bg-muted rounded-lg p-1">
+                <Button 
+                  variant={viewMode === "day" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("day")}
+                  className="h-8"
+                >
+                  Day
+                </Button>
+                <Button 
+                  variant={viewMode === "week" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("week")}
+                  className="h-8"
+                >
+                  Week
+                </Button>
+                <Button 
+                  variant={viewMode === "month" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("month")}
+                  className="h-8"
+                >
+                  Month
+                </Button>
+              </div>
               <Select value={filterType} onValueChange={setFilterType}>
                 <SelectTrigger className="w-40">
                   <Filter className="w-4 h-4 mr-2" />
@@ -487,58 +567,170 @@ export default function CalendarPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5" />
-              Monthly Calendar
+              {viewMode === "day" && "Daily Schedule"}
+              {viewMode === "week" && "Weekly Schedule"}
+              {viewMode === "month" && "Monthly Calendar"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-7 gap-1 mb-4">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="p-2 text-center font-semibold text-sm text-muted-foreground">
-                  {day}
+            {viewMode === "month" && (
+              <>
+                <div className="grid grid-cols-7 gap-1 mb-4">
+                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                    <div key={day} className="p-2 text-center font-semibold text-sm text-muted-foreground">
+                      {day}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((date) => {
-                const dayEvents = getEventsForDate(date);
-                const isCurrentDay = isToday(date);
+                <div className="grid grid-cols-7 gap-1">
+                  {eachDayOfInterval({ start: startOfMonth(currentDate), end: endOfMonth(currentDate) }).map((date) => {
+                    const dayEvents = getEventsForDate(date);
+                    const isCurrentDay = isToday(date);
+                    
+                    return (
+                      <div 
+                        key={date.toISOString()}
+                        className={`min-h-24 p-2 border rounded-lg cursor-pointer transition-colors ${
+                          isCurrentDay 
+                            ? "bg-primary/10 border-primary" 
+                            : "hover:bg-muted/50"
+                        }`}
+                        onClick={() => setSelectedDate(date)}
+                      >
+                        <div className={`text-sm font-semibold mb-1 ${
+                          isCurrentDay ? "text-primary" : ""
+                        }`}>
+                          {format(date, "d")}
+                        </div>
+                        <div className="space-y-1">
+                          {dayEvents.slice(0, 2).map((event) => (
+                            <div 
+                              key={event.id}
+                              className="text-xs p-1 rounded truncate text-white"
+                              style={{ backgroundColor: getEventTypeColor(event.type) }}
+                              title={event.title}
+                            >
+                              {event.title}
+                            </div>
+                          ))}
+                          {dayEvents.length > 2 && (
+                            <div className="text-xs text-muted-foreground">
+                              +{dayEvents.length - 2} more
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {viewMode === "week" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-8 gap-2">
+                  <div className="p-2 text-center font-semibold text-sm text-muted-foreground">Time</div>
+                  {getWeekDays(currentDate).map((date) => (
+                    <div key={date.toISOString()} className="p-2 text-center">
+                      <div className="font-semibold text-sm">{format(date, "EEE")}</div>
+                      <div className={`text-lg font-bold ${isToday(date) ? "text-primary" : ""}`}>
+                        {format(date, "d")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 
-                return (
-                  <div 
-                    key={date.toISOString()}
-                    className={`min-h-24 p-2 border rounded-lg cursor-pointer transition-colors ${
-                      isCurrentDay 
-                        ? "bg-primary/10 border-primary" 
-                        : "hover:bg-muted/50"
-                    }`}
-                    onClick={() => setSelectedDate(date)}
-                  >
-                    <div className={`text-sm font-semibold mb-1 ${
-                      isCurrentDay ? "text-primary" : ""
-                    }`}>
-                      {format(date, "d")}
+                {/* Time slots for weekly view */}
+                {Array.from({ length: 12 }, (_, i) => {
+                  const hour = 8 + i; // 8 AM to 7 PM
+                  const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+                  
+                  return (
+                    <div key={timeSlot} className="grid grid-cols-8 gap-2 border-t">
+                      <div className="p-2 text-sm text-muted-foreground">{timeSlot}</div>
+                      {getWeekDays(currentDate).map((date) => {
+                        const dayEvents = getEventsForDate(date).filter(event => {
+                          const eventHour = new Date(event.startDate).getHours();
+                          return eventHour === hour || (event.isAllDay && hour === 9); // Show all-day events at 9 AM
+                        });
+                        
+                        return (
+                          <div key={`${date.toISOString()}-${timeSlot}`} className="p-1 min-h-16">
+                            {dayEvents.map((event) => (
+                              <div 
+                                key={event.id}
+                                className="text-xs p-2 rounded mb-1 text-white cursor-pointer"
+                                style={{ backgroundColor: getEventTypeColor(event.type) }}
+                                title={`${event.title} - ${event.description || ''}`}
+                                onClick={() => handleEditEvent(event)}
+                              >
+                                <div className="font-medium truncate">{event.title}</div>
+                                {event.class && (
+                                  <div className="text-xs opacity-80">{event.class}</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="space-y-1">
-                      {dayEvents.slice(0, 2).map((event) => (
-                        <div 
-                          key={event.id}
-                          className="text-xs p-1 rounded truncate text-white"
-                          style={{ backgroundColor: getEventTypeColor(event.type) }}
-                          title={event.title}
-                        >
-                          {event.title}
-                        </div>
-                      ))}
-                      {dayEvents.length > 2 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{dayEvents.length - 2} more
-                        </div>
-                      )}
+                  );
+                })}
+              </div>
+            )}
+
+            {viewMode === "day" && (
+              <div className="space-y-2">
+                <div className="text-center mb-4">
+                  <h3 className="text-lg font-semibold">{format(currentDate, "EEEE, MMMM d, yyyy")}</h3>
+                </div>
+                
+                {/* Hourly schedule for daily view */}
+                {Array.from({ length: 12 }, (_, i) => {
+                  const hour = 8 + i; // 8 AM to 7 PM
+                  const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+                  const dayEvents = getEventsForDate(currentDate).filter(event => {
+                    const eventHour = new Date(event.startDate).getHours();
+                    return eventHour === hour || (event.isAllDay && hour === 9);
+                  });
+                  
+                  return (
+                    <div key={timeSlot} className="flex gap-4 border-b pb-2">
+                      <div className="w-20 text-sm text-muted-foreground pt-2">{timeSlot}</div>
+                      <div className="flex-1 space-y-2">
+                        {dayEvents.length > 0 ? (
+                          dayEvents.map((event) => (
+                            <div 
+                              key={event.id}
+                              className="p-3 rounded-lg text-white cursor-pointer"
+                              style={{ backgroundColor: getEventTypeColor(event.type) }}
+                              onClick={() => handleEditEvent(event)}
+                            >
+                              <div className="font-semibold">{event.title}</div>
+                              <div className="text-sm opacity-90">{event.description}</div>
+                              {event.class && (
+                                <div className="text-sm opacity-80 flex items-center gap-1 mt-1">
+                                  <GraduationCap className="h-3 w-3" />
+                                  {event.class}
+                                </div>
+                              )}
+                              {event.location && (
+                                <div className="text-sm opacity-80 flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {event.location}
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-muted-foreground text-sm italic p-2">No events scheduled</div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
