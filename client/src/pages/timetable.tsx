@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { 
   format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, 
-  addWeeks, subWeeks, addMonths, subMonths, addDays, isToday
+  addWeeks, subWeeks, addMonths, subMonths, addDays, isToday, startOfYear, endOfYear, addYears, subYears
 } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -21,8 +21,9 @@ export default function TimetablePage() {
   const [selectedClass, setSelectedClass] = useState("Grade 6");
   const [selectedSection, setSelectedSection] = useState("A");
   const [timetableData, setTimetableData] = useState<any>({});
-  const [viewMode, setViewMode] = useState<"weekly" | "monthly">("weekly");
+  const [viewMode, setViewMode] = useState<"weekly" | "monthly" | "yearly">("weekly");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
   const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"];
   const sections = ["A", "B", "C"];
@@ -164,9 +165,13 @@ export default function TimetablePage() {
     if (viewMode === "weekly") {
       const newDate = direction === "next" ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1);
       setCurrentDate(newDate);
-    } else {
+    } else if (viewMode === "monthly") {
       const newDate = direction === "next" ? addMonths(currentDate, 1) : subMonths(currentDate, 1);
       setCurrentDate(newDate);
+    } else {
+      const newYear = direction === "next" ? selectedYear + 1 : selectedYear - 1;
+      setSelectedYear(newYear);
+      setCurrentDate(new Date(newYear, 0, 1));
     }
   };
 
@@ -175,8 +180,10 @@ export default function TimetablePage() {
       const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
       return `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
-    } else {
+    } else if (viewMode === "monthly") {
       return format(currentDate, "MMMM yyyy");
+    } else {
+      return `Academic Year ${selectedYear}`;
     }
   };
 
@@ -204,6 +211,268 @@ export default function TimetablePage() {
     
     return weeks;
   };
+
+  const getYearMonths = (): Date[] => {
+    return Array.from({ length: 12 }, (_, i) => new Date(selectedYear, i, 1));
+  };
+
+  const renderWeeklyView = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            <th className="border p-3 bg-muted font-semibold">Time / Day</th>
+            {getWeekDays(currentDate).map(date => (
+              <th key={date.toISOString()} className="border p-3 bg-muted font-semibold min-w-48">
+                <div>{format(date, 'EEEE')}</div>
+                <div className="text-sm font-normal text-muted-foreground">
+                  {format(date, 'MMM d')}
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {timeSlots.map(timeSlot => (
+            <tr key={timeSlot.period}>
+              <td className="border p-3 font-medium text-sm bg-muted/50 text-center">
+                <div>{timeSlot.label}</div>
+                <div className="text-xs text-muted-foreground">{timeSlot.time}</div>
+              </td>
+              {getWeekDays(currentDate).map((date, index) => {
+                const dayName = format(date, 'EEEE');
+                if (timeSlot.period === 5) {
+                  return (
+                    <td key={`${dayName}-${timeSlot.period}`} className="border p-3 text-center bg-orange-50 dark:bg-orange-900/20">
+                      <div className="text-orange-600 font-medium">Lunch Break</div>
+                    </td>
+                  );
+                }
+
+                const slotData = getTimetableSlot(dayName, timeSlot.period);
+                return (
+                  <td key={`${dayName}-${timeSlot.period}`} className="border p-2">
+                    <div className="space-y-2">
+                      <Select
+                        value={slotData?.subjectId?.toString() || ""}
+                        onValueChange={(value: string) => {
+                          const subjectId = (value && value !== "none") ? parseInt(value) : null;
+                          const teacherId = slotData?.teacherId || (Array.isArray(subjects) && subjects.find((s: Subject) => s.id === subjectId) ? subjects[0]?.id : null);
+                          updateTimetableSlot(dayName, timeSlot.period, subjectId, teacherId);
+                        }}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Select Subject" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Subject</SelectItem>
+                          {Array.isArray(subjects) && subjects.map((subject: Subject) => (
+                            <SelectItem key={subject.id} value={subject.id.toString()}>
+                              {subject.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    
+                      {slotData?.subjectId && (
+                        <Select
+                          value={slotData?.teacherId?.toString() || ""}
+                          onValueChange={(value: string) => {
+                            const teacherId = value ? parseInt(value) : null;
+                            updateTimetableSlot(dayName, timeSlot.period, slotData.subjectId, teacherId);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Select Teacher" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.isArray(teachers) && teachers.map((teacher: Teacher) => (
+                              <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                                {teacher.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    
+                      {slotData?.subjectName && (
+                        <div className="text-xs p-2 bg-blue-100 dark:bg-blue-900/30 rounded border-l-4 border-blue-500">
+                          <div className="font-medium">{slotData.subjectName}</div>
+                          {slotData.teacherName && (
+                            <div className="text-xs opacity-90">{slotData.teacherName}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const renderMonthlyView = () => (
+    <div className="space-y-4">
+      {getMonthWeeks().map((week, weekIndex) => (
+        <div key={weekIndex} className="border rounded-lg overflow-hidden">
+          <div className="bg-muted p-2 text-sm font-medium">
+            Week {weekIndex + 1} - {format(week[0], 'MMM d')} to {format(week[week.length - 1], 'MMM d')}
+          </div>
+          <div className="grid grid-cols-5 gap-1 p-2">
+            {week.map(date => (
+              <div key={date.toISOString()} className={`border rounded p-2 min-h-[120px] ${isToday(date) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                <div className="text-sm font-medium mb-2">
+                  {format(date, 'EEE d')}
+                </div>
+                <div className="space-y-1">
+                  {timeSlots.slice(0, 3).map(timeSlot => {
+                    const slotData = getTimetableSlot(format(date, 'EEEE'), timeSlot.period);
+                    return (
+                      <div key={timeSlot.period} className="text-xs p-1 bg-muted/50 rounded">
+                        {slotData?.subjectName || 'Free'}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderYearlyView = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {getYearMonths().map(monthDate => (
+          <div key={monthDate.toISOString()} className="border rounded-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 text-center">
+              <h3 className="font-semibold">{format(monthDate, 'MMMM')}</h3>
+              <p className="text-sm opacity-90">{selectedYear}</p>
+            </div>
+            <div className="p-3 space-y-2">
+              <div className="grid grid-cols-7 gap-1 text-xs">
+                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                  <div key={i} className="text-center font-medium text-muted-foreground p-1">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {eachDayOfInterval({
+                  start: startOfMonth(monthDate),
+                  end: endOfMonth(monthDate)
+                }).map(date => {
+                  const dayName = format(date, 'EEEE');
+                  const hasClasses = timeSlots.slice(0, 3).some(timeSlot => 
+                    getTimetableSlot(dayName, timeSlot.period)
+                  );
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                  
+                  let className = "text-xs p-1 text-center rounded";
+                  if (isWeekend) className += " bg-gray-100 dark:bg-gray-800 text-muted-foreground";
+                  if (hasClasses && !isWeekend) className += " bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300";
+                  if (isToday(date)) className += " ring-2 ring-blue-500";
+                  
+                  return (
+                    <div key={date.toISOString()} className={className}>
+                      {format(date, 'd')}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="pt-2 border-t text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Classes:</span>
+                  <span className="font-medium">
+                    {eachDayOfInterval({
+                      start: startOfMonth(monthDate),
+                      end: endOfMonth(monthDate)
+                    }).filter(date => {
+                      const dayName = format(date, 'EEEE');
+                      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                      return !isWeekend && timeSlots.slice(0, 3).some(timeSlot => 
+                        getTimetableSlot(dayName, timeSlot.period)
+                      );
+                    }).length} days
+                  </span>
+                </div>
+                <div className="mt-1 space-y-1">
+                  {Array.from(new Set(
+                    eachDayOfInterval({
+                      start: startOfMonth(monthDate),
+                      end: endOfMonth(monthDate)
+                    }).flatMap(date => {
+                      const dayName = format(date, 'EEEE');
+                      return timeSlots.slice(0, 3).map(timeSlot => 
+                        getTimetableSlot(dayName, timeSlot.period)?.subjectName
+                      ).filter(Boolean);
+                    })
+                  )).slice(0, 3).map(subject => (
+                    <div key={subject} className="text-xs bg-muted/50 rounded px-1 py-0.5">
+                      {subject}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Academic Calendar Overview - {selectedYear}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">
+                {getYearMonths().reduce((total, monthDate) => 
+                  total + eachDayOfInterval({
+                    start: startOfMonth(monthDate),
+                    end: endOfMonth(monthDate)
+                  }).filter(date => {
+                    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                    return !isWeekend;
+                  }).length, 0
+                )}
+              </div>
+              <div className="text-sm text-muted-foreground">Total School Days</div>
+            </div>
+            
+            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {Array.isArray(subjects) ? subjects.length : 0}
+              </div>
+              <div className="text-sm text-muted-foreground">Active Subjects</div>
+            </div>
+            
+            <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">
+                {Array.isArray(teachers) ? teachers.length : 0}
+              </div>
+              <div className="text-sm text-muted-foreground">Teaching Staff</div>
+            </div>
+            
+            <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-orange-600">
+                {classes.length * sections.length}
+              </div>
+              <div className="text-sm text-muted-foreground">Class Sections</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -234,6 +503,14 @@ export default function TimetablePage() {
                 className="h-8"
               >
                 Monthly
+              </Button>
+              <Button
+                variant={viewMode === "yearly" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("yearly")}
+                className="h-8"
+              >
+                Yearly
               </Button>
             </div>
             
@@ -337,141 +614,13 @@ export default function TimetablePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              {viewMode === "weekly" ? "Weekly" : "Monthly"} Timetable - {selectedClass} Section {selectedSection}
+              {viewMode === "weekly" ? "Weekly" : viewMode === "monthly" ? "Monthly" : "Yearly"} Timetable - {selectedClass} Section {selectedSection}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {viewMode === "weekly" ? (
-              // Weekly View
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      <th className="border p-3 bg-muted font-semibold">Time / Day</th>
-                      {getWeekDays(currentDate).map(date => (
-                        <th key={date.toISOString()} className="border p-3 bg-muted font-semibold min-w-48">
-                          <div>{format(date, 'EEEE')}</div>
-                          <div className="text-sm font-normal text-muted-foreground">
-                            {format(date, 'MMM d')}
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {timeSlots.map(timeSlot => (
-                      <tr key={timeSlot.period}>
-                        <td className="border p-3 font-medium text-sm bg-muted/50 text-center">
-                          <div>{timeSlot.label}</div>
-                          <div className="text-xs text-muted-foreground">{timeSlot.time}</div>
-                        </td>
-                        {getWeekDays(currentDate).map((date, index) => {
-                          const dayName = format(date, 'EEEE');
-                          if (timeSlot.period === 5) {
-                            // Lunch break row
-                            return (
-                              <td key={`${dayName}-${timeSlot.period}`} className="border p-3 text-center bg-orange-50 dark:bg-orange-900/20">
-                                <div className="text-orange-600 font-medium">Lunch Break</div>
-                              </td>
-                            );
-                          }
-
-                          const slotData = getTimetableSlot(dayName, timeSlot.period);
-                          return (
-                            <td key={`${dayName}-${timeSlot.period}`} className="border p-2">
-                              <div className="space-y-2">
-                                <Select
-                                  value={slotData?.subjectId?.toString() || ""}
-                                  onValueChange={(value: string) => {
-                                    const subjectId = (value && value !== "none") ? parseInt(value) : null;
-                                    const teacherId = slotData?.teacherId || (Array.isArray(subjects) && subjects.find((s: Subject) => s.id === subjectId) ? subjects[0]?.id : null);
-                                    updateTimetableSlot(dayName, timeSlot.period, subjectId, teacherId);
-                                  }}
-                                >
-                                  <SelectTrigger className="h-8 text-xs">
-                                    <SelectValue placeholder="Select Subject" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="none">No Subject</SelectItem>
-                                    {Array.isArray(subjects) && subjects.map((subject: Subject) => (
-                                      <SelectItem key={subject.id} value={subject.id.toString()}>
-                                        {subject.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              
-                                {slotData?.subjectId && (
-                                  <Select
-                                    value={slotData?.teacherId?.toString() || ""}
-                                    onValueChange={(value: string) => {
-                                      const teacherId = value ? parseInt(value) : null;
-                                      updateTimetableSlot(dayName, timeSlot.period, slotData.subjectId, teacherId);
-                                    }}
-                                  >
-                                    <SelectTrigger className="h-8 text-xs">
-                                      <SelectValue placeholder="Select Teacher" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {Array.isArray(teachers) && teachers.map((teacher: Teacher) => (
-                                        <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                                          {teacher.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                )}
-                              
-                                {slotData?.subjectName && (
-                                  <div 
-                                    className="text-xs p-2 bg-blue-100 dark:bg-blue-900/30 rounded border-l-4 border-blue-500"
-                                  >
-                                    <div className="font-medium">{slotData.subjectName}</div>
-                                    {slotData.teacherName && (
-                                      <div className="text-xs opacity-90">{slotData.teacherName}</div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              // Monthly View
-              <div className="space-y-4">
-                {getMonthWeeks().map((week, weekIndex) => (
-                  <div key={weekIndex} className="border rounded-lg overflow-hidden">
-                    <div className="bg-muted p-2 text-sm font-medium">
-                      Week {weekIndex + 1} - {format(week[0], 'MMM d')} to {format(week[week.length - 1], 'MMM d')}
-                    </div>
-                    <div className="grid grid-cols-5 gap-1 p-2">
-                      {week.map(date => (
-                        <div key={date.toISOString()} className={`border rounded p-2 min-h-[120px] ${isToday(date) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
-                          <div className="text-sm font-medium mb-2">
-                            {format(date, 'EEE d')}
-                          </div>
-                          <div className="space-y-1">
-                            {timeSlots.slice(0, 3).map(timeSlot => {
-                              const slotData = getTimetableSlot(format(date, 'EEEE'), timeSlot.period);
-                              return (
-                                <div key={timeSlot.period} className="text-xs p-1 bg-muted/50 rounded">
-                                  {slotData?.subjectName || 'Free'}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            {viewMode === "weekly" && renderWeeklyView()}
+            {viewMode === "monthly" && renderMonthlyView()}
+            {viewMode === "yearly" && renderYearlyView()}
           </CardContent>
         </Card>
 
