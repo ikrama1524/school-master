@@ -292,7 +292,7 @@ export default function TimetablePage() {
                               {slotData?.subjectId && (
                                 <Select
                                   value={slotData?.teacherId?.toString() || ""}
-                                  onValueChange={(value) => {
+                                  onValueChange={(value: string) => {
                                     const teacherId = value ? parseInt(value) : null;
                                     updateTimetableSlot(day, timeSlot.period, slotData.subjectId, teacherId);
                                   }}
