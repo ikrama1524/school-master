@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -242,6 +242,45 @@ export const insertPeriodSchema = createInsertSchema(periods).omit({
   createdAt: true,
 });
 
+export const results = pgTable("results", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id).notNull(),
+  subjectId: integer("subject_id").references(() => subjects.id).notNull(),
+  examType: text("exam_type").notNull(),
+  examDate: timestamp("exam_date").notNull(),
+  maxMarks: integer("max_marks").notNull(),
+  obtainedMarks: integer("obtained_marks").notNull(),
+  percentage: decimal("percentage", { precision: 5, scale: 2 }).notNull(),
+  grade: text("grade").notNull(),
+  remarks: text("remarks"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const exams = pgTable("exams", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  class: text("class").notNull(),
+  section: text("section").notNull(),
+  subjects: integer("subjects").array(),
+  maxMarks: integer("max_marks").notNull(),
+  status: text("status").default("upcoming"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertResultSchema = createInsertSchema(results).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertExamSchema = createInsertSchema(exams).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -281,3 +320,9 @@ export type InsertMonthlyTimetable = z.infer<typeof insertMonthlyTimetableSchema
 
 export type Period = typeof periods.$inferSelect;
 export type InsertPeriod = z.infer<typeof insertPeriodSchema>;
+
+export type Result = typeof results.$inferSelect;
+export type InsertResult = z.infer<typeof insertResultSchema>;
+
+export type Exam = typeof exams.$inferSelect;
+export type InsertExam = z.infer<typeof insertExamSchema>;
