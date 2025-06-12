@@ -67,18 +67,27 @@ export default function TimetablePage() {
   // Fetch timetable data
   const { data: timetableData = [], isLoading: isLoadingTimetable } = useQuery({
     queryKey: ["/api/timetable", selectedClass, selectedSection],
-    queryFn: () => apiRequest("GET", `/api/timetable?class=${selectedClass}&section=${selectedSection}`),
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/timetable?class=${selectedClass}&section=${selectedSection}`);
+      return Array.isArray(response) ? response : [];
+    },
   });
 
   // Fetch subjects and teachers
   const { data: subjects = [] } = useQuery({
     queryKey: ["/api/subjects"],
-    queryFn: () => apiRequest("GET", "/api/subjects"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/subjects");
+      return Array.isArray(response) ? response : [];
+    },
   });
 
   const { data: teachers = [] } = useQuery({
     queryKey: ["/api/teachers"],
-    queryFn: () => apiRequest("GET", "/api/teachers"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/teachers");
+      return Array.isArray(response) ? response : [];
+    },
   });
 
   // Create timetable entry mutation
@@ -344,7 +353,7 @@ export default function TimetablePage() {
                       <SelectValue placeholder="Select subject" />
                     </SelectTrigger>
                     <SelectContent>
-                      {subjects.map((subject: Subject) => (
+                      {Array.isArray(subjects) && subjects.map((subject: Subject) => (
                         <SelectItem key={subject.id} value={subject.id.toString()}>
                           {subject.name} ({subject.code})
                         </SelectItem>
@@ -363,7 +372,7 @@ export default function TimetablePage() {
                       <SelectValue placeholder="Select teacher" />
                     </SelectTrigger>
                     <SelectContent>
-                      {teachers.map((teacher: Teacher) => (
+                      {Array.isArray(teachers) && teachers.map((teacher: Teacher) => (
                         <SelectItem key={teacher.id} value={teacher.id.toString()}>
                           {teacher.name} - {teacher.subject}
                         </SelectItem>
