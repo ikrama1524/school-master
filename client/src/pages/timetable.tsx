@@ -181,9 +181,38 @@ export default function TimetablePage() {
   };
 
   const getTimetableSlot = (day: string, period: number) => {
+    // First check local timetable data (for unsaved changes)
     const key = `${selectedClass}-${selectedSection}`;
     const slotKey = `${day}-${period}`;
-    return timetableData[key]?.[slotKey];
+    const localSlot = timetableData[key]?.[slotKey];
+    
+    if (localSlot) {
+      return localSlot;
+    }
+    
+    // Then check database entries (saved timetables)
+    if (Array.isArray(timetableEntries)) {
+      const dbEntry = timetableEntries.find((entry: any) => 
+        entry.className === selectedClass &&
+        entry.section === selectedSection &&
+        entry.dayOfWeek === day &&
+        entry.periodNumber === period
+      );
+      
+      if (dbEntry) {
+        const subject = Array.isArray(subjects) ? subjects.find((s: any) => s.id === dbEntry.subjectId) : null;
+        const teacher = Array.isArray(teachers) ? teachers.find((t: any) => t.id === dbEntry.teacherId) : null;
+        
+        return {
+          subjectId: dbEntry.subjectId,
+          teacherId: dbEntry.teacherId,
+          subjectName: subject?.name,
+          teacherName: teacher?.name
+        };
+      }
+    }
+    
+    return null;
   };
 
   const exportTimetable = () => {
@@ -209,6 +238,10 @@ export default function TimetablePage() {
     const key = `${selectedClass}-${selectedSection}`;
     const slots = timetableData[key] || {};
     
+    // Create entries for the entire academic year (current year)
+    const academicYearStart = new Date(new Date().getFullYear(), 3, 1); // April 1st
+    const academicYearEnd = new Date(new Date().getFullYear() + 1, 2, 31); // March 31st next year
+    
     const timetableEntries = Object.entries(slots).map(([slotKey, slot]: [string, any]) => {
       const [day, period] = slotKey.split('-');
       return {
@@ -218,10 +251,10 @@ export default function TimetablePage() {
         periodNumber: parseInt(period),
         subjectId: slot.subjectId || null,
         teacherId: slot.teacherId || null,
-        startDate: new Date(),
-        endDate: new Date(new Date().getFullYear(), 11, 31) // End of current year
+        startDate: academicYearStart,
+        endDate: academicYearEnd
       };
-    }).filter(entry => entry.subjectId && entry.teacherId); // Only save entries with both subject and teacher
+    }).filter(entry => entry.subjectId && entry.teacherId);
 
     if (timetableEntries.length === 0) {
       toast({
