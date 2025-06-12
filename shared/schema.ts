@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -145,6 +145,15 @@ export const calendarEvents = pgTable("calendar_events", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const monthlyTimetables = pgTable("monthly_timetables", {
+  id: serial("id").primaryKey(),
+  class: text("class").notNull(),
+  month: text("month").notNull(), // Format: YYYY-MM
+  timetableData: text("timetable_data").notNull(), // Stores the complete monthly schedule as JSON
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -212,6 +221,11 @@ export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit
   endDate: z.string().transform((str) => new Date(str)),
 });
 
+export const insertMonthlyTimetableSchema = createInsertSchema(monthlyTimetables).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -245,3 +259,6 @@ export type InsertTimetable = z.infer<typeof insertTimetableSchema>;
 
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;
+
+export type MonthlyTimetable = typeof monthlyTimetables.$inferSelect;
+export type InsertMonthlyTimetable = z.infer<typeof insertMonthlyTimetableSchema>;
