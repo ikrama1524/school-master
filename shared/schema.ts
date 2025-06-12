@@ -280,4 +280,4 @@ export type MonthlyTimetable = typeof monthlyTimetables.$inferSelect;
 export type InsertMonthlyTimetable = z.infer<typeof insertMonthlyTimetableSchema>;
 
 export type Period = typeof periods.$inferSelect;
-export type InsertPeriod = typeof periods.$inferInsert;
+export type InsertPeriod = z.infer<typeof insertPeriodSchema>;
