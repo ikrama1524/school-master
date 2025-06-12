@@ -1,5 +1,5 @@
 import { 
-  users, students, teachers, attendance, fees, notices, timetable, periods,
+  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams,
   type User, type InsertUser,
   type Student, type InsertStudent,
   type Teacher, type InsertTeacher,
@@ -7,7 +7,9 @@ import {
   type Fee, type InsertFee,
   type Notice, type InsertNotice,
   type Timetable, type InsertTimetable,
-  type Period, type InsertPeriod
+  type Period, type InsertPeriod,
+  type Result, type InsertResult,
+  type Exam, type InsertExam
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, count, and } from "drizzle-orm";
@@ -59,6 +61,21 @@ export interface IStorage {
   createPeriod(period: InsertPeriod): Promise<Period>;
   updatePeriod(id: number, period: Partial<Period>): Promise<Period | undefined>;
   deletePeriod(id: number): Promise<boolean>;
+  
+  // Results
+  getResults(): Promise<Result[]>;
+  getResult(id: number): Promise<Result | undefined>;
+  createResult(result: InsertResult): Promise<Result>;
+  updateResult(id: number, result: Partial<Result>): Promise<Result | undefined>;
+  deleteResult(id: number): Promise<boolean>;
+  getStudentResults(studentId: number): Promise<Result[]>;
+  
+  // Exams
+  getExams(): Promise<Exam[]>;
+  getExam(id: number): Promise<Exam | undefined>;
+  createExam(exam: InsertExam): Promise<Exam>;
+  updateExam(id: number, exam: Partial<Exam>): Promise<Exam | undefined>;
+  deleteExam(id: number): Promise<boolean>;
   
   // Stats
   getStats(): Promise<{
@@ -342,6 +359,60 @@ export class DatabaseStorage implements IStorage {
       feeCollection: paidFeesAmount,
       pendingFees: totalFeesAmount - paidFeesAmount,
     };
+  }
+
+  // Results methods
+  async getResults(): Promise<Result[]> {
+    return await db.select().from(results);
+  }
+
+  async getResult(id: number): Promise<Result | undefined> {
+    const [result] = await db.select().from(results).where(eq(results.id, id));
+    return result || undefined;
+  }
+
+  async createResult(insertResult: InsertResult): Promise<Result> {
+    const [result] = await db.insert(results).values(insertResult).returning();
+    return result;
+  }
+
+  async updateResult(id: number, updateData: Partial<Result>): Promise<Result | undefined> {
+    const [result] = await db.update(results).set(updateData).where(eq(results.id, id)).returning();
+    return result || undefined;
+  }
+
+  async deleteResult(id: number): Promise<boolean> {
+    const deleted = await db.delete(results).where(eq(results.id, id));
+    return deleted.rowCount ? deleted.rowCount > 0 : false;
+  }
+
+  async getStudentResults(studentId: number): Promise<Result[]> {
+    return await db.select().from(results).where(eq(results.studentId, studentId));
+  }
+
+  // Exams methods
+  async getExams(): Promise<Exam[]> {
+    return await db.select().from(exams);
+  }
+
+  async getExam(id: number): Promise<Exam | undefined> {
+    const [exam] = await db.select().from(exams).where(eq(exams.id, id));
+    return exam || undefined;
+  }
+
+  async createExam(insertExam: InsertExam): Promise<Exam> {
+    const [exam] = await db.insert(exams).values(insertExam).returning();
+    return exam;
+  }
+
+  async updateExam(id: number, updateData: Partial<Exam>): Promise<Exam | undefined> {
+    const [exam] = await db.update(exams).set(updateData).where(eq(exams.id, id)).returning();
+    return exam || undefined;
+  }
+
+  async deleteExam(id: number): Promise<boolean> {
+    const deleted = await db.delete(exams).where(eq(exams.id, id));
+    return deleted.rowCount ? deleted.rowCount > 0 : false;
   }
 }
 
