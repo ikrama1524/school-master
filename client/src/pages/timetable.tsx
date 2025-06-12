@@ -6,8 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Clock, Users, BookOpen, 
-  GraduationCap, Save, Download, Copy, ChevronLeft, ChevronRight, Calendar
+  GraduationCap, Save, Download, Copy, ChevronLeft, ChevronRight, Calendar, Settings, Plus, Edit, Trash2
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { 
   format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, 
   addWeeks, subWeeks, addMonths, subMonths, addDays, isToday, startOfYear, endOfYear, addYears, subYears
@@ -81,6 +84,70 @@ export default function TimetablePage() {
       toast({
         title: "Error",
         description: "Failed to save timetable",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addPeriodMutation = useMutation({
+    mutationFn: async (periodData: any) => {
+      return apiRequest("POST", "/api/periods", periodData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Period added successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/periods"] });
+      setShowPeriodManager(false);
+      setEditingPeriod(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add period",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePeriodMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest("PUT", `/api/periods/${id}`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Period updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/periods"] });
+      setShowPeriodManager(false);
+      setEditingPeriod(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update period",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePeriodMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest("DELETE", `/api/periods/${id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Period deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/periods"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete period",
         variant: "destructive",
       });
     },
@@ -498,6 +565,14 @@ export default function TimetablePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowPeriodManager(true)}
+              className="flex items-center gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              Manage Periods
+            </Button>
             {/* View Mode Toggle */}
             <div className="flex bg-muted rounded-md p-1">
               <Button
@@ -680,7 +755,228 @@ export default function TimetablePage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Period Management Dialog */}
+        <Dialog open={showPeriodManager} onOpenChange={setShowPeriodManager}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Period Management
+              </DialogTitle>
+            </DialogHeader>
+            
+            <PeriodManagerComponent />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
+
+  function PeriodManagerComponent() {
+    const [label, setLabel] = useState("");
+    const [startTime, setStartTime] = useState("");
+    const [endTime, setEndTime] = useState("");
+    const [isBreak, setIsBreak] = useState(false);
+    const [periodNumber, setPeriodNumber] = useState(1);
+
+    const resetForm = () => {
+      setLabel("");
+      setStartTime("");
+      setEndTime("");
+      setIsBreak(false);
+      setPeriodNumber(Array.isArray(periods) ? periods.length + 1 : 1);
+      setEditingPeriod(null);
+    };
+
+    const handleSubmit = () => {
+      if (!label || !startTime || !endTime) {
+        toast({
+          title: "Error",
+          description: "Please fill in all required fields",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const periodData = {
+        label,
+        startTime,
+        endTime,
+        isBreak,
+        periodNumber,
+      };
+
+      if (editingPeriod) {
+        updatePeriodMutation.mutate({ id: editingPeriod.id, data: periodData });
+      } else {
+        addPeriodMutation.mutate(periodData);
+      }
+    };
+
+    const handleEdit = (period: any) => {
+      setEditingPeriod(period);
+      setLabel(period.label);
+      setStartTime(period.startTime);
+      setEndTime(period.endTime);
+      setIsBreak(period.isBreak);
+      setPeriodNumber(period.periodNumber);
+    };
+
+    const handleDelete = (periodId: number) => {
+      if (confirm("Are you sure you want to delete this period?")) {
+        deletePeriodMutation.mutate(periodId);
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Current Periods List */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Current Periods</h3>
+            <Button
+              onClick={() => {
+                resetForm();
+              }}
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Period
+            </Button>
+          </div>
+          
+          <div className="grid gap-3 max-h-60 overflow-y-auto">
+            {Array.isArray(periods) && periods.length > 0 ? (
+              periods.map((period: any) => (
+                <div key={period.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
+                        {period.periodNumber}
+                      </div>
+                      <div>
+                        <div className="font-medium">{period.label}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {period.startTime} - {period.endTime}
+                          {period.isBreak && (
+                            <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
+                              Break
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(period)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(period.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No periods configured. Add your first period below.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Add/Edit Form */}
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-semibold mb-4">
+            {editingPeriod ? "Edit Period" : "Add New Period"}
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="label">Period Label *</Label>
+              <Input
+                id="label"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="e.g., Period 1, Lunch Break, Assembly"
+              />
+            </div>
+            <div>
+              <Label htmlFor="periodNumber">Period Number *</Label>
+              <Input
+                id="periodNumber"
+                type="number"
+                value={periodNumber}
+                onChange={(e) => setPeriodNumber(parseInt(e.target.value) || 1)}
+                min="1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="startTime">Start Time *</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="endTime">End Time *</Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2 mt-4">
+            <Switch
+              id="isBreak"
+              checked={isBreak}
+              onCheckedChange={setIsBreak}
+            />
+            <Label htmlFor="isBreak">This is a break period (no subject assignment)</Label>
+          </div>
+          
+          <div className="flex gap-3 mt-6">
+            <Button
+              onClick={handleSubmit}
+              disabled={addPeriodMutation.isPending || updatePeriodMutation.isPending}
+              className="flex items-center gap-2"
+            >
+              {addPeriodMutation.isPending || updatePeriodMutation.isPending ? (
+                <>
+                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  {editingPeriod ? "Updating..." : "Adding..."}
+                </>
+              ) : (
+                <>
+                  {editingPeriod ? "Update Period" : "Add Period"}
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={resetForm}
+            >
+              {editingPeriod ? "Cancel Edit" : "Clear Form"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
