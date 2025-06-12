@@ -29,6 +29,10 @@ export default function TimetablePage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showPeriodManager, setShowPeriodManager] = useState(false);
   const [editingPeriod, setEditingPeriod] = useState<any>(null);
+  const [showSubjectManager, setShowSubjectManager] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState("");
+  const [newSubjectCode, setNewSubjectCode] = useState("");
+  const [newSubjectDescription, setNewSubjectDescription] = useState("");
   
   const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"];
   const sections = ["A", "B", "C"];
@@ -148,6 +152,30 @@ export default function TimetablePage() {
       toast({
         title: "Error",
         description: "Failed to delete period",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addSubjectMutation = useMutation({
+    mutationFn: async (subjectData: any) => {
+      return apiRequest("POST", "/api/subjects", subjectData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Subject added successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/subjects"] });
+      setShowSubjectManager(false);
+      setNewSubjectName("");
+      setNewSubjectCode("");
+      setNewSubjectDescription("");
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add subject",
         variant: "destructive",
       });
     },
@@ -451,10 +479,60 @@ export default function TimetablePage() {
                 </div>
                 <div className="space-y-1">
                   {timeSlots.slice(0, 3).map(timeSlot => {
-                    const slotData = getTimetableSlot(format(date, 'EEEE'), timeSlot.period);
+                    const dayName = format(date, 'EEEE');
+                    const slotData = getTimetableSlot(dayName, timeSlot.period);
+                    
+                    if (timeSlot.isBreak) {
+                      return (
+                        <div key={timeSlot.period} className="text-xs p-1 bg-orange-100 dark:bg-orange-900/30 rounded">
+                          {timeSlot.label}
+                        </div>
+                      );
+                    }
+                    
                     return (
-                      <div key={timeSlot.period} className="text-xs p-1 bg-muted/50 rounded">
-                        {slotData?.subjectName || 'Free'}
+                      <div key={timeSlot.period} className="text-xs space-y-1">
+                        <div className="font-medium text-muted-foreground">{timeSlot.label}</div>
+                        <Select
+                          value={slotData?.subjectId?.toString() || ""}
+                          onValueChange={(value: string) => {
+                            const subjectId = (value && value !== "none") ? parseInt(value) : null;
+                            const teacherId = slotData?.teacherId || null;
+                            updateTimetableSlot(dayName, timeSlot.period, subjectId, teacherId);
+                          }}
+                        >
+                          <SelectTrigger className="h-6 text-xs">
+                            <SelectValue placeholder="Select Subject" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No Subject</SelectItem>
+                            {Array.isArray(subjects) && subjects.map((subject: Subject) => (
+                              <SelectItem key={subject.id} value={subject.id.toString()}>
+                                {subject.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {slotData?.subjectId && (
+                          <Select
+                            value={slotData?.teacherId?.toString() || ""}
+                            onValueChange={(value: string) => {
+                              const teacherId = value ? parseInt(value) : null;
+                              updateTimetableSlot(dayName, timeSlot.period, slotData.subjectId, teacherId);
+                            }}
+                          >
+                            <SelectTrigger className="h-6 text-xs">
+                              <SelectValue placeholder="Select Teacher" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.isArray(teachers) && teachers.map((teacher: Teacher) => (
+                                <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                                  {teacher.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                     );
                   })}
@@ -501,7 +579,17 @@ export default function TimetablePage() {
                   if (isToday(date)) className += " ring-2 ring-blue-500";
                   
                   return (
-                    <div key={date.toISOString()} className={className}>
+                    <div 
+                      key={date.toISOString()} 
+                      className={`${className} cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/20`}
+                      onClick={() => {
+                        if (!isWeekend) {
+                          setCurrentDate(date);
+                          setViewMode("weekly");
+                        }
+                      }}
+                      title={`Click to edit ${format(date, 'MMM d, yyyy')} schedule`}
+                    >
                       {format(date, 'd')}
                     </div>
                   );
@@ -608,6 +696,14 @@ export default function TimetablePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowSubjectManager(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Subject
+            </Button>
             <Button
               variant="outline"
               onClick={() => setShowPeriodManager(true)}
@@ -798,6 +894,94 @@ export default function TimetablePage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Subject Management Dialog */}
+        <Dialog open={showSubjectManager} onOpenChange={setShowSubjectManager}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Plus className="w-5 h-5" />
+                Add New Subject
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="subjectName">Subject Name *</Label>
+                <Input
+                  id="subjectName"
+                  value={newSubjectName}
+                  onChange={(e) => setNewSubjectName(e.target.value)}
+                  placeholder="e.g., Advanced Mathematics, Environmental Science"
+                />
+              </div>
+              <div>
+                <Label htmlFor="subjectCode">Subject Code *</Label>
+                <Input
+                  id="subjectCode"
+                  value={newSubjectCode}
+                  onChange={(e) => setNewSubjectCode(e.target.value.toUpperCase())}
+                  placeholder="e.g., AMATH, ENVS"
+                  maxLength={10}
+                />
+              </div>
+              <div>
+                <Label htmlFor="subjectDescription">Description</Label>
+                <Input
+                  id="subjectDescription"
+                  value={newSubjectDescription}
+                  onChange={(e) => setNewSubjectDescription(e.target.value)}
+                  placeholder="Brief description of the subject"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => {
+                    if (!newSubjectName || !newSubjectCode) {
+                      toast({
+                        title: "Missing Information",
+                        description: "Please provide both subject name and code",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    
+                    addSubjectMutation.mutate({
+                      name: newSubjectName,
+                      code: newSubjectCode,
+                      description: newSubjectDescription || null
+                    });
+                  }}
+                  disabled={addSubjectMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  {addSubjectMutation.isPending ? (
+                    <>
+                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      Add Subject
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setNewSubjectName("");
+                    setNewSubjectCode("");
+                    setNewSubjectDescription("");
+                    setShowSubjectManager(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Period Management Dialog */}
         <Dialog open={showPeriodManager} onOpenChange={setShowPeriodManager}>
