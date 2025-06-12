@@ -341,6 +341,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/timetable/bulk", async (req, res) => {
+    try {
+      const { entries } = req.body;
+      
+      // Mock bulk save - in real app, save multiple timetable entries
+      const savedEntries = entries.map((entry: any, index: number) => ({
+        id: Math.floor(Math.random() * 1000) + index,
+        ...entry,
+        createdAt: new Date()
+      }));
+
+      res.status(201).json(savedEntries);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to save timetable entries" });
+    }
+  });
+
   // Calendar routes
   app.get("/api/calendar", async (req, res) => {
     try {

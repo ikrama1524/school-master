@@ -282,6 +282,7 @@ interface TimetableManagerProps {
 }
 
 function TimetableManager({ selectedClass, onClassChange, subjects, teachers }: TimetableManagerProps) {
+  const { toast } = useToast();
   const [timetableData, setTimetableData] = useState<any>({});
   
   const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"];
@@ -338,11 +339,11 @@ function TimetableManager({ selectedClass, onClassChange, subjects, teachers }: 
 
   const getTimetableSlot = (day: string, period: number) => {
     return timetableData[selectedClass]?.[day]?.[period] || 
-           existingTimetable?.find((entry: any) => 
+           (Array.isArray(existingTimetable) ? existingTimetable.find((entry: any) => 
              entry.class === selectedClass && 
              entry.day === day && 
              entry.period === period
-           ) || null;
+           ) : null) || null;
   };
 
   const saveTimetableMutation = useMutation({
