@@ -1350,6 +1350,16 @@ export default function CalendarPage() {
                 })}
               </div>
             )}
+
+            {/* Dedicated Timetable View */}
+            {activeTab === "timetable" && (
+              <TimetableManager 
+                selectedClass={selectedTimetableClass}
+                onClassChange={setSelectedTimetableClass}
+                subjects={Array.isArray(subjects) ? subjects : []}
+                teachers={Array.isArray(teachers) ? teachers : []}
+              />
+            )}
           </CardContent>
         </Card>
 
