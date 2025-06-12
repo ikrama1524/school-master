@@ -591,6 +591,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Results routes
+  app.get("/api/results", async (req, res) => {
+    try {
+      const results = await storage.getResults();
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching results:", error);
+      res.status(500).json({ message: "Failed to fetch results" });
+    }
+  });
+
+  app.post("/api/results", async (req, res) => {
+    try {
+      const result = await storage.createResult(req.body);
+      res.status(201).json(result);
+    } catch (error) {
+      console.error("Error creating result:", error);
+      res.status(500).json({ message: "Failed to create result" });
+    }
+  });
+
+  app.get("/api/results/:id", async (req, res) => {
+    try {
+      const result = await storage.getResult(parseInt(req.params.id));
+      if (!result) {
+        return res.status(404).json({ message: "Result not found" });
+      }
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching result:", error);
+      res.status(500).json({ message: "Failed to fetch result" });
+    }
+  });
+
+  // Exams routes
+  app.get("/api/exams", async (req, res) => {
+    try {
+      const exams = await storage.getExams();
+      res.json(exams);
+    } catch (error) {
+      console.error("Error fetching exams:", error);
+      res.status(500).json({ message: "Failed to fetch exams" });
+    }
+  });
+
+  app.post("/api/exams", async (req, res) => {
+    try {
+      const exam = await storage.createExam(req.body);
+      res.status(201).json(exam);
+    } catch (error) {
+      console.error("Error creating exam:", error);
+      res.status(500).json({ message: "Failed to create exam" });
+    }
+  });
+
   // Stats route
   app.get("/api/stats", async (req, res) => {
     try {

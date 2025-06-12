@@ -14,6 +14,7 @@ import Settings from "@/pages/settings";
 import Admissions from "@/pages/admissions";
 import Payroll from "@/pages/payroll";
 import Homework from "@/pages/homework";
+import Results from "@/pages/results";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import MobileMenu from "@/components/layout/mobile-menu";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/payroll" component={Payroll} />
       <Route path="/homework" component={Homework} />
+      <Route path="/results" component={Results} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -11,7 +11,8 @@ import {
   Wallet,
   BookOpen,
   Clock,
-  CalendarDays
+  CalendarDays,
+  Award
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
