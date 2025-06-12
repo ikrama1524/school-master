@@ -29,6 +29,24 @@ export default function TimetablePage() {
   
   const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"];
   const sections = ["A", "B", "C"];
+  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+  const { data: subjects } = useQuery({
+    queryKey: ["/api/subjects"],
+  });
+
+  const { data: teachers } = useQuery({
+    queryKey: ["/api/teachers"],
+  });
+
+  const { data: timetableEntries } = useQuery({
+    queryKey: ["/api/timetable"],
+  });
+
+  const { data: periods } = useQuery({
+    queryKey: ["/api/periods"],
+  });
+
   // Use dynamic periods from database, fallback to default if not loaded
   const timeSlots = Array.isArray(periods) && periods.length > 0 
     ? periods.map(period => ({
@@ -47,23 +65,6 @@ export default function TimetablePage() {
         { period: 7, label: "Period 6", time: "2:00 - 3:00 PM", isBreak: false },
         { period: 8, label: "Period 7", time: "3:00 - 4:00 PM", isBreak: false }
       ];
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-
-  const { data: subjects } = useQuery({
-    queryKey: ["/api/subjects"],
-  });
-
-  const { data: teachers } = useQuery({
-    queryKey: ["/api/teachers"],
-  });
-
-  const { data: timetableEntries } = useQuery({
-    queryKey: ["/api/timetable"],
-  });
-
-  const { data: periods } = useQuery({
-    queryKey: ["/api/periods"],
-  });
 
   const saveTimetableMutation = useMutation({
     mutationFn: async (data: { entries: any[] }) => {
