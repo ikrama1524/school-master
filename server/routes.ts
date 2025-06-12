@@ -511,6 +511,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Monthly Timetable routes
+  app.get("/api/monthly-timetable/:class/:month", async (req, res) => {
+    try {
+      const { class: className, month } = req.params;
+      // Mock response - return empty timetable for now
+      const mockTimetable = {
+        id: 1,
+        class: className,
+        month: month,
+        timetableData: "{}",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      res.json(mockTimetable);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch monthly timetable" });
+    }
+  });
+
+  app.post("/api/monthly-timetable", async (req, res) => {
+    try {
+      const { class: className, month, timetableData } = req.body;
+      
+      // Mock save - in real app, save to database
+      const savedTimetable = {
+        id: Math.floor(Math.random() * 1000),
+        class: className,
+        month: month,
+        timetableData: JSON.stringify(timetableData),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      res.status(201).json(savedTimetable);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to save monthly timetable" });
+    }
+  });
+
+  app.put("/api/monthly-timetable/:id", async (req, res) => {
+    try {
+      const timetableId = parseInt(req.params.id);
+      const { class: className, month, timetableData } = req.body;
+      
+      // Mock update - in real app, update in database
+      const updatedTimetable = {
+        id: timetableId,
+        class: className,
+        month: month,
+        timetableData: JSON.stringify(timetableData),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      res.json(updatedTimetable);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update monthly timetable" });
+    }
+  });
+
   // Stats route
   app.get("/api/stats", async (req, res) => {
     try {
