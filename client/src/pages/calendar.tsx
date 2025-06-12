@@ -465,7 +465,7 @@ function TimetableManager({ selectedClass, onClassChange, subjects, teachers }: 
                                 <SelectValue placeholder="Select Subject" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">No Subject</SelectItem>
+                                <SelectItem value="none">No Subject</SelectItem>
                                 {subjects.map(subject => (
                                   <SelectItem key={subject.id} value={subject.id.toString()}>
                                     {subject.name}
@@ -534,6 +534,8 @@ export default function CalendarPage() {
   const [monthlyTimetableData, setMonthlyTimetableData] = useState<any>({});
   const [isTimetableViewOpen, setIsTimetableViewOpen] = useState(false);
   const [selectedTimetableClass, setSelectedTimetableClass] = useState("Grade 6");
+  const [showTimetableInCalendar, setShowTimetableInCalendar] = useState(true);
+  const [activeTab, setActiveTab] = useState<"calendar" | "timetable">("calendar");
 
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -1032,97 +1034,165 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Calendar Navigation and Filters */}
+      {/* Main Navigation Tabs */}
       <Card className="animate-slide-up">
         <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigateDate("prev")}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <h2 className="text-xl font-semibold min-w-64 text-center">
-                  {getViewTitle()}
-                </h2>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigateDate("next")}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setCurrentDate(new Date())}
-              >
-                Today
-              </Button>
-            </div>
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-6">
+            {/* Tab Navigation */}
+            <div className="flex items-center justify-between">
               <div className="flex gap-1 bg-muted rounded-lg p-1">
                 <Button 
-                  variant={viewMode === "day" ? "default" : "ghost"}
+                  variant={activeTab === "calendar" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setViewMode("day")}
-                  className="h-8"
+                  onClick={() => setActiveTab("calendar")}
+                  className="h-9 px-4"
                 >
-                  Day
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  Calendar View
                 </Button>
                 <Button 
-                  variant={viewMode === "week" ? "default" : "ghost"}
+                  variant={activeTab === "timetable" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setViewMode("week")}
-                  className="h-8"
+                  onClick={() => setActiveTab("timetable")}
+                  className="h-9 px-4"
                 >
-                  Week
-                </Button>
-                <Button 
-                  variant={viewMode === "month" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("month")}
-                  className="h-8"
-                >
-                  Month
+                  <Clock className="h-4 w-4 mr-2" />
+                  Timetable View
                 </Button>
               </div>
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-40">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Events</SelectItem>
-                  {eventTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              
+              <div className="flex items-center gap-2">
+                <Label className="text-sm">Show Timetable in Calendar:</Label>
+                <input
+                  type="checkbox"
+                  checked={showTimetableInCalendar}
+                  onChange={(e) => setShowTimetableInCalendar(e.target.checked)}
+                  className="rounded"
+                />
+              </div>
             </div>
+            
+            {/* Calendar Navigation and Filters */}
+            {activeTab === "calendar" && (
+              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigateDate("prev")}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <h2 className="text-xl font-semibold min-w-64 text-center">
+                      {getViewTitle()}
+                    </h2>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigateDate("next")}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setCurrentDate(new Date())}
+                  >
+                    Today
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex gap-1 bg-muted rounded-lg p-1">
+                    <Button 
+                      variant={viewMode === "day" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setViewMode("day")}
+                      className="h-8"
+                    >
+                      Day
+                    </Button>
+                    <Button 
+                      variant={viewMode === "week" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setViewMode("week")}
+                      className="h-8"
+                    >
+                      Week
+                    </Button>
+                    <Button 
+                      variant={viewMode === "month" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setViewMode("month")}
+                      className="h-8"
+                    >
+                      Month
+                    </Button>
+                  </div>
+                  <Select value={filterType} onValueChange={setFilterType}>
+                    <SelectTrigger className="w-40">
+                      <Filter className="w-4 h-4 mr-2" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Events</SelectItem>
+                      {eventTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            
+            {/* Timetable Class Selection */}
+            {activeTab === "timetable" && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Label>Select Class:</Label>
+                  <Select value={selectedTimetableClass} onValueChange={setSelectedTimetableClass}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"].map(cls => (
+                        <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar Grid */}
+        {/* Main Content Area */}
         <Card className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '200ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" />
-              {viewMode === "day" && "Daily Schedule"}
-              {viewMode === "week" && "Weekly Schedule"}
-              {viewMode === "month" && "Monthly Calendar"}
+              {activeTab === "calendar" ? (
+                <>
+                  <CalendarIcon className="h-5 w-5" />
+                  {viewMode === "day" && "Daily Schedule"}
+                  {viewMode === "week" && "Weekly Schedule"}
+                  {viewMode === "month" && "Monthly Calendar"}
+                  {showTimetableInCalendar && " with Timetable"}
+                </>
+              ) : (
+                <>
+                  <Clock className="h-5 w-5" />
+                  Weekly Timetable - {selectedTimetableClass}
+                </>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {viewMode === "month" && (
+            {activeTab === "calendar" && viewMode === "month" && (
               <>
                 <div className="grid grid-cols-7 gap-1 mb-4">
                   {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
@@ -1175,7 +1245,7 @@ export default function CalendarPage() {
               </>
             )}
 
-            {viewMode === "week" && (
+            {activeTab === "calendar" && viewMode === "week" && (
               <div className="space-y-4">
                 <div className="grid grid-cols-8 gap-2">
                   <div className="p-2 text-center font-semibold text-sm text-muted-foreground">Time</div>
@@ -1228,7 +1298,7 @@ export default function CalendarPage() {
               </div>
             )}
 
-            {viewMode === "day" && (
+            {activeTab === "calendar" && viewMode === "day" && (
               <div className="space-y-2">
                 <div className="text-center mb-4">
                   <h3 className="text-lg font-semibold">{format(currentDate, "EEEE, MMMM d, yyyy")}</h3>
