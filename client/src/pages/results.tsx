@@ -1085,6 +1085,344 @@ export default function Results() {
           </DialogContent>
         </Dialog>
 
+        {/* Add Semester Dialog */}
+        <Dialog open={showAddSemester} onOpenChange={setShowAddSemester}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Create New Semester
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="semesterName">Semester Name *</Label>
+                  <Input
+                    id="semesterName"
+                    value={newSemester.name}
+                    onChange={(e) => setNewSemester(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Fall 2024, Spring 2025"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="academicYear">Academic Year *</Label>
+                  <Input
+                    id="academicYear"
+                    value={newSemester.academicYear}
+                    onChange={(e) => setNewSemester(prev => ({ ...prev, academicYear: e.target.value }))}
+                    placeholder="e.g., 2024-2025"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="semesterStartDate">Start Date *</Label>
+                  <Input
+                    id="semesterStartDate"
+                    type="date"
+                    value={newSemester.startDate}
+                    onChange={(e) => setNewSemester(prev => ({ ...prev, startDate: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="semesterEndDate">End Date *</Label>
+                  <Input
+                    id="semesterEndDate"
+                    type="date"
+                    value={newSemester.endDate}
+                    onChange={(e) => setNewSemester(prev => ({ ...prev, endDate: e.target.value }))}
+                    min={newSemester.startDate}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  checked={newSemester.isActive}
+                  onChange={(e) => setNewSemester(prev => ({ ...prev, isActive: e.target.checked }))}
+                  className="w-4 h-4"
+                />
+                <Label htmlFor="isActive">Set as Active Semester</Label>
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => {
+                    if (!newSemester.name || !newSemester.academicYear || 
+                        !newSemester.startDate || !newSemester.endDate) {
+                      toast({
+                        title: "Missing Information",
+                        description: "Please fill all required fields",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    
+                    addSemesterMutation.mutate({
+                      ...newSemester,
+                      startDate: new Date(newSemester.startDate).toISOString(),
+                      endDate: new Date(newSemester.endDate).toISOString(),
+                    });
+                  }}
+                  disabled={addSemesterMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  {addSemesterMutation.isPending ? (
+                    <>
+                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4" />
+                      Create Semester
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setNewSemester({
+                      name: "",
+                      academicYear: "",
+                      startDate: "",
+                      endDate: "",
+                      isActive: false
+                    });
+                    setShowAddSemester(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Semester Result Dialog */}
+        <Dialog open={showAddSemesterResult} onOpenChange={setShowAddSemesterResult}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Plus className="w-5 h-5" />
+                Add Semester Result
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="resultStudentId">Student *</Label>
+                  <Select value={newSemesterResult.studentId} onValueChange={(value) => setNewSemesterResult(prev => ({ ...prev, studentId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select student" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.isArray(students) && students.map((student: any) => (
+                        <SelectItem key={student.id} value={student.id.toString()}>
+                          {student.name} ({student.rollNumber})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="resultSemesterId">Semester *</Label>
+                  <Select value={newSemesterResult.semesterId} onValueChange={(value) => setNewSemesterResult(prev => ({ ...prev, semesterId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select semester" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.isArray(semesters) && semesters.map((semester: any) => (
+                        <SelectItem key={semester.id} value={semester.id.toString()}>
+                          {semester.name} ({semester.academicYear})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="resultSubjectId">Subject *</Label>
+                  <Select value={newSemesterResult.subjectId} onValueChange={(value) => setNewSemesterResult(prev => ({ ...prev, subjectId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.isArray(subjects) && subjects.map((subject: any) => (
+                        <SelectItem key={subject.id} value={subject.id.toString()}>
+                          {subject.name} ({subject.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="internalMarks">Internal Marks</Label>
+                  <Input
+                    id="internalMarks"
+                    type="number"
+                    min="0"
+                    value={newSemesterResult.internalMarks}
+                    onChange={(e) => setNewSemesterResult(prev => ({ ...prev, internalMarks: e.target.value }))}
+                    placeholder="e.g., 40"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="externalMarks">External Marks</Label>
+                  <Input
+                    id="externalMarks"
+                    type="number"
+                    min="0"
+                    value={newSemesterResult.externalMarks}
+                    onChange={(e) => setNewSemesterResult(prev => ({ ...prev, externalMarks: e.target.value }))}
+                    placeholder="e.g., 60"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="totalMarks">Total Marks *</Label>
+                  <Input
+                    id="totalMarks"
+                    type="number"
+                    min="1"
+                    value={newSemesterResult.totalMarks}
+                    onChange={(e) => setNewSemesterResult(prev => ({ ...prev, totalMarks: e.target.value }))}
+                    placeholder="e.g., 100"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="obtainedMarks">Obtained Marks *</Label>
+                  <Input
+                    id="obtainedMarks"
+                    type="number"
+                    min="0"
+                    max={newSemesterResult.totalMarks || undefined}
+                    value={newSemesterResult.obtainedMarks}
+                    onChange={(e) => setNewSemesterResult(prev => ({ ...prev, obtainedMarks: e.target.value }))}
+                    placeholder="e.g., 85"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="gpa">GPA (Optional)</Label>
+                  <Input
+                    id="gpa"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="10"
+                    value={newSemesterResult.gpa}
+                    onChange={(e) => setNewSemesterResult(prev => ({ ...prev, gpa: e.target.value }))}
+                    placeholder="e.g., 8.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="semesterRemarks">Remarks</Label>
+                  <Input
+                    id="semesterRemarks"
+                    value={newSemesterResult.remarks}
+                    onChange={(e) => setNewSemesterResult(prev => ({ ...prev, remarks: e.target.value }))}
+                    placeholder="Optional remarks"
+                  />
+                </div>
+              </div>
+
+              {/* Grade Preview */}
+              {newSemesterResult.totalMarks && newSemesterResult.obtainedMarks && (
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Grade Preview:</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg font-bold">
+                        {Math.round((parseInt(newSemesterResult.obtainedMarks) / parseInt(newSemesterResult.totalMarks)) * 100)}%
+                      </span>
+                      <Badge className={getGradeColor(calculateGrade((parseInt(newSemesterResult.obtainedMarks) / parseInt(newSemesterResult.totalMarks)) * 100))}>
+                        {calculateGrade((parseInt(newSemesterResult.obtainedMarks) / parseInt(newSemesterResult.totalMarks)) * 100)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => {
+                    if (!newSemesterResult.studentId || !newSemesterResult.semesterId || 
+                        !newSemesterResult.subjectId || !newSemesterResult.totalMarks || 
+                        !newSemesterResult.obtainedMarks) {
+                      toast({
+                        title: "Missing Information",
+                        description: "Please fill all required fields",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    
+                    const percentage = Math.round((parseInt(newSemesterResult.obtainedMarks) / parseInt(newSemesterResult.totalMarks)) * 100);
+                    const grade = calculateGrade(percentage);
+                    
+                    addSemesterResultMutation.mutate({
+                      ...newSemesterResult,
+                      studentId: parseInt(newSemesterResult.studentId),
+                      semesterId: parseInt(newSemesterResult.semesterId),
+                      subjectId: parseInt(newSemesterResult.subjectId),
+                      internalMarks: newSemesterResult.internalMarks ? parseInt(newSemesterResult.internalMarks) : 0,
+                      externalMarks: newSemesterResult.externalMarks ? parseInt(newSemesterResult.externalMarks) : 0,
+                      totalMarks: parseInt(newSemesterResult.totalMarks),
+                      obtainedMarks: parseInt(newSemesterResult.obtainedMarks),
+                      percentage,
+                      grade,
+                      gpa: newSemesterResult.gpa ? parseFloat(newSemesterResult.gpa) : null
+                    });
+                  }}
+                  disabled={addSemesterResultMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  {addSemesterResultMutation.isPending ? (
+                    <>
+                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      Add Result
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setNewSemesterResult({
+                      studentId: "",
+                      semesterId: "",
+                      subjectId: "",
+                      internalMarks: "",
+                      externalMarks: "",
+                      totalMarks: "",
+                      obtainedMarks: "",
+                      gpa: "",
+                      remarks: ""
+                    });
+                    setShowAddSemesterResult(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Add Exam Dialog */}
         <Dialog open={showAddExam} onOpenChange={setShowAddExam}>
           <DialogContent className="max-w-2xl">
