@@ -620,10 +620,10 @@ export default function Results() {
                       <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                       <div>
                         <h3 className="font-semibold text-green-700 dark:text-green-300">
-                          Active Semester: {activeSemester.name}
+                          Active Semester: {(activeSemester as any)?.name || 'Unknown'}
                         </h3>
                         <p className="text-sm text-green-600 dark:text-green-400">
-                          Academic Year: {activeSemester.academicYear}
+                          Academic Year: {(activeSemester as any)?.academicYear || 'Unknown'}
                         </p>
                       </div>
                     </div>

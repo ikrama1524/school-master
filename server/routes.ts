@@ -604,7 +604,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/results", async (req, res) => {
     try {
-      const result = await storage.createResult(req.body);
+      const resultData = {
+        ...req.body,
+        examDate: req.body.examDate ? new Date(req.body.examDate) : new Date()
+      };
+      const result = await storage.createResult(resultData);
       res.status(201).json(result);
     } catch (error) {
       console.error("Error creating result:", error);
@@ -638,7 +642,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/exams", async (req, res) => {
     try {
-      const exam = await storage.createExam(req.body);
+      const examData = {
+        ...req.body,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
+        endDate: req.body.endDate ? new Date(req.body.endDate) : new Date()
+      };
+      const exam = await storage.createExam(examData);
       res.status(201).json(exam);
     } catch (error) {
       console.error("Error creating exam:", error);
@@ -659,7 +668,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/semesters", async (req, res) => {
     try {
-      const semester = await storage.createSemester(req.body);
+      const semesterData = {
+        ...req.body,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
+        endDate: req.body.endDate ? new Date(req.body.endDate) : new Date()
+      };
+      const semester = await storage.createSemester(semesterData);
       res.status(201).json(semester);
     } catch (error) {
       console.error("Error creating semester:", error);
