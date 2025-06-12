@@ -271,12 +271,48 @@ export const exams = pgTable("exams", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const semesters = pgTable("semesters", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  academicYear: text("academic_year").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  isActive: boolean("is_active").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const semesterResults = pgTable("semester_results", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id).notNull(),
+  semesterId: integer("semester_id").references(() => semesters.id).notNull(),
+  subjectId: integer("subject_id").references(() => subjects.id).notNull(),
+  internalMarks: integer("internal_marks").default(0),
+  externalMarks: integer("external_marks").default(0),
+  totalMarks: integer("total_marks").notNull(),
+  obtainedMarks: integer("obtained_marks").notNull(),
+  percentage: decimal("percentage", { precision: 5, scale: 2 }).notNull(),
+  grade: text("grade").notNull(),
+  gpa: decimal("gpa", { precision: 3, scale: 2 }),
+  remarks: text("remarks"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertResultSchema = createInsertSchema(results).omit({
   id: true,
   createdAt: true,
 });
 
 export const insertExamSchema = createInsertSchema(exams).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSemesterSchema = createInsertSchema(semesters).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSemesterResultSchema = createInsertSchema(semesterResults).omit({
   id: true,
   createdAt: true,
 });
@@ -326,3 +362,9 @@ export type InsertResult = z.infer<typeof insertResultSchema>;
 
 export type Exam = typeof exams.$inferSelect;
 export type InsertExam = z.infer<typeof insertExamSchema>;
+
+export type Semester = typeof semesters.$inferSelect;
+export type InsertSemester = z.infer<typeof insertSemesterSchema>;
+
+export type SemesterResult = typeof semesterResults.$inferSelect;
+export type InsertSemesterResult = z.infer<typeof insertSemesterResultSchema>;

@@ -1,5 +1,5 @@
 import { 
-  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams,
+  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults,
   type User, type InsertUser,
   type Student, type InsertStudent,
   type Teacher, type InsertTeacher,
@@ -9,7 +9,9 @@ import {
   type Timetable, type InsertTimetable,
   type Period, type InsertPeriod,
   type Result, type InsertResult,
-  type Exam, type InsertExam
+  type Exam, type InsertExam,
+  type Semester, type InsertSemester,
+  type SemesterResult, type InsertSemesterResult
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, count, and } from "drizzle-orm";
@@ -76,6 +78,23 @@ export interface IStorage {
   createExam(exam: InsertExam): Promise<Exam>;
   updateExam(id: number, exam: Partial<Exam>): Promise<Exam | undefined>;
   deleteExam(id: number): Promise<boolean>;
+  
+  // Semesters
+  getSemesters(): Promise<Semester[]>;
+  getSemester(id: number): Promise<Semester | undefined>;
+  createSemester(semester: InsertSemester): Promise<Semester>;
+  updateSemester(id: number, semester: Partial<Semester>): Promise<Semester | undefined>;
+  deleteSemester(id: number): Promise<boolean>;
+  getActiveSemester(): Promise<Semester | undefined>;
+  
+  // Semester Results
+  getSemesterResults(): Promise<SemesterResult[]>;
+  getSemesterResult(id: number): Promise<SemesterResult | undefined>;
+  createSemesterResult(semesterResult: InsertSemesterResult): Promise<SemesterResult>;
+  updateSemesterResult(id: number, semesterResult: Partial<SemesterResult>): Promise<SemesterResult | undefined>;
+  deleteSemesterResult(id: number): Promise<boolean>;
+  getStudentSemesterResults(studentId: number, semesterId?: number): Promise<SemesterResult[]>;
+  getSemesterResultsBySemester(semesterId: number): Promise<SemesterResult[]>;
   
   // Stats
   getStats(): Promise<{
@@ -413,6 +432,73 @@ export class DatabaseStorage implements IStorage {
   async deleteExam(id: number): Promise<boolean> {
     const deleted = await db.delete(exams).where(eq(exams.id, id));
     return deleted.rowCount ? deleted.rowCount > 0 : false;
+  }
+
+  // Semesters methods
+  async getSemesters(): Promise<Semester[]> {
+    return await db.select().from(semesters);
+  }
+
+  async getSemester(id: number): Promise<Semester | undefined> {
+    const [semester] = await db.select().from(semesters).where(eq(semesters.id, id));
+    return semester || undefined;
+  }
+
+  async createSemester(insertSemester: InsertSemester): Promise<Semester> {
+    const [semester] = await db.insert(semesters).values(insertSemester).returning();
+    return semester;
+  }
+
+  async updateSemester(id: number, updateData: Partial<Semester>): Promise<Semester | undefined> {
+    const [semester] = await db.update(semesters).set(updateData).where(eq(semesters.id, id)).returning();
+    return semester || undefined;
+  }
+
+  async deleteSemester(id: number): Promise<boolean> {
+    const deleted = await db.delete(semesters).where(eq(semesters.id, id));
+    return deleted.rowCount ? deleted.rowCount > 0 : false;
+  }
+
+  async getActiveSemester(): Promise<Semester | undefined> {
+    const [semester] = await db.select().from(semesters).where(eq(semesters.isActive, true));
+    return semester || undefined;
+  }
+
+  // Semester Results methods
+  async getSemesterResults(): Promise<SemesterResult[]> {
+    return await db.select().from(semesterResults);
+  }
+
+  async getSemesterResult(id: number): Promise<SemesterResult | undefined> {
+    const [result] = await db.select().from(semesterResults).where(eq(semesterResults.id, id));
+    return result || undefined;
+  }
+
+  async createSemesterResult(insertSemesterResult: InsertSemesterResult): Promise<SemesterResult> {
+    const [result] = await db.insert(semesterResults).values(insertSemesterResult).returning();
+    return result;
+  }
+
+  async updateSemesterResult(id: number, updateData: Partial<SemesterResult>): Promise<SemesterResult | undefined> {
+    const [result] = await db.update(semesterResults).set(updateData).where(eq(semesterResults.id, id)).returning();
+    return result || undefined;
+  }
+
+  async deleteSemesterResult(id: number): Promise<boolean> {
+    const deleted = await db.delete(semesterResults).where(eq(semesterResults.id, id));
+    return deleted.rowCount ? deleted.rowCount > 0 : false;
+  }
+
+  async getStudentSemesterResults(studentId: number, semesterId?: number): Promise<SemesterResult[]> {
+    if (semesterId) {
+      return await db.select().from(semesterResults)
+        .where(and(eq(semesterResults.studentId, studentId), eq(semesterResults.semesterId, semesterId)));
+    }
+    return await db.select().from(semesterResults).where(eq(semesterResults.studentId, studentId));
+  }
+
+  async getSemesterResultsBySemester(semesterId: number): Promise<SemesterResult[]> {
+    return await db.select().from(semesterResults).where(eq(semesterResults.semesterId, semesterId));
   }
 }
 
