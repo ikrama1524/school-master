@@ -274,6 +274,252 @@ function MonthlyTimetableCreator({ currentDate, subjects, teachers, onSave }: Mo
   );
 }
 
+interface TimetableManagerProps {
+  selectedClass: string;
+  onClassChange: (className: string) => void;
+  subjects: Subject[];
+  teachers: Teacher[];
+}
+
+function TimetableManager({ selectedClass, onClassChange, subjects, teachers }: TimetableManagerProps) {
+  const [timetableData, setTimetableData] = useState<any>({});
+  
+  const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"];
+  const timeSlots = [
+    { period: 1, time: "08:00-09:00", label: "1st Period" },
+    { period: 2, time: "09:00-10:00", label: "2nd Period" },
+    { period: 3, time: "10:00-11:00", label: "3rd Period" },
+    { period: 4, time: "11:00-12:00", label: "4th Period" },
+    { period: 5, time: "12:00-13:00", label: "Lunch Break" },
+    { period: 6, time: "13:00-14:00", label: "5th Period" },
+    { period: 7, time: "14:00-15:00", label: "6th Period" },
+    { period: 8, time: "15:00-16:00", label: "7th Period" },
+  ];
+  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+  // Load existing timetable data
+  const { data: existingTimetable, isLoading } = useQuery({
+    queryKey: ["/api/timetable", selectedClass],
+    retry: false,
+  });
+
+  const updateTimetableSlot = (day: string, period: number, subjectId: number | null, teacherId: number | null) => {
+    const newData = { ...timetableData };
+    
+    if (!newData[selectedClass]) {
+      newData[selectedClass] = {};
+    }
+    if (!newData[selectedClass][day]) {
+      newData[selectedClass][day] = {};
+    }
+    
+    if (subjectId && teacherId && period !== 5) { // Skip lunch break
+      const subject = subjects.find(s => s.id === subjectId);
+      const teacher = teachers.find(t => t.id === teacherId);
+      
+      newData[selectedClass][day][period] = {
+        subjectId,
+        teacherId,
+        subjectName: subject?.name || "",
+        teacherName: teacher?.name || "",
+        color: getSubjectColor(subjectId)
+      };
+    } else {
+      delete newData[selectedClass][day][period];
+    }
+    
+    setTimetableData(newData);
+  };
+
+  const getSubjectColor = (subjectId: number): string => {
+    const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+    return colors[subjectId % colors.length];
+  };
+
+  const getTimetableSlot = (day: string, period: number) => {
+    return timetableData[selectedClass]?.[day]?.[period] || 
+           existingTimetable?.find((entry: any) => 
+             entry.class === selectedClass && 
+             entry.day === day && 
+             entry.period === period
+           ) || null;
+  };
+
+  const saveTimetableMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/timetable/bulk", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/timetable"] });
+      toast({
+        title: "Timetable Saved",
+        description: "Weekly timetable has been successfully updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save timetable. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSaveTimetable = () => {
+    const timetableEntries = [];
+    
+    for (const day of daysOfWeek) {
+      for (const timeSlot of timeSlots) {
+        if (timeSlot.period === 5) continue; // Skip lunch break
+        
+        const slotData = getTimetableSlot(day, timeSlot.period);
+        if (slotData && slotData.subjectId && slotData.teacherId) {
+          timetableEntries.push({
+            class: selectedClass,
+            section: "A", // Default section
+            day: day,
+            period: timeSlot.period,
+            subjectId: slotData.subjectId,
+            teacherId: slotData.teacherId,
+            startTime: timeSlot.time.split('-')[0],
+            endTime: timeSlot.time.split('-')[1],
+          });
+        }
+      }
+    }
+
+    saveTimetableMutation.mutate({ entries: timetableEntries });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Class Selection */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Label>Select Class:</Label>
+          <Select value={selectedClass} onValueChange={onClassChange}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {classes.map(cls => (
+                <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={handleSaveTimetable} disabled={saveTimetableMutation.isPending}>
+          {saveTimetableMutation.isPending ? "Saving..." : "Save Timetable"}
+        </Button>
+      </div>
+
+      {/* Timetable Grid */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Weekly Timetable - {selectedClass}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="border p-3 bg-muted font-semibold">Time / Day</th>
+                  {daysOfWeek.map(day => (
+                    <th key={day} className="border p-3 bg-muted font-semibold min-w-48">
+                      {day}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {timeSlots.map(timeSlot => (
+                  <tr key={timeSlot.period}>
+                    <td className="border p-3 font-medium text-sm bg-muted/50 text-center">
+                      <div>{timeSlot.label}</div>
+                      <div className="text-xs text-muted-foreground">{timeSlot.time}</div>
+                    </td>
+                    {daysOfWeek.map(day => {
+                      if (timeSlot.period === 5) {
+                        // Lunch break row
+                        return (
+                          <td key={`${day}-${timeSlot.period}`} className="border p-3 text-center bg-orange-50 dark:bg-orange-900/20">
+                            <div className="text-orange-600 font-medium">Lunch Break</div>
+                          </td>
+                        );
+                      }
+
+                      const slotData = getTimetableSlot(day, timeSlot.period);
+                      return (
+                        <td key={`${day}-${timeSlot.period}`} className="border p-2">
+                          <div className="space-y-2">
+                            <Select
+                              value={slotData?.subjectId?.toString() || ""}
+                              onValueChange={(value) => {
+                                const subjectId = value ? parseInt(value) : null;
+                                const teacherId = slotData?.teacherId || (subjects.find(s => s.id === subjectId) ? subjects[0]?.id : null);
+                                updateTimetableSlot(day, timeSlot.period, subjectId, teacherId);
+                              }}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Select Subject" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">No Subject</SelectItem>
+                                {subjects.map(subject => (
+                                  <SelectItem key={subject.id} value={subject.id.toString()}>
+                                    {subject.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            
+                            {slotData?.subjectId && (
+                              <Select
+                                value={slotData?.teacherId?.toString() || ""}
+                                onValueChange={(value) => {
+                                  const teacherId = value ? parseInt(value) : null;
+                                  updateTimetableSlot(day, timeSlot.period, slotData.subjectId, teacherId);
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Select Teacher" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {teachers.map(teacher => (
+                                    <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                                      {teacher.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                            
+                            {slotData && slotData.subjectName && (
+                              <div 
+                                className="text-xs p-2 rounded text-white text-center"
+                                style={{ backgroundColor: slotData.color }}
+                              >
+                                <div className="font-medium">{slotData.subjectName}</div>
+                                {slotData.teacherName && (
+                                  <div className="text-xs opacity-90">{slotData.teacherName}</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function CalendarPage() {
   const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -285,6 +531,8 @@ export default function CalendarPage() {
   const [filterType, setFilterType] = useState("all");
   const [isMonthlyTimetableOpen, setIsMonthlyTimetableOpen] = useState(false);
   const [monthlyTimetableData, setMonthlyTimetableData] = useState<any>({});
+  const [isTimetableViewOpen, setIsTimetableViewOpen] = useState(false);
+  const [selectedTimetableClass, setSelectedTimetableClass] = useState("Grade 6");
 
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -537,6 +785,29 @@ export default function CalendarPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Dialog open={isTimetableViewOpen} onOpenChange={setIsTimetableViewOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Clock className="w-4 h-4 mr-2" />
+                Class Timetable
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Weekly Class Timetable</DialogTitle>
+                <DialogDescription>
+                  Manage weekly schedules for each class with subject and teacher assignments
+                </DialogDescription>
+              </DialogHeader>
+              <TimetableManager 
+                selectedClass={selectedTimetableClass}
+                onClassChange={setSelectedTimetableClass}
+                subjects={Array.isArray(subjects) ? subjects : []}
+                teachers={Array.isArray(teachers) ? teachers : []}
+              />
+            </DialogContent>
+          </Dialog>
+
           <Dialog open={isMonthlyTimetableOpen} onOpenChange={setIsMonthlyTimetableOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
