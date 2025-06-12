@@ -7,6 +7,55 @@ import { z } from "zod";
 export async function registerRoutes(app: Express): Promise<Server> {
   // In-memory storage for admissions (temporary until proper database implementation)
   const admissionsStore = new Map();
+  
+  // Initialize with some sample applications
+  const sampleApplications = [
+    {
+      id: 1,
+      applicationNumber: "ADM001",
+      studentName: "Alice Johnson",
+      dateOfBirth: "2010-03-15",
+      parentName: "Robert Johnson",
+      email: "robert.johnson@email.com",
+      phone: "+1234567890",
+      address: "123 Main Street, City",
+      previousSchool: "ABC Elementary",
+      class: "Grade 6",
+      section: "A",
+      gender: "female",
+      status: "pending",
+      applicationDate: new Date("2024-01-15"),
+      documents: [
+        { id: "1", name: "Birth Certificate", type: "pdf", status: "verified", uploadDate: new Date(), size: "2.1 MB" },
+        { id: "2", name: "Previous School Records", type: "pdf", status: "pending", uploadDate: new Date(), size: "1.8 MB" }
+      ],
+      priority: "normal"
+    },
+    {
+      id: 2,
+      applicationNumber: "ADM002",
+      studentName: "Michael Chen",
+      dateOfBirth: "2009-07-22",
+      parentName: "David Chen",
+      email: "david.chen@email.com",
+      phone: "+1234567891",
+      address: "456 Oak Avenue, City",
+      previousSchool: "XYZ School",
+      class: "Grade 7",
+      section: "B",
+      gender: "male",
+      status: "document_review",
+      applicationDate: new Date("2024-01-20"),
+      documents: [
+        { id: "3", name: "Birth Certificate", type: "pdf", status: "verified", uploadDate: new Date(), size: "2.3 MB" },
+        { id: "4", name: "Medical Records", type: "pdf", status: "rejected", uploadDate: new Date(), size: "1.5 MB" }
+      ],
+      priority: "high"
+    }
+  ];
+  
+  // Initialize store with sample data
+  sampleApplications.forEach(app => admissionsStore.set(app.id, app));
 
   // Admissions routes (replaces direct student creation)
   app.post("/api/admissions", async (req, res) => {
@@ -22,12 +71,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         applicationNumber,
         status: "pending",
         applicationDate: new Date(),
+        documents: applicationData.documents || [
+          { id: `${id}_1`, name: "Birth Certificate", type: "pdf", status: "pending", uploadDate: new Date(), size: "0 MB" },
+          { id: `${id}_2`, name: "Previous School Records", type: "pdf", status: "pending", uploadDate: new Date(), size: "0 MB" }
+        ],
+        priority: applicationData.priority || "normal"
       };
       
       // Store admission application
       admissionsStore.set(id, admission);
       res.status(201).json(admission);
     } catch (error) {
+      console.error("Error creating admission:", error);
       res.status(500).json({ message: "Failed to create admission application" });
     }
   });
