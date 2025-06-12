@@ -212,14 +212,25 @@ export default function TimetablePage() {
     const timetableEntries = Object.entries(slots).map(([slotKey, slot]: [string, any]) => {
       const [day, period] = slotKey.split('-');
       return {
-        class: selectedClass,
+        className: selectedClass,
         section: selectedSection,
-        day,
-        period: parseInt(period),
-        subjectId: slot.subjectId,
-        teacherId: slot.teacherId
+        dayOfWeek: day,
+        periodNumber: parseInt(period),
+        subjectId: slot.subjectId || null,
+        teacherId: slot.teacherId || null,
+        startDate: new Date(),
+        endDate: new Date(new Date().getFullYear(), 11, 31) // End of current year
       };
-    });
+    }).filter(entry => entry.subjectId && entry.teacherId); // Only save entries with both subject and teacher
+
+    if (timetableEntries.length === 0) {
+      toast({
+        title: "No Data",
+        description: "Please assign subjects and teachers before saving",
+        variant: "destructive",
+      });
+      return;
+    }
 
     saveTimetableMutation.mutate({ entries: timetableEntries });
   };
@@ -312,8 +323,8 @@ export default function TimetablePage() {
           </tr>
         </thead>
         <tbody>
-          {timeSlots.map(timeSlot => (
-            <tr key={timeSlot.period}>
+          {timeSlots.map((timeSlot, slotIndex) => (
+            <tr key={`timeslot-${timeSlot.period}-${slotIndex}`}>
               <td className="border p-3 font-medium text-sm bg-muted/50 text-center">
                 <div>{timeSlot.label}</div>
                 <div className="text-xs text-muted-foreground">{timeSlot.time}</div>
