@@ -1,11 +1,13 @@
 import { 
-  users, students, teachers, attendance, fees, notices,
+  users, students, teachers, attendance, fees, notices, timetable, periods,
   type User, type InsertUser,
   type Student, type InsertStudent,
   type Teacher, type InsertTeacher,
   type Attendance, type InsertAttendance,
   type Fee, type InsertFee,
-  type Notice, type InsertNotice
+  type Notice, type InsertNotice,
+  type Timetable, type InsertTimetable,
+  type Period, type InsertPeriod
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, count } from "drizzle-orm";
@@ -44,6 +46,19 @@ export interface IStorage {
   // Notices
   getNotices(): Promise<Notice[]>;
   createNotice(notice: InsertNotice): Promise<Notice>;
+  
+  // Timetable
+  getTimetables(className?: string, section?: string): Promise<Timetable[]>;
+  createTimetable(timetableEntry: InsertTimetable): Promise<Timetable>;
+  updateTimetable(id: number, timetableEntry: Partial<Timetable>): Promise<Timetable | undefined>;
+  deleteTimetable(id: number): Promise<boolean>;
+  bulkCreateTimetables(entries: InsertTimetable[]): Promise<Timetable[]>;
+  
+  // Periods
+  getPeriods(): Promise<Period[]>;
+  createPeriod(period: InsertPeriod): Promise<Period>;
+  updatePeriod(id: number, period: Partial<Period>): Promise<Period | undefined>;
+  deletePeriod(id: number): Promise<boolean>;
   
   // Stats
   getStats(): Promise<{

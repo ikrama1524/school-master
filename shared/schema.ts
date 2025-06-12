@@ -154,6 +154,17 @@ export const monthlyTimetables = pgTable("monthly_timetables", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+export const periods = pgTable("periods", {
+  id: serial("id").primaryKey(),
+  label: text("label").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  periodNumber: integer("period_number").notNull(),
+  isBreak: boolean("is_break").default(false),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -226,6 +237,11 @@ export const insertMonthlyTimetableSchema = createInsertSchema(monthlyTimetables
   createdAt: true,
 });
 
+export const insertPeriodSchema = createInsertSchema(periods).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -262,3 +278,6 @@ export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;
 
 export type MonthlyTimetable = typeof monthlyTimetables.$inferSelect;
 export type InsertMonthlyTimetable = z.infer<typeof insertMonthlyTimetableSchema>;
+
+export type Period = typeof periods.$inferSelect;
+export type InsertPeriod = typeof periods.$inferInsert;
