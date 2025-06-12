@@ -22,6 +22,7 @@ const navigationItems = [
   { href: "/calendar", label: "Timetable", icon: Clock },
   { href: "/teachers", label: "Teachers", icon: GraduationCap },
   { href: "/homework", label: "Homework", icon: BookOpen },
+  { href: "/results", label: "Results", icon: Award },
   { href: "/attendance", label: "Attendance", icon: Calendar },
   { href: "/fees", label: "Fee Management", icon: DollarSign },
   { href: "/payroll", label: "Payroll", icon: Wallet },
