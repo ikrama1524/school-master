@@ -10,7 +10,7 @@ import {
   type Period, type InsertPeriod
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, count } from "drizzle-orm";
+import { eq, count, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -248,6 +248,67 @@ export class DatabaseStorage implements IStorage {
       .values(insertNotice)
       .returning();
     return notice;
+  }
+
+  // Timetable methods
+  async getTimetables(className?: string, section?: string): Promise<Timetable[]> {
+    if (className && section) {
+      return await db.select().from(timetable)
+        .where(and(eq(timetable.class, className), eq(timetable.section, section)));
+    } else if (className) {
+      return await db.select().from(timetable)
+        .where(eq(timetable.class, className));
+    }
+    
+    return await db.select().from(timetable);
+  }
+
+  async createTimetable(timetableEntry: InsertTimetable): Promise<Timetable> {
+    const [entry] = await db.insert(timetable).values(timetableEntry).returning();
+    return entry;
+  }
+
+  async updateTimetable(id: number, timetableEntry: Partial<Timetable>): Promise<Timetable | undefined> {
+    const [entry] = await db.update(timetable)
+      .set(timetableEntry)
+      .where(eq(timetable.id, id))
+      .returning();
+    return entry;
+  }
+
+  async deleteTimetable(id: number): Promise<boolean> {
+    const result = await db.delete(timetable).where(eq(timetable.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async bulkCreateTimetables(entries: InsertTimetable[]): Promise<Timetable[]> {
+    const createdEntries = await db.insert(timetable).values(entries).returning();
+    return createdEntries;
+  }
+
+  // Period methods
+  async getPeriods(): Promise<Period[]> {
+    return await db.select().from(periods).where(eq(periods.isActive, true));
+  }
+
+  async createPeriod(period: InsertPeriod): Promise<Period> {
+    const [newPeriod] = await db.insert(periods).values(period).returning();
+    return newPeriod;
+  }
+
+  async updatePeriod(id: number, period: Partial<Period>): Promise<Period | undefined> {
+    const [updatedPeriod] = await db.update(periods)
+      .set(period)
+      .where(eq(periods.id, id))
+      .returning();
+    return updatedPeriod;
+  }
+
+  async deletePeriod(id: number): Promise<boolean> {
+    const result = await db.update(periods)
+      .set({ isActive: false })
+      .where(eq(periods.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Stats method
