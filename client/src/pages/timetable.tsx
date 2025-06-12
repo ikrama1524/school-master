@@ -132,16 +132,21 @@ export default function Timetable() {
   const saveTimetable = () => {
     const timetableEntries: InsertTimetable[] = [];
     Object.entries(localTimetable).forEach(([day, periods]) => {
-      Object.entries(periods).forEach(([period, data]) => {
+      Object.entries(periods).forEach(([periodLabel, data]) => {
         if (data.subjectId) {
-          timetableEntries.push({
-            class: selectedClass,
-            section: selectedSection,
-            day,
-            period,
-            subjectId: data.subjectId,
-            teacherId: data.teacherId,
-          });
+          const timeSlot = timeSlots.find(slot => slot.label === periodLabel);
+          if (timeSlot) {
+            timetableEntries.push({
+              class: selectedClass,
+              section: selectedSection,
+              day,
+              period: timeSlot.periodNumber,
+              startTime: timeSlot.startTime,
+              endTime: timeSlot.endTime,
+              subjectId: data.subjectId,
+              teacherId: data.teacherId || null,
+            });
+          }
         }
       });
     });
@@ -237,9 +242,9 @@ export default function Timetable() {
                     <td key={date.toISOString()} className="p-4">
                       <div className="space-y-2">
                         <Select
-                          value={slotData.subjectId?.toString() || ""}
+                          value={slotData.subjectId?.toString() || "none"}
                           onValueChange={(value: string) => {
-                            const subjectId = value ? parseInt(value) : null;
+                            const subjectId = (value && value !== "none") ? parseInt(value) : null;
                             updateTimetableSlot(dayName, timeSlot.label, subjectId, slotData.teacherId);
                           }}
                         >
@@ -247,7 +252,7 @@ export default function Timetable() {
                             <SelectValue placeholder="Select Subject" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">No Subject</SelectItem>
+                            <SelectItem value="none">No Subject</SelectItem>
                             {Array.isArray(subjects) && subjects.map((subject: Subject) => (
                               <SelectItem key={subject.id} value={subject.id.toString()}>
                                 {subject.name}
@@ -257,9 +262,9 @@ export default function Timetable() {
                         </Select>
                         {slotData.subjectId && (
                           <Select
-                            value={slotData.teacherId?.toString() || ""}
+                            value={slotData.teacherId?.toString() || "none"}
                             onValueChange={(value: string) => {
-                              const teacherId = value ? parseInt(value) : null;
+                              const teacherId = (value && value !== "none") ? parseInt(value) : null;
                               updateTimetableSlot(dayName, timeSlot.label, slotData.subjectId, teacherId);
                             }}
                           >
@@ -267,6 +272,7 @@ export default function Timetable() {
                               <SelectValue placeholder="Select Teacher" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="none">No Teacher</SelectItem>
                               {Array.isArray(teachers) && teachers.map((teacher: Teacher) => (
                                 <SelectItem key={teacher.id} value={teacher.id.toString()}>
                                   {teacher.name}
@@ -357,7 +363,7 @@ export default function Timetable() {
                               {timeSlot.label}
                             </div>
                             <Select
-                              value={slotData?.subjectId?.toString() || ""}
+                              value={slotData?.subjectId?.toString() || "none"}
                               onValueChange={(value: string) => {
                                 const subjectId = (value && value !== "none") ? parseInt(value) : null;
                                 const teacherId = slotData?.teacherId || null;
@@ -378,9 +384,9 @@ export default function Timetable() {
                             </Select>
                             {slotData?.subjectId && (
                               <Select
-                                value={slotData?.teacherId?.toString() || ""}
+                                value={slotData?.teacherId?.toString() || "none"}
                                 onValueChange={(value: string) => {
-                                  const teacherId = value ? parseInt(value) : null;
+                                  const teacherId = (value && value !== "none") ? parseInt(value) : null;
                                   updateTimetableSlot(dayName, timeSlot.label, slotData.subjectId, teacherId);
                                 }}
                               >
@@ -388,6 +394,7 @@ export default function Timetable() {
                                   <SelectValue placeholder="Teacher" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                  <SelectItem value="none">No Teacher</SelectItem>
                                   {Array.isArray(teachers) && teachers.map((teacher: Teacher) => (
                                     <SelectItem key={teacher.id} value={teacher.id.toString()}>
                                       {teacher.name}
