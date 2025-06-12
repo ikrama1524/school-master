@@ -30,6 +30,7 @@ export default function TimetablePage() {
   const [showPeriodManager, setShowPeriodManager] = useState(false);
   const [editingPeriod, setEditingPeriod] = useState<any>(null);
   const [showSubjectManager, setShowSubjectManager] = useState(false);
+  const [showSubjectList, setShowSubjectList] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
   const [newSubjectCode, setNewSubjectCode] = useState("");
   const [newSubjectDescription, setNewSubjectDescription] = useState("");
@@ -698,6 +699,14 @@ export default function TimetablePage() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
+              onClick={() => setShowSubjectList(true)}
+              className="flex items-center gap-2"
+            >
+              <BookOpen className="w-4 h-4" />
+              View Subjects
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setShowSubjectManager(true)}
               className="flex items-center gap-2"
             >
@@ -894,6 +903,101 @@ export default function TimetablePage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Subject List Dialog */}
+        <Dialog open={showSubjectList} onOpenChange={setShowSubjectList}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                Subject List
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-muted-foreground">
+                  Manage all subjects in the system
+                </p>
+                <Button
+                  onClick={() => {
+                    setShowSubjectList(false);
+                    setShowSubjectManager(true);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New Subject
+                </Button>
+              </div>
+              
+              <div className="grid gap-4">
+                {Array.isArray(subjects) && subjects.length > 0 ? (
+                  subjects.map((subject: any) => (
+                    <div key={subject.id} className="border rounded-lg p-4 bg-card">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">
+                              {subject.code}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-lg">{subject.name}</h3>
+                              <p className="text-sm text-muted-foreground">Code: {subject.code}</p>
+                            </div>
+                          </div>
+                          {subject.description && (
+                            <p className="text-sm text-muted-foreground ml-13">
+                              {subject.description}
+                            </p>
+                          )}
+                          <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Subject ID: {subject.id}</span>
+                            {subject.createdAt && (
+                              <span>Added: {new Date(subject.createdAt).toLocaleDateString()}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-medium mb-2">No Subjects Found</h3>
+                    <p className="text-sm">Add your first subject to get started with timetable management.</p>
+                    <Button
+                      onClick={() => {
+                        setShowSubjectList(false);
+                        setShowSubjectManager(true);
+                      }}
+                      className="mt-4"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Subject
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Subject Management Dialog */}
         <Dialog open={showSubjectManager} onOpenChange={setShowSubjectManager}>
