@@ -646,6 +646,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Semesters routes
+  app.get("/api/semesters", async (req, res) => {
+    try {
+      const semesters = await storage.getSemesters();
+      res.json(semesters);
+    } catch (error) {
+      console.error("Error fetching semesters:", error);
+      res.status(500).json({ message: "Failed to fetch semesters" });
+    }
+  });
+
+  app.post("/api/semesters", async (req, res) => {
+    try {
+      const semester = await storage.createSemester(req.body);
+      res.status(201).json(semester);
+    } catch (error) {
+      console.error("Error creating semester:", error);
+      res.status(500).json({ message: "Failed to create semester" });
+    }
+  });
+
+  app.get("/api/semesters/active", async (req, res) => {
+    try {
+      const semester = await storage.getActiveSemester();
+      res.json(semester);
+    } catch (error) {
+      console.error("Error fetching active semester:", error);
+      res.status(500).json({ message: "Failed to fetch active semester" });
+    }
+  });
+
+  app.put("/api/semesters/:id", async (req, res) => {
+    try {
+      const semester = await storage.updateSemester(parseInt(req.params.id), req.body);
+      if (!semester) {
+        return res.status(404).json({ message: "Semester not found" });
+      }
+      res.json(semester);
+    } catch (error) {
+      console.error("Error updating semester:", error);
+      res.status(500).json({ message: "Failed to update semester" });
+    }
+  });
+
+  // Semester Results routes
+  app.get("/api/semester-results", async (req, res) => {
+    try {
+      const { studentId, semesterId } = req.query;
+      let results;
+      
+      if (studentId) {
+        results = await storage.getStudentSemesterResults(
+          parseInt(studentId as string), 
+          semesterId ? parseInt(semesterId as string) : undefined
+        );
+      } else if (semesterId) {
+        results = await storage.getSemesterResultsBySemester(parseInt(semesterId as string));
+      } else {
+        results = await storage.getSemesterResults();
+      }
+      
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching semester results:", error);
+      res.status(500).json({ message: "Failed to fetch semester results" });
+    }
+  });
+
+  app.post("/api/semester-results", async (req, res) => {
+    try {
+      const result = await storage.createSemesterResult(req.body);
+      res.status(201).json(result);
+    } catch (error) {
+      console.error("Error creating semester result:", error);
+      res.status(500).json({ message: "Failed to create semester result" });
+    }
+  });
+
+  app.get("/api/semester-results/:id", async (req, res) => {
+    try {
+      const result = await storage.getSemesterResult(parseInt(req.params.id));
+      if (!result) {
+        return res.status(404).json({ message: "Semester result not found" });
+      }
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching semester result:", error);
+      res.status(500).json({ message: "Failed to fetch semester result" });
+    }
+  });
+
+  app.put("/api/semester-results/:id", async (req, res) => {
+    try {
+      const result = await storage.updateSemesterResult(parseInt(req.params.id), req.body);
+      if (!result) {
+        return res.status(404).json({ message: "Semester result not found" });
+      }
+      res.json(result);
+    } catch (error) {
+      console.error("Error updating semester result:", error);
+      res.status(500).json({ message: "Failed to update semester result" });
+    }
+  });
+
   // Stats route
   app.get("/api/stats", async (req, res) => {
     try {

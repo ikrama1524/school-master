@@ -25,7 +25,7 @@ import {
   FileText,
   BarChart3
 } from "lucide-react";
-import type { Student, Subject, Teacher } from "@shared/schema";
+import type { Student, Subject, Teacher, Semester, SemesterResult } from "@shared/schema";
 
 interface Result {
   id: number;
@@ -62,9 +62,12 @@ export default function Results() {
   const [activeTab, setActiveTab] = useState("results");
   const [showAddResult, setShowAddResult] = useState(false);
   const [showAddExam, setShowAddExam] = useState(false);
+  const [showAddSemester, setShowAddSemester] = useState(false);
+  const [showAddSemesterResult, setShowAddSemesterResult] = useState(false);
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedExamType, setSelectedExamType] = useState("all");
+  const [selectedSemester, setSelectedSemester] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
   // New result form
@@ -89,6 +92,28 @@ export default function Results() {
     maxMarks: ""
   });
 
+  // New semester form
+  const [newSemester, setNewSemester] = useState({
+    name: "",
+    academicYear: "",
+    startDate: "",
+    endDate: "",
+    isActive: false
+  });
+
+  // New semester result form
+  const [newSemesterResult, setNewSemesterResult] = useState({
+    studentId: "",
+    semesterId: "",
+    subjectId: "",
+    internalMarks: "",
+    externalMarks: "",
+    totalMarks: "",
+    obtainedMarks: "",
+    gpa: "",
+    remarks: ""
+  });
+
   const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"];
   const sections = ["A", "B", "C"];
   const examTypes = ["Unit Test", "Midterm", "Final", "Assignment", "Project", "Practical"];
@@ -108,6 +133,18 @@ export default function Results() {
 
   const { data: subjects = [] } = useQuery({
     queryKey: ["/api/subjects"],
+  });
+
+  const { data: semesters = [], isLoading: semestersLoading } = useQuery({
+    queryKey: ["/api/semesters"],
+  });
+
+  const { data: semesterResults = [], isLoading: semesterResultsLoading } = useQuery({
+    queryKey: ["/api/semester-results"],
+  });
+
+  const { data: activeSemester } = useQuery({
+    queryKey: ["/api/semesters/active"],
   });
 
   // Mutations
@@ -168,6 +205,68 @@ export default function Results() {
       toast({
         title: "Error",
         description: error.message || "Failed to schedule exam",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addSemesterMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", "/api/semesters", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/semesters"] });
+      toast({
+        title: "Success",
+        description: "Semester created successfully",
+      });
+      setNewSemester({
+        name: "",
+        academicYear: "",
+        startDate: "",
+        endDate: "",
+        isActive: false
+      });
+      setShowAddSemester(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create semester",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addSemesterResultMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", "/api/semester-results", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/semester-results"] });
+      toast({
+        title: "Success",
+        description: "Semester result added successfully",
+      });
+      setNewSemesterResult({
+        studentId: "",
+        semesterId: "",
+        subjectId: "",
+        internalMarks: "",
+        externalMarks: "",
+        totalMarks: "",
+        obtainedMarks: "",
+        gpa: "",
+        remarks: ""
+      });
+      setShowAddSemesterResult(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add semester result",
         variant: "destructive",
       });
     },
@@ -309,8 +408,9 @@ export default function Results() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="results">Results</TabsTrigger>
+            <TabsTrigger value="semesters">Semesters</TabsTrigger>
             <TabsTrigger value="exams">Exams</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -464,6 +564,230 @@ export default function Results() {
                                 {result.grade}
                               </Badge>
                             </td>
+                            <td className="p-3">
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="ghost">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost">
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Semesters Tab */}
+          <TabsContent value="semesters" className="space-y-6">
+            {/* Semester Header */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold">Semester Management</h2>
+                <p className="text-muted-foreground">Create and manage academic semesters and semester-wise results</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowAddSemesterResult(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Semester Result
+                </Button>
+                <Button
+                  onClick={() => setShowAddSemester(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Semester
+                </Button>
+              </div>
+            </div>
+
+            {/* Active Semester Banner */}
+            {activeSemester && (
+              <Card className="border-0 shadow-lg bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                      <div>
+                        <h3 className="font-semibold text-green-700 dark:text-green-300">
+                          Active Semester: {activeSemester.name}
+                        </h3>
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                          Academic Year: {activeSemester.academicYear}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                      Current
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Semesters List */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  Academic Semesters
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {semestersLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : Array.isArray(semesters) && semesters.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-medium mb-2">No Semesters Created</h3>
+                    <p className="text-sm">Create your first semester to start tracking semester-wise academic results.</p>
+                    <Button onClick={() => setShowAddSemester(true)} className="mt-4">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Semester
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {Array.isArray(semesters) && semesters.map((semester: any) => (
+                      <div key={semester.id} className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className={`w-10 h-10 ${semester.isActive ? 'bg-gradient-to-r from-green-500 to-blue-600' : 'bg-gradient-to-r from-gray-400 to-gray-600'} text-white rounded-lg flex items-center justify-center`}>
+                                <Calendar className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-lg flex items-center gap-2">
+                                  {semester.name}
+                                  {semester.isActive && (
+                                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                      Active
+                                    </Badge>
+                                  )}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Academic Year: {semester.academicYear}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                              <span>
+                                Start: {semester.startDate ? new Date(semester.startDate).toLocaleDateString() : 'TBD'}
+                              </span>
+                              <span>
+                                End: {semester.endDate ? new Date(semester.endDate).toLocaleDateString() : 'TBD'}
+                              </span>
+                              <span>
+                                Results: {Array.isArray(semesterResults) ? 
+                                  semesterResults.filter((r: any) => r.semesterId === semester.id).length : 0
+                                }
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Semester Results Overview */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Semester-wise Results Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {semesterResultsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : Array.isArray(semesterResults) && semesterResults.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Award className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-medium mb-2">No Semester Results</h3>
+                    <p className="text-sm">Start adding semester-wise marks for students to track academic progress.</p>
+                    <Button onClick={() => setShowAddSemesterResult(true)} className="mt-4">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Result
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-3 font-medium">Student</th>
+                          <th className="text-left p-3 font-medium">Semester</th>
+                          <th className="text-left p-3 font-medium">Subject</th>
+                          <th className="text-left p-3 font-medium">Internal</th>
+                          <th className="text-left p-3 font-medium">External</th>
+                          <th className="text-left p-3 font-medium">Total</th>
+                          <th className="text-left p-3 font-medium">Grade</th>
+                          <th className="text-left p-3 font-medium">GPA</th>
+                          <th className="text-left p-3 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Array.isArray(semesterResults) && semesterResults.slice(0, 10).map((result: any) => (
+                          <tr key={result.id} className="border-b hover:bg-muted/50">
+                            <td className="p-3">
+                              <div>
+                                <div className="font-medium">{result.student?.name || 'Unknown Student'}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {result.student?.rollNumber}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <div className="font-medium">{result.semester?.name || 'Unknown Semester'}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {result.semester?.academicYear}
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg flex items-center justify-center text-xs font-bold">
+                                  {result.subject?.code || 'N/A'}
+                                </div>
+                                <span>{result.subject?.name || 'Unknown Subject'}</span>
+                              </div>
+                            </td>
+                            <td className="p-3 text-center">{result.internalMarks || 0}</td>
+                            <td className="p-3 text-center">{result.externalMarks || 0}</td>
+                            <td className="p-3">
+                              <span className="font-medium">{result.obtainedMarks}</span>
+                              <span className="text-muted-foreground">/{result.totalMarks}</span>
+                            </td>
+                            <td className="p-3">
+                              <Badge className={getGradeColor(result.grade)}>
+                                {result.grade}
+                              </Badge>
+                            </td>
+                            <td className="p-3 font-medium">{result.gpa || 'N/A'}</td>
                             <td className="p-3">
                               <div className="flex gap-2">
                                 <Button size="sm" variant="ghost">
