@@ -250,58 +250,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/timetable", async (req, res) => {
     try {
       const { class: className, section } = req.query;
-      // Mock timetable data
-      const mockTimetable = [
-        {
-          id: 1,
-          class: className || "Grade 6",
-          section: section || "A",
-          day: "monday",
-          period: 1,
-          startTime: "09:00",
-          endTime: "09:45",
-          subjectId: 1,
-          teacherId: 1,
-          room: "Room 101",
-          isActive: true,
-          createdAt: new Date(),
-          subject: { id: 1, name: "Mathematics", code: "MATH" },
-          teacher: { id: 1, name: "Dr. Maria Rodriguez", subject: "Mathematics" }
-        },
-        {
-          id: 2,
-          class: className || "Grade 6",
-          section: section || "A",
-          day: "monday",
-          period: 2,
-          startTime: "09:45",
-          endTime: "10:30",
-          subjectId: 2,
-          teacherId: 2,
-          room: "Room 102",
-          isActive: true,
-          createdAt: new Date(),
-          subject: { id: 2, name: "English", code: "ENG" },
-          teacher: { id: 2, name: "Prof. James Wilson", subject: "English" }
-        },
-        {
-          id: 3,
-          class: className || "Grade 6",
-          section: section || "A",
-          day: "tuesday",
-          period: 1,
-          startTime: "09:00",
-          endTime: "09:45",
-          subjectId: 3,
-          teacherId: 3,
-          room: "Lab A",
-          isActive: true,
-          createdAt: new Date(),
-          subject: { id: 3, name: "Science", code: "SCI" },
-          teacher: { id: 3, name: "Dr. Sarah Chen", subject: "Science" }
-        }
-      ];
-      res.json(mockTimetable);
+      const timetables = await storage.getTimetables(
+        className as string, 
+        section as string
+      );
+      res.json(timetables);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch timetable" });
     }
@@ -309,15 +262,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/timetable", async (req, res) => {
     try {
-      // Mock creation response
-      const newEntry = {
-        id: Math.floor(Math.random() * 1000),
-        ...req.body,
-        isActive: true,
-        createdAt: new Date(),
-      };
-      res.status(201).json(newEntry);
+      const validatedData = insertTimetableSchema.parse(req.body);
+      const timetableEntry = await storage.createTimetable(validatedData);
+      res.status(201).json(timetableEntry);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
       res.status(500).json({ message: "Failed to create timetable entry" });
     }
   });
@@ -345,15 +296,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { entries } = req.body;
       
-      // Mock bulk save - in real app, save multiple timetable entries
-      const savedEntries = entries.map((entry: any, index: number) => ({
-        id: Math.floor(Math.random() * 1000) + index,
-        ...entry,
-        createdAt: new Date()
-      }));
+      if (!Array.isArray(entries) || entries.length === 0) {
+        return res.status(400).json({ message: "Invalid entries data" });
+      }
+      
+      const validatedEntries = entries.map(entry => insertTimetableSchema.parse(entry));
+      const savedEntries = await storage.bulkCreateTimetables(validatedEntries);
 
       res.status(201).json(savedEntries);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
       res.status(500).json({ message: "Failed to save timetable entries" });
     }
   });
@@ -585,6 +539,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedTimetable);
     } catch (error) {
       res.status(500).json({ message: "Failed to update monthly timetable" });
+    }
+  });
+
+  // Period management routes
+  app.get("/api/periods", async (req, res) => {
+    try {
+      const periods = await storage.getPeriods();
+      res.json(periods);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch periods" });
+    }
+  });
+
+  app.post("/api/periods", async (req, res) => {
+    try {
+      const validatedData = insertPeriodSchema.parse(req.body);
+      const period = await storage.createPeriod(validatedData);
+      res.status(201).json(period);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create period" });
+    }
+  });
+
+  app.put("/api/periods/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const period = await storage.updatePeriod(id, req.body);
+      if (!period) {
+        return res.status(404).json({ message: "Period not found" });
+      }
+      res.json(period);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update period" });
+    }
+  });
+
+  app.delete("/api/periods/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deletePeriod(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Period not found" });
+      }
+      res.json({ message: "Period deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete period" });
     }
   });
 

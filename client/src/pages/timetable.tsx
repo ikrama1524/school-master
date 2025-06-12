@@ -24,22 +24,29 @@ export default function TimetablePage() {
   const [viewMode, setViewMode] = useState<"weekly" | "monthly" | "yearly">("weekly");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [showPeriodManager, setShowPeriodManager] = useState(false);
+  const [editingPeriod, setEditingPeriod] = useState<any>(null);
   
   const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"];
   const sections = ["A", "B", "C"];
-  const timeSlots = [
-    { period: 1, label: "Period 1", time: "8:00 - 9:00 AM" },
-    { period: 2, label: "Period 2", time: "9:00 - 10:00 AM" },
-    { period: 3, label: "Period 3", time: "10:00 - 11:00 AM" },
-    { period: 4, label: "Period 4", time: "11:00 - 12:00 PM" },
-    { period: 5, label: "Lunch", time: "12:00 - 1:00 PM" },
-    { period: 6, label: "Period 5", time: "1:00 - 2:00 PM" },
-    { period: 7, label: "Period 6", time: "2:00 - 3:00 PM" },
-    { period: 8, label: "Period 7", time: "3:00 - 4:00 PM" },
-    { period: 9, label: "Period 8", time: "4:00 - 5:00 PM" },
-    { period: 10, label: "Period 9", time: "5:00 - 6:00 PM" },
-    { period: 11, label: "Period 10", time: "6:00 - 7:00 PM" }
-  ];
+  // Use dynamic periods from database, fallback to default if not loaded
+  const timeSlots = Array.isArray(periods) && periods.length > 0 
+    ? periods.map(period => ({
+        period: period.periodNumber,
+        label: period.label,
+        time: `${period.startTime} - ${period.endTime}`,
+        isBreak: period.isBreak
+      }))
+    : [
+        { period: 1, label: "Period 1", time: "8:00 - 9:00 AM", isBreak: false },
+        { period: 2, label: "Period 2", time: "9:00 - 10:00 AM", isBreak: false },
+        { period: 3, label: "Period 3", time: "10:00 - 11:00 AM", isBreak: false },
+        { period: 4, label: "Period 4", time: "11:00 - 12:00 PM", isBreak: false },
+        { period: 5, label: "Lunch", time: "12:00 - 1:00 PM", isBreak: true },
+        { period: 6, label: "Period 5", time: "1:00 - 2:00 PM", isBreak: false },
+        { period: 7, label: "Period 6", time: "2:00 - 3:00 PM", isBreak: false },
+        { period: 8, label: "Period 7", time: "3:00 - 4:00 PM", isBreak: false }
+      ];
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
   const { data: subjects } = useQuery({
@@ -54,9 +61,13 @@ export default function TimetablePage() {
     queryKey: ["/api/timetable"],
   });
 
+  const { data: periods } = useQuery({
+    queryKey: ["/api/periods"],
+  });
+
   const saveTimetableMutation = useMutation({
     mutationFn: async (data: { entries: any[] }) => {
-      return apiRequest("POST", "/api/timetable", data);
+      return apiRequest("POST", "/api/timetable/bulk", data);
     },
     onSuccess: () => {
       toast({
@@ -241,10 +252,10 @@ export default function TimetablePage() {
               </td>
               {getWeekDays(currentDate).map((date, index) => {
                 const dayName = format(date, 'EEEE');
-                if (timeSlot.period === 5) {
+                if (timeSlot.isBreak) {
                   return (
                     <td key={`${dayName}-${timeSlot.period}`} className="border p-3 text-center bg-orange-50 dark:bg-orange-900/20">
-                      <div className="text-orange-600 font-medium">Lunch Break</div>
+                      <div className="text-orange-600 font-medium">{timeSlot.label}</div>
                     </td>
                   );
                 }
