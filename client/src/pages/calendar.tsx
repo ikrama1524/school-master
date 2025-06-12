@@ -29,6 +29,251 @@ interface EventWithDetails extends CalendarEvent {
   teacher?: Teacher;
 }
 
+interface MonthlyTimetableCreatorProps {
+  currentDate: Date;
+  subjects: Subject[];
+  teachers: Teacher[];
+  onSave: (timetableData: any) => void;
+}
+
+function MonthlyTimetableCreator({ currentDate, subjects, teachers, onSave }: MonthlyTimetableCreatorProps) {
+  const [timetableData, setTimetableData] = useState<any>({});
+  const [selectedClass, setSelectedClass] = useState("Grade 6");
+  
+  const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"];
+  const timeSlots = [
+    "08:00-09:00", "09:00-10:00", "10:00-11:00", "11:00-12:00",
+    "12:00-13:00", "13:00-14:00", "14:00-15:00", "15:00-16:00", "16:00-17:00"
+  ];
+  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  
+  // Get all weekdays for the current month
+  const getMonthWeekdays = () => {
+    const startOfCurrentMonth = startOfMonth(currentDate);
+    const endOfCurrentMonth = endOfMonth(currentDate);
+    const allDays = eachDayOfInterval({ start: startOfCurrentMonth, end: endOfCurrentMonth });
+    return allDays.filter(day => day.getDay() >= 1 && day.getDay() <= 5); // Monday to Friday
+  };
+
+  const monthWeekdays = getMonthWeekdays();
+
+  const updateTimetableSlot = (date: Date, timeSlot: string, subjectId: number | null, teacherId: number | null) => {
+    const dateKey = format(date, "yyyy-MM-dd");
+    const newData = { ...timetableData };
+    
+    if (!newData[selectedClass]) {
+      newData[selectedClass] = {};
+    }
+    if (!newData[selectedClass][dateKey]) {
+      newData[selectedClass][dateKey] = {};
+    }
+    
+    if (subjectId && teacherId) {
+      const subject = subjects.find(s => s.id === subjectId);
+      const teacher = teachers.find(t => t.id === teacherId);
+      
+      newData[selectedClass][dateKey][timeSlot] = {
+        subjectId,
+        teacherId,
+        subjectName: subject?.name || "",
+        teacherName: teacher?.name || "",
+        color: getSubjectColor(subjectId)
+      };
+    } else {
+      delete newData[selectedClass][dateKey][timeSlot];
+    }
+    
+    setTimetableData(newData);
+  };
+
+  const getSubjectColor = (subjectId: number): string => {
+    const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+    return colors[subjectId % colors.length];
+  };
+
+  const getTimetableSlot = (date: Date, timeSlot: string) => {
+    const dateKey = format(date, "yyyy-MM-dd");
+    return timetableData[selectedClass]?.[dateKey]?.[timeSlot] || null;
+  };
+
+  const copyWeekSchedule = (sourceWeek: Date[], targetWeek: Date[]) => {
+    const newData = { ...timetableData };
+    
+    sourceWeek.forEach((sourceDate, index) => {
+      if (targetWeek[index]) {
+        const sourceDateKey = format(sourceDate, "yyyy-MM-dd");
+        const targetDateKey = format(targetWeek[index], "yyyy-MM-dd");
+        
+        if (newData[selectedClass]?.[sourceDateKey]) {
+          if (!newData[selectedClass]) newData[selectedClass] = {};
+          newData[selectedClass][targetDateKey] = { ...newData[selectedClass][sourceDateKey] };
+        }
+      }
+    });
+    
+    setTimetableData(newData);
+  };
+
+  const getWeeksInMonth = () => {
+    const weeks: Date[][] = [];
+    const monthStart = startOfMonth(currentDate);
+    let currentWeekStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+    
+    while (currentWeekStart <= endOfMonth(currentDate)) {
+      const week = [];
+      for (let i = 0; i < 5; i++) { // Monday to Friday
+        const day = addDays(currentWeekStart, i);
+        if (day >= monthStart && day <= endOfMonth(currentDate)) {
+          week.push(day);
+        }
+      }
+      if (week.length > 0) {
+        weeks.push(week);
+      }
+      currentWeekStart = addWeeks(currentWeekStart, 1);
+    }
+    
+    return weeks;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Class Selection */}
+      <div className="flex items-center gap-4">
+        <Label>Select Class:</Label>
+        <Select value={selectedClass} onValueChange={setSelectedClass}>
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {classes.map(cls => (
+              <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Weekly Timetable Grid */}
+      <div className="space-y-8">
+        {getWeeksInMonth().map((week, weekIndex) => (
+          <Card key={weekIndex} className="p-4">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">
+                  Week {weekIndex + 1} - {format(week[0], "MMM d")} to {format(week[week.length - 1], "MMM d")}
+                </CardTitle>
+                {weekIndex > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => copyWeekSchedule(getWeeksInMonth()[0], week)}
+                  >
+                    Copy from Week 1
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="border p-2 bg-muted font-semibold">Time</th>
+                      {week.map(date => (
+                        <th key={date.toISOString()} className="border p-2 bg-muted font-semibold min-w-40">
+                          {format(date, "EEE, MMM d")}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {timeSlots.map(timeSlot => (
+                      <tr key={timeSlot}>
+                        <td className="border p-2 font-medium text-sm bg-muted/50">
+                          {timeSlot}
+                        </td>
+                        {week.map(date => {
+                          const slotData = getTimetableSlot(date, timeSlot);
+                          return (
+                            <td key={`${date.toISOString()}-${timeSlot}`} className="border p-1">
+                              <div className="space-y-2">
+                                <Select
+                                  value={slotData?.subjectId?.toString() || ""}
+                                  onValueChange={(value) => {
+                                    const subjectId = value ? parseInt(value) : null;
+                                    const teacherId = slotData?.teacherId || (subjects.find(s => s.id === subjectId) ? subjects[0]?.id : null);
+                                    updateTimetableSlot(date, timeSlot, subjectId, teacherId);
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue placeholder="Subject" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="">No Subject</SelectItem>
+                                    {subjects.map(subject => (
+                                      <SelectItem key={subject.id} value={subject.id.toString()}>
+                                        {subject.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                
+                                {slotData?.subjectId && (
+                                  <Select
+                                    value={slotData?.teacherId?.toString() || ""}
+                                    onValueChange={(value) => {
+                                      const teacherId = value ? parseInt(value) : null;
+                                      updateTimetableSlot(date, timeSlot, slotData.subjectId, teacherId);
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs">
+                                      <SelectValue placeholder="Teacher" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {teachers.map(teacher => (
+                                        <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                                          {teacher.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                                
+                                {slotData && (
+                                  <div 
+                                    className="text-xs p-1 rounded text-white text-center"
+                                    style={{ backgroundColor: slotData.color }}
+                                  >
+                                    {slotData.subjectName}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-2 pt-4 border-t">
+        <Button variant="outline" onClick={() => setTimetableData({})}>
+          Clear All
+        </Button>
+        <Button onClick={() => onSave(timetableData)}>
+          Save Monthly Timetable
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function CalendarPage() {
   const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -38,6 +283,8 @@ export default function CalendarPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventWithDetails | null>(null);
   const [filterType, setFilterType] = useState("all");
+  const [isMonthlyTimetableOpen, setIsMonthlyTimetableOpen] = useState(false);
+  const [monthlyTimetableData, setMonthlyTimetableData] = useState<any>({});
 
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -290,6 +537,36 @@ export default function CalendarPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Dialog open={isMonthlyTimetableOpen} onOpenChange={setIsMonthlyTimetableOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                Monthly Timetable
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create Monthly Timetable - {format(currentDate, "MMMM yyyy")}</DialogTitle>
+                <DialogDescription>
+                  Set up comprehensive monthly schedule with subjects, teachers, and time slots
+                </DialogDescription>
+              </DialogHeader>
+              <MonthlyTimetableCreator 
+                currentDate={currentDate}
+                subjects={Array.isArray(subjects) ? subjects : []}
+                teachers={Array.isArray(teachers) ? teachers : []}
+                onSave={(timetableData: any) => {
+                  setMonthlyTimetableData(timetableData);
+                  setIsMonthlyTimetableOpen(false);
+                  toast({
+                    title: "Monthly Timetable Created",
+                    description: "The monthly timetable has been successfully created.",
+                  });
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+          
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Export Calendar
