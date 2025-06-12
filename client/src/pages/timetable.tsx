@@ -193,10 +193,10 @@ export default function TimetablePage() {
     // Then check database entries (saved timetables)
     if (Array.isArray(timetableEntries)) {
       const dbEntry = timetableEntries.find((entry: any) => 
-        entry.className === selectedClass &&
+        entry.class === selectedClass &&
         entry.section === selectedSection &&
-        entry.dayOfWeek === day &&
-        entry.periodNumber === period
+        entry.day === day &&
+        entry.period === period
       );
       
       if (dbEntry) {
@@ -238,21 +238,20 @@ export default function TimetablePage() {
     const key = `${selectedClass}-${selectedSection}`;
     const slots = timetableData[key] || {};
     
-    // Create entries for the entire academic year (current year)
-    const academicYearStart = new Date(new Date().getFullYear(), 3, 1); // April 1st
-    const academicYearEnd = new Date(new Date().getFullYear() + 1, 2, 31); // March 31st next year
-    
     const timetableEntries = Object.entries(slots).map(([slotKey, slot]: [string, any]) => {
       const [day, period] = slotKey.split('-');
+      const timeSlot = timeSlots.find(t => t.period === parseInt(period));
+      
       return {
-        className: selectedClass,
+        class: selectedClass,
         section: selectedSection,
-        dayOfWeek: day,
-        periodNumber: parseInt(period),
-        subjectId: slot.subjectId || null,
-        teacherId: slot.teacherId || null,
-        startDate: academicYearStart,
-        endDate: academicYearEnd
+        day: day,
+        period: parseInt(period),
+        startTime: timeSlot?.time.split(' - ')[0] || "09:00",
+        endTime: timeSlot?.time.split(' - ')[1] || "10:00",
+        subjectId: slot.subjectId,
+        teacherId: slot.teacherId,
+        room: null
       };
     }).filter(entry => entry.subjectId && entry.teacherId);
 
