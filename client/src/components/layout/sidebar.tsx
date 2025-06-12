@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 const navigationItems = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/admissions", label: "Admissions", icon: UserPlus },
-  { href: "/calendar", label: "Calendar & Timetable", icon: CalendarDays },
+  { href: "/calendar", label: "Timetable", icon: Clock },
   { href: "/teachers", label: "Teachers", icon: GraduationCap },
   { href: "/homework", label: "Homework", icon: BookOpen },
   { href: "/attendance", label: "Attendance", icon: Calendar },

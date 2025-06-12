@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/dashboard";
 
-import Calendar from "@/pages/calendar";
+import Timetable from "@/pages/timetable";
 import Teachers from "@/pages/teachers";
 import Attendance from "@/pages/attendance";
 import Fees from "@/pages/fees";
@@ -25,7 +25,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/admissions" component={Admissions} />
-      <Route path="/calendar" component={Calendar} />
+      <Route path="/calendar" component={Timetable} />
       <Route path="/teachers" component={Teachers} />
       <Route path="/attendance" component={Attendance} />
       <Route path="/fees" component={Fees} />

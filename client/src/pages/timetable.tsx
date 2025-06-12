@@ -1,605 +1,383 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { 
-  Clock, Plus, Edit, Trash2, Calendar, Users, BookOpen, 
-  ChevronLeft, ChevronRight, Download, Filter, Search,
-  MapPin, User, GraduationCap, AlertCircle
+import {
+  Clock, Users, BookOpen, 
+  GraduationCap, Save, Download, Copy
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Timetable, Teacher, Subject } from "@shared/schema";
-
-interface TimetableEntry extends Timetable {
-  subject: Subject;
-  teacher: Teacher;
-}
-
-interface TimeSlot {
-  period: number;
-  startTime: string;
-  endTime: string;
-  duration: number;
-}
+import type { Subject, Teacher, Timetable } from "@shared/schema";
 
 export default function TimetablePage() {
   const { toast } = useToast();
   const [selectedClass, setSelectedClass] = useState("Grade 6");
   const [selectedSection, setSelectedSection] = useState("A");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<TimetableEntry | null>(null);
-  const [viewMode, setViewMode] = useState<"weekly" | "daily">("weekly");
-
-  const [newTimetableEntry, setNewTimetableEntry] = useState({
-    class: "Grade 6",
-    section: "A",
-    day: "monday",
-    period: 1,
-    startTime: "09:00",
-    endTime: "09:45",
-    subjectId: "",
-    teacherId: "",
-    room: "",
-  });
-
-  // Time slots configuration
-  const timeSlots: TimeSlot[] = [
-    { period: 1, startTime: "09:00", endTime: "09:45", duration: 45 },
-    { period: 2, startTime: "09:45", endTime: "10:30", duration: 45 },
-    { period: 3, startTime: "10:45", endTime: "11:30", duration: 45 }, // Break: 10:30-10:45
-    { period: 4, startTime: "11:30", endTime: "12:15", duration: 45 },
-    { period: 5, startTime: "13:00", endTime: "13:45", duration: 45 }, // Lunch: 12:15-13:00
-    { period: 6, startTime: "13:45", endTime: "14:30", duration: 45 },
-    { period: 7, startTime: "14:30", endTime: "15:15", duration: 45 },
-    { period: 8, startTime: "15:15", endTime: "16:00", duration: 45 },
+  const [timetableData, setTimetableData] = useState<any>({});
+  
+  const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"];
+  const sections = ["A", "B", "C"];
+  const timeSlots = [
+    { period: 1, time: "08:00-09:00", label: "1st Period" },
+    { period: 2, time: "09:00-10:00", label: "2nd Period" },
+    { period: 3, time: "10:00-11:00", label: "3rd Period" },
+    { period: 4, time: "11:00-12:00", label: "4th Period" },
+    { period: 5, time: "12:00-13:00", label: "Lunch Break" },
+    { period: 6, time: "13:00-14:00", label: "5th Period" },
+    { period: 7, time: "14:00-15:00", label: "6th Period" },
+    { period: 8, time: "15:00-16:00", label: "7th Period" },
   ];
+  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
-  const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-  const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
-
-  // Fetch timetable data
-  const { data: timetableData = [], isLoading: isLoadingTimetable } = useQuery({
-    queryKey: ["/api/timetable", selectedClass, selectedSection],
-    queryFn: async () => {
-      const response = await apiRequest("GET", `/api/timetable?class=${selectedClass}&section=${selectedSection}`);
-      return Array.isArray(response) ? response : [];
-    },
-  });
-
-  // Fetch subjects and teachers
-  const { data: subjects = [] } = useQuery({
+  const { data: subjects, isLoading: subjectsLoading } = useQuery({
     queryKey: ["/api/subjects"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/subjects");
-      return Array.isArray(response) ? response : [];
-    },
+    retry: false,
   });
 
-  const { data: teachers = [] } = useQuery({
+  const { data: teachers, isLoading: teachersLoading } = useQuery({
     queryKey: ["/api/teachers"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/teachers");
-      return Array.isArray(response) ? response : [];
-    },
+    retry: false,
   });
 
-  // Create timetable entry mutation
-  const createTimetableEntryMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest("POST", "/api/timetable", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/timetable"] });
-      toast({
-        title: "Timetable Entry Created",
-        description: "Subject period has been scheduled successfully",
-      });
-      setIsCreateModalOpen(false);
-      resetForm();
-    },
+  const { data: existingTimetable, isLoading: timetableLoading } = useQuery({
+    queryKey: ["/api/timetable", selectedClass, selectedSection],
+    retry: false,
   });
 
-  // Update timetable entry mutation
-  const updateTimetableEntryMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return await apiRequest("PUT", `/api/timetable/${id}`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/timetable"] });
-      toast({
-        title: "Timetable Updated",
-        description: "Subject period has been updated successfully",
-      });
-      setEditingEntry(null);
-    },
-  });
-
-  // Delete timetable entry mutation
-  const deleteTimetableEntryMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return await apiRequest("DELETE", `/api/timetable/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/timetable"] });
-      toast({
-        title: "Period Deleted",
-        description: "Subject period has been removed from timetable",
-      });
-    },
-  });
-
-  const resetForm = () => {
-    setNewTimetableEntry({
-      class: selectedClass,
-      section: selectedSection,
-      day: "monday",
-      period: 1,
-      startTime: "09:00",
-      endTime: "09:45",
-      subjectId: "",
-      teacherId: "",
-      room: "",
-    });
+  const updateTimetableSlot = (day: string, period: number, subjectId: number | null, teacherId: number | null) => {
+    const newData = { ...timetableData };
+    const key = `${selectedClass}-${selectedSection}`;
+    
+    if (!newData[key]) {
+      newData[key] = {};
+    }
+    if (!newData[key][day]) {
+      newData[key][day] = {};
+    }
+    
+    if (subjectId && teacherId && period !== 5) { // Skip lunch break
+      const subject = Array.isArray(subjects) ? subjects.find((s: Subject) => s.id === subjectId) : null;
+      const teacher = Array.isArray(teachers) ? teachers.find((t: Teacher) => t.id === teacherId) : null;
+      
+      newData[key][day][period] = {
+        subjectId,
+        teacherId,
+        subjectName: subject?.name || "",
+        teacherName: teacher?.name || "",
+        color: getSubjectColor(subjectId)
+      };
+    } else {
+      delete newData[key][day][period];
+    }
+    
+    setTimetableData(newData);
   };
 
-  const handleCreateEntry = () => {
-    if (!newTimetableEntry.subjectId || !newTimetableEntry.teacherId) {
+  const getSubjectColor = (subjectId: number): string => {
+    const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+    return colors[subjectId % colors.length];
+  };
+
+  const getTimetableSlot = (day: string, period: number) => {
+    const key = `${selectedClass}-${selectedSection}`;
+    return timetableData[key]?.[day]?.[period] || 
+           (Array.isArray(existingTimetable) ? existingTimetable.find((entry: any) => 
+             entry.class === selectedClass && 
+             entry.section === selectedSection &&
+             entry.day === day && 
+             entry.period === period
+           ) : null) || null;
+  };
+
+  const saveTimetableMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/timetable/bulk", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/timetable"] });
       toast({
-        title: "Missing Information",
-        description: "Please select both subject and teacher",
+        title: "Timetable Saved",
+        description: "Weekly timetable has been successfully updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save timetable. Please try again.",
         variant: "destructive",
       });
-      return;
+    },
+  });
+
+  const handleSaveTimetable = () => {
+    const timetableEntries = [];
+    
+    for (const day of daysOfWeek) {
+      for (const timeSlot of timeSlots) {
+        if (timeSlot.period === 5) continue; // Skip lunch break
+        
+        const slotData = getTimetableSlot(day, timeSlot.period);
+        if (slotData && slotData.subjectId && slotData.teacherId) {
+          timetableEntries.push({
+            class: selectedClass,
+            section: selectedSection,
+            day: day,
+            period: timeSlot.period,
+            subjectId: slotData.subjectId,
+            teacherId: slotData.teacherId,
+            startTime: timeSlot.time.split('-')[0],
+            endTime: timeSlot.time.split('-')[1],
+          });
+        }
+      }
     }
 
-    const timeSlot = timeSlots.find(slot => slot.period === newTimetableEntry.period);
-    const entryData = {
-      ...newTimetableEntry,
-      startTime: timeSlot?.startTime || newTimetableEntry.startTime,
-      endTime: timeSlot?.endTime || newTimetableEntry.endTime,
-      subjectId: parseInt(newTimetableEntry.subjectId),
-      teacherId: parseInt(newTimetableEntry.teacherId),
-    };
-
-    createTimetableEntryMutation.mutate(entryData);
+    saveTimetableMutation.mutate({ entries: timetableEntries });
   };
 
-  const handleEditEntry = (entry: TimetableEntry) => {
-    setEditingEntry(entry);
-    setNewTimetableEntry({
-      class: entry.class,
-      section: entry.section,
-      day: entry.day,
-      period: entry.period,
-      startTime: entry.startTime,
-      endTime: entry.endTime,
-      subjectId: entry.subjectId.toString(),
-      teacherId: entry.teacherId.toString(),
-      room: entry.room || "",
-    });
-  };
-
-  const handleUpdateEntry = () => {
-    if (!editingEntry) return;
-
-    const timeSlot = timeSlots.find(slot => slot.period === newTimetableEntry.period);
-    const entryData = {
-      ...newTimetableEntry,
-      startTime: timeSlot?.startTime || newTimetableEntry.startTime,
-      endTime: timeSlot?.endTime || newTimetableEntry.endTime,
-      subjectId: parseInt(newTimetableEntry.subjectId),
-      teacherId: parseInt(newTimetableEntry.teacherId),
-    };
-
-    updateTimetableEntryMutation.mutate({ id: editingEntry.id, data: entryData });
-  };
-
-  const getTimetableEntry = (day: string, period: number): TimetableEntry | undefined => {
-    return timetableData.find((entry: TimetableEntry) => 
-      entry.day === day && entry.period === period
-    );
-  };
-
-  const getSubjectName = (subjectId: number): string => {
-    const subject = subjects.find((s: Subject) => s.id === subjectId);
-    return subject?.name || "Unknown Subject";
-  };
-
-  const getTeacherName = (teacherId: number): string => {
-    const teacher = teachers.find((t: Teacher) => t.id === teacherId);
-    return teacher?.name || "Unknown Teacher";
-  };
-
-  const getSubjectColor = (subjectName: string): string => {
-    const colors = [
-      "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-      "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-      "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
-      "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300",
-      "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300",
-      "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-    ];
-    return colors[subjectName.length % colors.length];
-  };
-
-  const isBreakTime = (period: number): boolean => {
-    return period === 3 || period === 5; // Periods after break
+  const copyTimetableToSection = (targetSection: string) => {
+    const sourceKey = `${selectedClass}-${selectedSection}`;
+    const targetKey = `${selectedClass}-${targetSection}`;
+    
+    if (timetableData[sourceKey]) {
+      const newData = { ...timetableData };
+      newData[targetKey] = { ...timetableData[sourceKey] };
+      setTimetableData(newData);
+      
+      toast({
+        title: "Timetable Copied",
+        description: `Timetable copied to ${selectedClass} Section ${targetSection}`,
+      });
+    }
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Subject Timetable & Schedule
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Manage class schedules, subject periods, and teacher assignments
-          </p>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gradient">Timetable Management</h1>
+            <p className="text-muted-foreground mt-1">
+              Create and manage weekly class schedules with subject and teacher assignments
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export Timetable
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Schedule
-          </Button>
-          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Period
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingEntry ? "Edit Period" : "Add New Period"}
-                </DialogTitle>
-                <DialogDescription>
-                  Schedule a subject period with teacher assignment
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="class">Class</Label>
-                    <Select 
-                      value={newTimetableEntry.class} 
-                      onValueChange={(value) => setNewTimetableEntry({ ...newTimetableEntry, class: value })}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classes.map((cls) => (
-                          <SelectItem key={cls} value={cls}>{cls}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="section">Section</Label>
-                    <Select 
-                      value={newTimetableEntry.section} 
-                      onValueChange={(value) => setNewTimetableEntry({ ...newTimetableEntry, section: value })}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="A">A</SelectItem>
-                        <SelectItem value="B">B</SelectItem>
-                        <SelectItem value="C">C</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="day">Day</Label>
-                    <Select 
-                      value={newTimetableEntry.day} 
-                      onValueChange={(value) => setNewTimetableEntry({ ...newTimetableEntry, day: value })}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {days.map((day) => (
-                          <SelectItem key={day} value={day}>
-                            {day.charAt(0).toUpperCase() + day.slice(1)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="period">Period</Label>
-                    <Select 
-                      value={newTimetableEntry.period.toString()} 
-                      onValueChange={(value) => setNewTimetableEntry({ ...newTimetableEntry, period: parseInt(value) })}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeSlots.map((slot) => (
-                          <SelectItem key={slot.period} value={slot.period.toString()}>
-                            Period {slot.period} ({slot.startTime} - {slot.endTime})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="subject">Subject</Label>
-                  <Select 
-                    value={newTimetableEntry.subjectId} 
-                    onValueChange={(value) => setNewTimetableEntry({ ...newTimetableEntry, subjectId: value })}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select subject" />
+        {/* Class and Section Selection */}
+        <Card className="animate-slide-up">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Label>Class:</Label>
+                  <Select value={selectedClass} onValueChange={setSelectedClass}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.isArray(subjects) && subjects.map((subject: Subject) => (
-                        <SelectItem key={subject.id} value={subject.id.toString()}>
-                          {subject.name} ({subject.code})
-                        </SelectItem>
+                      {classes.map(cls => (
+                        <SelectItem key={cls} value={cls}>{cls}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div>
-                  <Label htmlFor="teacher">Teacher</Label>
-                  <Select 
-                    value={newTimetableEntry.teacherId} 
-                    onValueChange={(value) => setNewTimetableEntry({ ...newTimetableEntry, teacherId: value })}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select teacher" />
+                <div className="flex items-center gap-2">
+                  <Label>Section:</Label>
+                  <Select value={selectedSection} onValueChange={setSelectedSection}>
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.isArray(teachers) && teachers.map((teacher: Teacher) => (
-                        <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                          {teacher.name} - {teacher.subject}
-                        </SelectItem>
+                      {sections.map(section => (
+                        <SelectItem key={section} value={section}>{section}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="room">Room (Optional)</Label>
-                  <Input
-                    id="room"
-                    value={newTimetableEntry.room}
-                    onChange={(e) => setNewTimetableEntry({ ...newTimetableEntry, room: e.target.value })}
-                    placeholder="e.g., Room 101, Lab A"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setIsCreateModalOpen(false);
-                      setEditingEntry(null);
-                      resetForm();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={editingEntry ? handleUpdateEntry : handleCreateEntry}
-                    disabled={createTimetableEntryMutation.isPending || updateTimetableEntryMutation.isPending}
-                  >
-                    {editingEntry ? "Update" : "Create"} Period
-                  </Button>
                 </div>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Class and Section Selector */}
-      <Card className="animate-slide-up">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-            <div className="flex gap-4">
-              <div>
-                <Label>Class</Label>
-                <Select value={selectedClass} onValueChange={setSelectedClass}>
-                  <SelectTrigger className="w-32 mt-1">
-                    <SelectValue />
+              <div className="flex gap-2">
+                <Select onValueChange={copyTimetableToSection}>
+                  <SelectTrigger className="w-48">
+                    <Copy className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Copy to Section..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {classes.map((cls) => (
-                      <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                    {sections.filter(s => s !== selectedSection).map(section => (
+                      <SelectItem key={section} value={section}>Section {section}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label>Section</Label>
-                <Select value={selectedSection} onValueChange={setSelectedSection}>
-                  <SelectTrigger className="w-24 mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A">A</SelectItem>
-                    <SelectItem value="B">B</SelectItem>
-                    <SelectItem value="C">C</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Button onClick={handleSaveTimetable} disabled={saveTimetableMutation.isPending}>
+                  <Save className="w-4 h-4 mr-2" />
+                  {saveTimetableMutation.isPending ? "Saving..." : "Save Timetable"}
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2 ml-auto">
-              <Button 
-                variant={viewMode === "weekly" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("weekly")}
-              >
-                Weekly View
-              </Button>
-              <Button 
-                variant={viewMode === "daily" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("daily")}
-              >
-                Daily View
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Weekly Timetable Grid */}
-      <Card className="animate-slide-up" style={{ animationDelay: '200ms' }}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Weekly Timetable - {selectedClass} {selectedSection}
-          </CardTitle>
-          <CardDescription>
-            Subject schedule with teacher assignments and room details
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className="border p-3 bg-muted font-semibold text-left min-w-24">Period</th>
-                  {days.map((day) => (
-                    <th key={day} className="border p-3 bg-muted font-semibold text-center min-w-40">
-                      {day.charAt(0).toUpperCase() + day.slice(1)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {timeSlots.map((slot) => (
-                  <tr key={slot.period}>
-                    <td className="border p-3 bg-muted/50">
-                      <div className="text-sm font-medium">Period {slot.period}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {slot.startTime} - {slot.endTime}
-                      </div>
-                      {isBreakTime(slot.period) && slot.period === 3 && (
-                        <div className="text-xs text-orange-600 font-medium mt-1">
-                          After Break
-                        </div>
-                      )}
-                      {isBreakTime(slot.period) && slot.period === 5 && (
-                        <div className="text-xs text-orange-600 font-medium mt-1">
-                          After Lunch
-                        </div>
-                      )}
-                    </td>
-                    {days.map((day) => {
-                      const entry = getTimetableEntry(day, slot.period);
-                      return (
-                        <td key={`${day}-${slot.period}`} className="border p-2 h-20">
-                          {entry ? (
-                            <div className={`p-2 rounded-lg text-sm ${getSubjectColor(getSubjectName(entry.subjectId))} h-full flex flex-col justify-between`}>
-                              <div>
-                                <div className="font-semibold truncate">
-                                  {getSubjectName(entry.subjectId)}
-                                </div>
-                                <div className="text-xs flex items-center gap-1 mt-1">
-                                  <User className="h-3 w-3" />
-                                  {getTeacherName(entry.teacherId)}
-                                </div>
-                                {entry.room && (
-                                  <div className="text-xs flex items-center gap-1">
-                                    <MapPin className="h-3 w-3" />
-                                    {entry.room}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex gap-1 mt-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  className="h-6 w-6 p-0"
-                                  onClick={() => {
-                                    handleEditEntry(entry);
-                                    setIsCreateModalOpen(true);
-                                  }}
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  className="h-6 w-6 p-0 text-red-500 hover:text-red-600"
-                                  onClick={() => deleteTimetableEntryMutation.mutate(entry.id)}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="h-full flex items-center justify-center text-muted-foreground">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-full w-full text-xs"
-                                onClick={() => {
-                                  setNewTimetableEntry({
-                                    ...newTimetableEntry,
-                                    day,
-                                    period: slot.period,
-                                    startTime: slot.startTime,
-                                    endTime: slot.endTime,
-                                  });
-                                  setIsCreateModalOpen(true);
+        {/* Timetable Grid */}
+        <Card className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Weekly Timetable - {selectedClass} Section {selectedSection}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border p-3 bg-muted font-semibold">Time / Day</th>
+                    {daysOfWeek.map(day => (
+                      <th key={day} className="border p-3 bg-muted font-semibold min-w-48">
+                        {day}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {timeSlots.map(timeSlot => (
+                    <tr key={timeSlot.period}>
+                      <td className="border p-3 font-medium text-sm bg-muted/50 text-center">
+                        <div>{timeSlot.label}</div>
+                        <div className="text-xs text-muted-foreground">{timeSlot.time}</div>
+                      </td>
+                      {daysOfWeek.map(day => {
+                        if (timeSlot.period === 5) {
+                          // Lunch break row
+                          return (
+                            <td key={`${day}-${timeSlot.period}`} className="border p-3 text-center bg-orange-50 dark:bg-orange-900/20">
+                              <div className="text-orange-600 font-medium">Lunch Break</div>
+                            </td>
+                          );
+                        }
+
+                        const slotData = getTimetableSlot(day, timeSlot.period);
+                        return (
+                          <td key={`${day}-${timeSlot.period}`} className="border p-2">
+                            <div className="space-y-2">
+                              <Select
+                                value={slotData?.subjectId?.toString() || ""}
+                                onValueChange={(value: string) => {
+                                  const subjectId = (value && value !== "none") ? parseInt(value) : null;
+                                  const teacherId = slotData?.teacherId || (Array.isArray(subjects) && subjects.find((s: Subject) => s.id === subjectId) ? subjects[0]?.id : null);
+                                  updateTimetableSlot(day, timeSlot.period, subjectId, teacherId);
                                 }}
                               >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Add
-                              </Button>
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue placeholder="Select Subject" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">No Subject</SelectItem>
+                                  {Array.isArray(subjects) && subjects.map((subject: Subject) => (
+                                    <SelectItem key={subject.id} value={subject.id.toString()}>
+                                      {subject.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              
+                              {slotData?.subjectId && (
+                                <Select
+                                  value={slotData?.teacherId?.toString() || ""}
+                                  onValueChange={(value) => {
+                                    const teacherId = value ? parseInt(value) : null;
+                                    updateTimetableSlot(day, timeSlot.period, slotData.subjectId, teacherId);
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue placeholder="Select Teacher" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.isArray(teachers) && teachers.map((teacher: Teacher) => (
+                                      <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                                        {teacher.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                              
+                              {slotData && slotData.subjectName && (
+                                <div 
+                                  className="text-xs p-2 rounded text-white text-center"
+                                  style={{ backgroundColor: slotData.color }}
+                                >
+                                  <div className="font-medium">{slotData.subjectName}</div>
+                                  {slotData.teacherName && (
+                                    <div className="text-xs opacity-90">{slotData.teacherName}</div>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Break Times Info */}
-      <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-orange-500" />
-              <span className="font-medium">Break Times:</span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <Badge variant="outline">Morning Break: 10:30 - 10:45 AM</Badge>
-            <Badge variant="outline">Lunch Break: 12:15 - 1:00 PM</Badge>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <BookOpen className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Subjects</p>
+                  <p className="text-2xl font-bold">{Array.isArray(subjects) ? subjects.length : 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="animate-slide-up" style={{ animationDelay: '500ms' }}>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <Users className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Teachers</p>
+                  <p className="text-2xl font-bold">{Array.isArray(teachers) ? teachers.length : 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="animate-slide-up" style={{ animationDelay: '600ms' }}>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                  <Clock className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Periods per Day</p>
+                  <p className="text-2xl font-bold">7</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
