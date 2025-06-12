@@ -27,119 +27,119 @@ export default function TimetablePage() {
   const classes = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10"];
   const sections = ["A", "B", "C"];
   const timeSlots = [
-    { period: 1, time: "08:00-09:00", label: "1st Period" },
-    { period: 2, time: "09:00-10:00", label: "2nd Period" },
-    { period: 3, time: "10:00-11:00", label: "3rd Period" },
-    { period: 4, time: "11:00-12:00", label: "4th Period" },
-    { period: 5, time: "12:00-13:00", label: "Lunch Break" },
-    { period: 6, time: "13:00-14:00", label: "5th Period" },
-    { period: 7, time: "14:00-15:00", label: "6th Period" },
-    { period: 8, time: "15:00-16:00", label: "7th Period" },
+    { period: 1, label: "Period 1", time: "8:00 - 9:00 AM" },
+    { period: 2, label: "Period 2", time: "9:00 - 10:00 AM" },
+    { period: 3, label: "Period 3", time: "10:00 - 11:00 AM" },
+    { period: 4, label: "Period 4", time: "11:00 - 12:00 PM" },
+    { period: 5, label: "Lunch", time: "12:00 - 1:00 PM" },
+    { period: 6, label: "Period 5", time: "1:00 - 2:00 PM" },
+    { period: 7, label: "Period 6", time: "2:00 - 3:00 PM" },
+    { period: 8, label: "Period 7", time: "3:00 - 4:00 PM" },
+    { period: 9, label: "Period 8", time: "4:00 - 5:00 PM" },
+    { period: 10, label: "Period 9", time: "5:00 - 6:00 PM" },
+    { period: 11, label: "Period 10", time: "6:00 - 7:00 PM" }
   ];
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
-  const { data: subjects, isLoading: subjectsLoading } = useQuery({
+  const { data: subjects } = useQuery({
     queryKey: ["/api/subjects"],
-    retry: false,
   });
 
-  const { data: teachers, isLoading: teachersLoading } = useQuery({
+  const { data: teachers } = useQuery({
     queryKey: ["/api/teachers"],
-    retry: false,
   });
 
-  const { data: existingTimetable, isLoading: timetableLoading } = useQuery({
-    queryKey: ["/api/timetable", selectedClass, selectedSection],
-    retry: false,
+  const { data: timetableEntries } = useQuery({
+    queryKey: ["/api/timetable"],
   });
-
-  const updateTimetableSlot = (day: string, period: number, subjectId: number | null, teacherId: number | null) => {
-    const newData = { ...timetableData };
-    const key = `${selectedClass}-${selectedSection}`;
-    
-    if (!newData[key]) {
-      newData[key] = {};
-    }
-    if (!newData[key][day]) {
-      newData[key][day] = {};
-    }
-    
-    if (subjectId && teacherId && period !== 5) { // Skip lunch break
-      const subject = Array.isArray(subjects) ? subjects.find((s: Subject) => s.id === subjectId) : null;
-      const teacher = Array.isArray(teachers) ? teachers.find((t: Teacher) => t.id === teacherId) : null;
-      
-      newData[key][day][period] = {
-        subjectId,
-        teacherId,
-        subjectName: subject?.name || "",
-        teacherName: teacher?.name || "",
-        color: getSubjectColor(subjectId)
-      };
-    } else {
-      delete newData[key][day][period];
-    }
-    
-    setTimetableData(newData);
-  };
-
-  const getSubjectColor = (subjectId: number): string => {
-    const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
-    return colors[subjectId % colors.length];
-  };
-
-  const getTimetableSlot = (day: string, period: number) => {
-    const key = `${selectedClass}-${selectedSection}`;
-    return timetableData[key]?.[day]?.[period] || 
-           (Array.isArray(existingTimetable) ? existingTimetable.find((entry: any) => 
-             entry.class === selectedClass && 
-             entry.section === selectedSection &&
-             entry.day === day && 
-             entry.period === period
-           ) : null) || null;
-  };
 
   const saveTimetableMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest("POST", "/api/timetable/bulk", data);
+    mutationFn: async (data: { entries: any[] }) => {
+      return apiRequest("POST", "/api/timetable", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/timetable"] });
       toast({
-        title: "Timetable Saved",
-        description: "Weekly timetable has been successfully updated.",
+        title: "Success",
+        description: "Timetable saved successfully",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/timetable"] });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to save timetable. Please try again.",
+        description: "Failed to save timetable",
         variant: "destructive",
       });
     },
   });
 
-  const handleSaveTimetable = () => {
-    const timetableEntries = [];
+  const updateTimetableSlot = (day: string, period: number, subjectId: number | null, teacherId: number | null) => {
+    const key = `${selectedClass}-${selectedSection}`;
+    const newData = { ...timetableData };
     
-    for (const day of daysOfWeek) {
-      for (const timeSlot of timeSlots) {
-        if (timeSlot.period === 5) continue; // Skip lunch break
-        
-        const slotData = getTimetableSlot(day, timeSlot.period);
-        if (slotData && slotData.subjectId && slotData.teacherId) {
-          timetableEntries.push({
-            class: selectedClass,
-            section: selectedSection,
-            day: day,
-            period: timeSlot.period,
-            subjectId: slotData.subjectId,
-            teacherId: slotData.teacherId,
-            startTime: timeSlot.time.split('-')[0],
-            endTime: timeSlot.time.split('-')[1],
-          });
-        }
-      }
+    if (!newData[key]) {
+      newData[key] = {};
     }
+    
+    const slotKey = `${day}-${period}`;
+    
+    if (subjectId) {
+      const subject = Array.isArray(subjects) ? subjects.find((s: Subject) => s.id === subjectId) : null;
+      const teacher = Array.isArray(teachers) ? teachers.find((t: Teacher) => t.id === teacherId) : null;
+      
+      newData[key][slotKey] = {
+        subjectId,
+        teacherId,
+        subjectName: subject?.name || "",
+        teacherName: teacher?.name || ""
+      };
+    } else {
+      delete newData[key][slotKey];
+    }
+    
+    setTimetableData(newData);
+  };
+
+  const getTimetableSlot = (day: string, period: number) => {
+    const key = `${selectedClass}-${selectedSection}`;
+    const slotKey = `${day}-${period}`;
+    return timetableData[key]?.[slotKey];
+  };
+
+  const exportTimetable = () => {
+    const data = timetableData[`${selectedClass}-${selectedSection}`] || {};
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Day,Time,Subject,Teacher\n" +
+      Object.entries(data).map(([key, slot]: [string, any]) => {
+        const [day, period] = key.split('-');
+        const timeSlot = timeSlots.find(t => t.period === parseInt(period));
+        return `${day},${timeSlot?.time || ''},${slot.subjectName},${slot.teacherName}`;
+      }).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `timetable-${selectedClass}-${selectedSection}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleSaveTimetable = () => {
+    const key = `${selectedClass}-${selectedSection}`;
+    const slots = timetableData[key] || {};
+    
+    const timetableEntries = Object.entries(slots).map(([slotKey, slot]: [string, any]) => {
+      const [day, period] = slotKey.split('-');
+      return {
+        class: selectedClass,
+        section: selectedSection,
+        day,
+        period: parseInt(period),
+        subjectId: slot.subjectId,
+        teacherId: slot.teacherId
+      };
+    });
 
     saveTimetableMutation.mutate({ entries: timetableEntries });
   };
@@ -237,7 +237,7 @@ export default function TimetablePage() {
               </Button>
             </div>
             
-            <Button variant="outline">
+            <Button variant="outline" onClick={exportTimetable}>
               <Download className="w-4 h-4 mr-2" />
               Export Timetable
             </Button>
@@ -315,7 +315,6 @@ export default function TimetablePage() {
               <div className="flex gap-2">
                 <Select onValueChange={copyTimetableToSection}>
                   <SelectTrigger className="w-48">
-                    <Copy className="w-4 h-4 mr-2" />
                     <SelectValue placeholder="Copy to Section..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -359,104 +358,148 @@ export default function TimetablePage() {
                       ))}
                     </tr>
                   </thead>
-                <tbody>
-                  {timeSlots.map(timeSlot => (
-                    <tr key={timeSlot.period}>
-                      <td className="border p-3 font-medium text-sm bg-muted/50 text-center">
-                        <div>{timeSlot.label}</div>
-                        <div className="text-xs text-muted-foreground">{timeSlot.time}</div>
-                      </td>
-                      {getWeekDays(currentDate).map((date, index) => {
-                        const dayName = format(date, 'EEEE');
-                        if (timeSlot.period === 5) {
-                          // Lunch break row
-                          return (
-                            <td key={`${dayName}-${timeSlot.period}`} className="border p-3 text-center bg-orange-50 dark:bg-orange-900/20">
-                              <div className="text-orange-600 font-medium">Lunch Break</div>
-                            </td>
-                          );
-                        }
+                  <tbody>
+                    {timeSlots.map(timeSlot => (
+                      <tr key={timeSlot.period}>
+                        <td className="border p-3 font-medium text-sm bg-muted/50 text-center">
+                          <div>{timeSlot.label}</div>
+                          <div className="text-xs text-muted-foreground">{timeSlot.time}</div>
+                        </td>
+                        {getWeekDays(currentDate).map((date, index) => {
+                          const dayName = format(date, 'EEEE');
+                          if (timeSlot.period === 5) {
+                            // Lunch break row
+                            return (
+                              <td key={`${dayName}-${timeSlot.period}`} className="border p-3 text-center bg-orange-50 dark:bg-orange-900/20">
+                                <div className="text-orange-600 font-medium">Lunch Break</div>
+                              </td>
+                            );
+                          }
 
-                        const slotData = getTimetableSlot(dayName, timeSlot.period);
-                        return (
-                          <td key={`${dayName}-${timeSlot.period}`} className="border p-2">
-                            <div className="space-y-2">
-                              <Select
-                                value={slotData?.subjectId?.toString() || ""}
-                                onValueChange={(value: string) => {
-                                  const subjectId = (value && value !== "none") ? parseInt(value) : null;
-                                  const teacherId = slotData?.teacherId || (Array.isArray(subjects) && subjects.find((s: Subject) => s.id === subjectId) ? subjects[0]?.id : null);
-                                  updateTimetableSlot(dayName, timeSlot.period, subjectId, teacherId);
-                                }}
-                              >
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue placeholder="Select Subject" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">No Subject</SelectItem>
-                                  {Array.isArray(subjects) && subjects.map((subject: Subject) => (
-                                    <SelectItem key={subject.id} value={subject.id.toString()}>
-                                      {subject.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              
-                              {slotData?.subjectId && (
+                          const slotData = getTimetableSlot(dayName, timeSlot.period);
+                          return (
+                            <td key={`${dayName}-${timeSlot.period}`} className="border p-2">
+                              <div className="space-y-2">
                                 <Select
-                                  value={slotData?.teacherId?.toString() || ""}
+                                  value={slotData?.subjectId?.toString() || ""}
                                   onValueChange={(value: string) => {
-                                    const teacherId = value ? parseInt(value) : null;
-                                    updateTimetableSlot(day, timeSlot.period, slotData.subjectId, teacherId);
+                                    const subjectId = (value && value !== "none") ? parseInt(value) : null;
+                                    const teacherId = slotData?.teacherId || (Array.isArray(subjects) && subjects.find((s: Subject) => s.id === subjectId) ? subjects[0]?.id : null);
+                                    updateTimetableSlot(dayName, timeSlot.period, subjectId, teacherId);
                                   }}
                                 >
                                   <SelectTrigger className="h-8 text-xs">
-                                    <SelectValue placeholder="Select Teacher" />
+                                    <SelectValue placeholder="Select Subject" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {Array.isArray(teachers) && teachers.map((teacher: Teacher) => (
-                                      <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                                        {teacher.name}
+                                    <SelectItem value="none">No Subject</SelectItem>
+                                    {Array.isArray(subjects) && subjects.map((subject: Subject) => (
+                                      <SelectItem key={subject.id} value={subject.id.toString()}>
+                                        {subject.name}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
-                              )}
                               
-                              {slotData && slotData.subjectName && (
-                                <div 
-                                  className="text-xs p-2 rounded text-white text-center"
-                                  style={{ backgroundColor: slotData.color }}
-                                >
-                                  <div className="font-medium">{slotData.subjectName}</div>
-                                  {slotData.teacherName && (
-                                    <div className="text-xs opacity-90">{slotData.teacherName}</div>
-                                  )}
+                                {slotData?.subjectId && (
+                                  <Select
+                                    value={slotData?.teacherId?.toString() || ""}
+                                    onValueChange={(value: string) => {
+                                      const teacherId = value ? parseInt(value) : null;
+                                      updateTimetableSlot(dayName, timeSlot.period, slotData.subjectId, teacherId);
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs">
+                                      <SelectValue placeholder="Select Teacher" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {Array.isArray(teachers) && teachers.map((teacher: Teacher) => (
+                                        <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                                          {teacher.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              
+                                {slotData?.subjectName && (
+                                  <div 
+                                    className="text-xs p-2 bg-blue-100 dark:bg-blue-900/30 rounded border-l-4 border-blue-500"
+                                  >
+                                    <div className="font-medium">{slotData.subjectName}</div>
+                                    {slotData.teacherName && (
+                                      <div className="text-xs opacity-90">{slotData.teacherName}</div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              // Monthly View
+              <div className="space-y-4">
+                {getMonthWeeks().map((week, weekIndex) => (
+                  <div key={weekIndex} className="border rounded-lg overflow-hidden">
+                    <div className="bg-muted p-2 text-sm font-medium">
+                      Week {weekIndex + 1} - {format(week[0], 'MMM d')} to {format(week[week.length - 1], 'MMM d')}
+                    </div>
+                    <div className="grid grid-cols-5 gap-1 p-2">
+                      {week.map(date => (
+                        <div key={date.toISOString()} className={`border rounded p-2 min-h-[120px] ${isToday(date) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                          <div className="text-sm font-medium mb-2">
+                            {format(date, 'EEE d')}
+                          </div>
+                          <div className="space-y-1">
+                            {timeSlots.slice(0, 3).map(timeSlot => {
+                              const slotData = getTimetableSlot(format(date, 'EEEE'), timeSlot.period);
+                              return (
+                                <div key={timeSlot.period} className="text-xs p-1 bg-muted/50 rounded">
+                                  {slotData?.subjectName || 'Free'}
                                 </div>
-                              )}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+          <Card className="animate-slide-up" style={{ animationDelay: '300ms' }}>
             <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-4">
                   <BookOpen className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Subjects</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total Subjects</p>
                   <p className="text-2xl font-bold">{Array.isArray(subjects) ? subjects.length : 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg mr-4">
+                  <Users className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Teachers</p>
+                  <p className="text-2xl font-bold">{Array.isArray(teachers) ? teachers.length : 0}</p>
                 </div>
               </div>
             </CardContent>
@@ -464,27 +507,13 @@ export default function TimetablePage() {
 
           <Card className="animate-slide-up" style={{ animationDelay: '500ms' }}>
             <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                  <Users className="h-6 w-6 text-green-600" />
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-4">
+                  <GraduationCap className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Teachers</p>
-                  <p className="text-2xl font-bold">{Array.isArray(teachers) ? teachers.length : 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="animate-slide-up" style={{ animationDelay: '600ms' }}>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                  <Clock className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Periods per Day</p>
-                  <p className="text-2xl font-bold">7</p>
+                  <p className="text-sm font-medium text-muted-foreground">Classes</p>
+                  <p className="text-2xl font-bold">{classes.length}</p>
                 </div>
               </div>
             </CardContent>
