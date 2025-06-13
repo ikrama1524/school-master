@@ -58,6 +58,18 @@ export default function Admissions() {
   const [isNewApplicationOpen, setIsNewApplicationOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<AdmissionApplication | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // Form completion tracking
+  const [completedSteps, setCompletedSteps] = useState<boolean[]>([false, false, false, false, false]);
+  
+  const steps = [
+    { id: 0, title: "Basic Info", description: "Student details" },
+    { id: 1, title: "Guardian Info", description: "Parent/Guardian details" },
+    { id: 2, title: "Address", description: "Contact information" },
+    { id: 3, title: "Academic", description: "Previous school details" },
+    { id: 4, title: "Medical", description: "Health information" }
+  ];
 
   const [newApplication, setNewApplication] = useState({
     // Student Basic Information
@@ -102,53 +114,16 @@ export default function Admissions() {
     priority: "normal" as "normal" | "high" | "urgent",
   });
 
-  // Mock data for demonstration
-  const applications: AdmissionApplication[] = [
-    {
-      id: 1,
-      applicationNumber: "ADM001",
-      studentName: "Emma Wilson",
-      dateOfBirth: "2010-05-15",
-      parentName: "David Wilson",
-      email: "david.wilson@email.com",
-      phone: "+1234567890",
-      address: "123 Oak Street, City",
-      previousSchool: "Green Valley Elementary",
-      class: "Grade 6",
-      status: "pending",
-      applicationDate: new Date("2024-12-01"),
-      priority: "normal",
-      documents: [
-        { id: "1", name: "Birth Certificate", type: "pdf", status: "verified", uploadDate: new Date("2024-12-01"), size: "1.2 MB" },
-        { id: "2", name: "Previous School Records", type: "pdf", status: "pending", uploadDate: new Date("2024-12-01"), size: "2.5 MB" },
-        { id: "3", name: "Parent ID", type: "pdf", status: "verified", uploadDate: new Date("2024-12-01"), size: "0.8 MB" }
-      ]
-    },
-    {
-      id: 2,
-      applicationNumber: "ADM002",
-      studentName: "James Chen",
-      dateOfBirth: "2011-08-22",
-      parentName: "Linda Chen",
-      email: "linda.chen@email.com",
-      phone: "+1234567891",
-      address: "456 Pine Avenue, City",
-      previousSchool: "Riverside Primary",
-      class: "Grade 5",
-      status: "approved",
-      applicationDate: new Date("2024-11-28"),
-      priority: "high",
-      documents: [
-        { id: "4", name: "Birth Certificate", type: "pdf", status: "verified", uploadDate: new Date("2024-11-28"), size: "1.1 MB" },
-        { id: "5", name: "Academic Records", type: "pdf", status: "verified", uploadDate: new Date("2024-11-28"), size: "2.8 MB" }
-      ]
-    }
-  ];
+  // Fetch applications from API
+  const { data: applications = [], isLoading, refetch } = useQuery<AdmissionApplication[]>({
+    queryKey: ["/api/admissions"],
+    staleTime: 30000, // 30 seconds
+  });
 
   const filteredApplications = applications.filter(app => {
-    const matchesSearch = app.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          app.applicationNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          app.parentName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = app.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          app.applicationNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          app.parentName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     const matchesClass = classFilter === "all" || app.class === classFilter;
     return matchesSearch && matchesStatus && matchesClass;
@@ -166,32 +141,54 @@ export default function Admissions() {
 
   const submitApplicationMutation = useMutation({
     mutationFn: async (applicationData: any) => {
-      // This will create both admission and student record
-      return await apiRequest("POST", "/api/admissions", applicationData);
+      // Validate required fields before submission
+      if (!applicationData.studentName || !applicationData.dateOfBirth || !applicationData.class || 
+          !applicationData.parentName || !applicationData.email || !applicationData.phone || !applicationData.address) {
+        throw new Error("Please fill all required fields");
+      }
+
+      const response = await apiRequest("POST", "/api/admissions", applicationData);
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admissions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
       toast({
-        title: "Application Submitted",
-        description: "Student admission application has been submitted successfully",
+        title: "Application Submitted Successfully",
+        description: `Application ${data.applicationNumber} has been created and is pending review`,
       });
       setIsNewApplicationOpen(false);
       resetForm();
+      refetch(); // Refresh the admissions list
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Failed to submit application. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
   const approveApplicationMutation = useMutation({
     mutationFn: async (applicationId: number) => {
-      // This will automatically create student record from approved admission
-      return await apiRequest("POST", `/api/admissions/${applicationId}/approve`);
+      const response = await apiRequest("POST", `/api/admissions/${applicationId}/approve`);
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admissions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
       toast({
         title: "Application Approved",
-        description: "Student has been admitted and added to the system",
+        description: `Student ${data.student.name} (Roll: ${data.student.rollNumber}) has been admitted and added to the system`,
+      });
+      refetch(); // Refresh the admissions list
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Approval Failed",
+        description: error.message || "Failed to approve application. Please try again.",
+        variant: "destructive",
       });
     },
   });
@@ -212,12 +209,57 @@ export default function Admissions() {
     setNewApplication({ ...newApplication, documents: updatedDocs });
   };
 
+  // Validation functions for each step
+  const validateStep = (stepIndex: number): boolean => {
+    switch (stepIndex) {
+      case 0: // Basic Info
+        return !!(newApplication.studentName && newApplication.dateOfBirth && newApplication.gender && newApplication.class);
+      case 1: // Guardian Info
+        return !!(newApplication.parentName && newApplication.email && newApplication.phone);
+      case 2: // Address
+        return !!(newApplication.address && newApplication.city && newApplication.state);
+      case 3: // Academic
+        return true; // Optional step
+      case 4: // Medical
+        return true; // Optional step
+      default:
+        return false;
+    }
+  };
+
+  const updateStepCompletion = () => {
+    const newCompletedSteps = steps.map((_, index) => validateStep(index));
+    setCompletedSteps(newCompletedSteps);
+  };
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      updateStepCompletion();
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1);
+      }
+    } else {
+      toast({
+        title: "Incomplete Information",
+        description: "Please fill in all required fields for this step",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const submitApplication = () => {
-    if (!newApplication.studentName || !newApplication.dateOfBirth || !newApplication.parentName || 
-        !newApplication.email || !newApplication.phone || !newApplication.class) {
+    updateStepCompletion();
+    
+    if (!validateStep(0) || !validateStep(1) || !validateStep(2)) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields marked with *",
+        description: "Please complete all required steps before submitting",
         variant: "destructive",
       });
       return;
