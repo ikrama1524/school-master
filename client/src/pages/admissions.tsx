@@ -369,7 +369,46 @@ export default function Admissions() {
                   Complete student admission application with comprehensive information for student registration.
                 </DialogDescription>
               </DialogHeader>
-              <Tabs defaultValue="basic" className="w-full">
+              
+              {/* Progress Indicator */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Application Progress</span>
+                  <span className="text-sm text-muted-foreground">
+                    Step {currentStep + 1} of {steps.length}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {steps.map((step, index) => (
+                    <div key={step.id} className="flex items-center">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                          index === currentStep
+                            ? "bg-primary text-primary-foreground"
+                            : completedSteps[index]
+                            ? "bg-green-500 text-white"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {completedSteps[index] ? (
+                          <CheckCircle className="w-4 h-4" />
+                        ) : (
+                          index + 1
+                        )}
+                      </div>
+                      <div className="ml-2 hidden md:block">
+                        <div className="text-xs font-medium">{step.title}</div>
+                        <div className="text-xs text-muted-foreground">{step.description}</div>
+                      </div>
+                      {index < steps.length - 1 && (
+                        <div className="w-8 h-px bg-muted mx-2" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Tabs value={steps[currentStep]?.title.toLowerCase().replace(" ", "")} className="w-full">
                 <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="basic">Basic Info</TabsTrigger>
                   <TabsTrigger value="guardian">Guardian</TabsTrigger>
@@ -787,13 +826,48 @@ export default function Admissions() {
                   </div>
                 </TabsContent>
 
-                <div className="flex justify-end gap-2 mt-6">
-                  <Button variant="outline" onClick={() => setIsNewApplicationOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={submitApplication} disabled={submitApplicationMutation.isPending}>
-                    {submitApplicationMutation.isPending ? "Submitting..." : "Submit Application"}
-                  </Button>
+                {/* Step Navigation */}
+                <div className="flex justify-between items-center mt-6 pt-4 border-t">
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={prevStep}
+                      disabled={currentStep === 0}
+                    >
+                      Previous
+                    </Button>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => {
+                      setIsNewApplicationOpen(false);
+                      setCurrentStep(0);
+                      resetForm();
+                    }}>
+                      Cancel
+                    </Button>
+                    
+                    {currentStep < steps.length - 1 ? (
+                      <Button onClick={nextStep}>
+                        Next Step
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={submitApplication} 
+                        disabled={submitApplicationMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {submitApplicationMutation.isPending ? (
+                          <>
+                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                            Submitting...
+                          </>
+                        ) : (
+                          "Submit Application"
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </Tabs>
             </DialogContent>
