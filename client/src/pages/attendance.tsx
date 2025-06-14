@@ -53,6 +53,8 @@ export default function Attendance() {
   const [isMarkAttendanceOpen, setIsMarkAttendanceOpen] = useState(false);
   const [isBulkAttendanceOpen, setIsBulkAttendanceOpen] = useState(false);
   const [attendanceView, setAttendanceView] = useState<"today" | "calendar" | "analytics">("today");
+  const [bulkRollNumbers, setBulkRollNumbers] = useState("");
+  const [bulkStatus, setBulkStatus] = useState<"present" | "absent" | "late" | "excused">("present");
   const { toast } = useToast();
 
   const { data: students = [], isLoading: studentsLoading } = useQuery<Student[]>({
@@ -185,6 +187,56 @@ export default function Attendance() {
       status: "present"
     }));
     bulkMarkAttendanceMutation.mutate({ records });
+  };
+
+  const markBulkAttendance = () => {
+    if (!bulkRollNumbers.trim()) {
+      toast({
+        title: "No Roll Numbers",
+        description: "Please enter roll numbers separated by commas",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const rollNumbers = bulkRollNumbers
+      .split(',')
+      .map(roll => roll.trim())
+      .filter(roll => roll.length > 0);
+
+    const validStudents = rollNumbers.map(roll => 
+      students.find(student => student.rollNumber === roll)
+    ).filter(Boolean);
+
+    const invalidRollNumbers = rollNumbers.filter(roll => 
+      !students.some(student => student.rollNumber === roll)
+    );
+
+    if (invalidRollNumbers.length > 0) {
+      toast({
+        title: "Invalid Roll Numbers",
+        description: `Following roll numbers not found: ${invalidRollNumbers.join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (validStudents.length === 0) {
+      toast({
+        title: "No Valid Students",
+        description: "No valid students found for the entered roll numbers",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const records = validStudents.map(student => ({
+      studentId: student!.id,
+      status: bulkStatus
+    }));
+
+    bulkMarkAttendanceMutation.mutate({ records });
+    setBulkRollNumbers("");
   };
 
   return (
@@ -450,6 +502,10 @@ export default function Attendance() {
               <CheckCircle className="w-4 h-4 mr-2" />
               Mark All Present
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsBulkAttendanceOpen(true)}>
+              <Users className="w-4 h-4 mr-2" />
+              Bulk Mark
+            </Button>
             <Button variant="outline" size="sm">
               <MessageSquare className="w-4 h-4 mr-2" />
               Send Notifications
@@ -558,6 +614,60 @@ export default function Attendance() {
               <div className="flex gap-2">
                 <Button size="sm" onClick={markAllPresent}>Mark All Present</Button>
                 <Button size="sm" variant="outline">Mark All Absent</Button>
+              </div>
+            </div>
+            
+            {/* Bulk Roll Number Input */}
+            <div className="border-2 border-dashed border-muted rounded-lg p-4 bg-muted/30">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Bulk Mark by Roll Numbers</label>
+                  <div className="text-xs text-muted-foreground">
+                    Enter comma-separated roll numbers
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-2">
+                    <Input
+                      placeholder="e.g., 2025589, 2025633, 2025906..."
+                      value={bulkRollNumbers}
+                      onChange={(e) => setBulkRollNumbers(e.target.value)}
+                      className="w-full"
+                    />
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Separate multiple roll numbers with commas
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Select value={bulkStatus} onValueChange={(value: any) => setBulkStatus(value)}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="present">Present</SelectItem>
+                        <SelectItem value="absent">Absent</SelectItem>
+                        <SelectItem value="late">Late</SelectItem>
+                        <SelectItem value="excused">Excused</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button 
+                      onClick={markBulkAttendance}
+                      disabled={!bulkRollNumbers.trim() || bulkMarkAttendanceMutation.isPending}
+                      size="sm"
+                    >
+                      {bulkMarkAttendanceMutation.isPending ? "Marking..." : "Mark"}
+                    </Button>
+                  </div>
+                </div>
+                
+                {bulkRollNumbers.trim() && (
+                  <div className="text-xs text-muted-foreground">
+                    <strong>Preview:</strong> Will mark {bulkRollNumbers.split(',').filter(r => r.trim()).length} roll numbers as {bulkStatus}
+                  </div>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
