@@ -12,9 +12,13 @@ import {
   BookOpen,
   Clock,
   CalendarDays,
-  Award
+  Award,
+  LogOut,
+  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const navigationItems = [
   { href: "/", label: "Dashboard", icon: Home },
@@ -32,9 +36,14 @@ const navigationItems = [
 
 export default function Sidebar() {
   const [location] = useLocation();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
-    <aside className="w-64 bg-card border-r border-border hidden md:block fixed h-full z-30 animate-fade-in">
+    <aside className="w-64 bg-card border-r border-border hidden md:block fixed h-full z-30 animate-fade-in flex flex-col">
       <div className="p-6 border-b border-border">
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center shadow-lg">
@@ -47,7 +56,7 @@ export default function Sidebar() {
         </div>
       </div>
       
-      <nav className="mt-6 px-4">
+      <nav className="mt-6 px-4 flex-1">
         <div className="space-y-1">
           {navigationItems.map((item, index) => {
             const Icon = item.icon;
@@ -84,6 +93,28 @@ export default function Sidebar() {
           })}
         </div>
       </nav>
+
+      {/* User Profile and Logout */}
+      <div className="p-4 border-t border-border">
+        <div className="flex items-center space-x-3 mb-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+            <User className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{user?.name}</p>
+            <p className="text-xs text-muted-foreground capitalize truncate">{user?.role}</p>
+          </div>
+        </div>
+        <Button 
+          onClick={handleLogout}
+          variant="outline"
+          size="sm"
+          className="w-full flex items-center justify-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </Button>
+      </div>
     </aside>
   );
 }
