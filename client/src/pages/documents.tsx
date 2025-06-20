@@ -564,7 +564,7 @@ export default function Documents() {
                         <div>
                           <span className="text-muted-foreground">Created:</span>
                           <p className="font-medium">
-                            {document.createdAt ? new Date(document.createdAt as string).toLocaleDateString() : 'N/A'}
+                            {document.createdAt ? new Date(document.createdAt as any).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>
                         <div>

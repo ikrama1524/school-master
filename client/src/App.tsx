@@ -13,6 +13,7 @@ import Fees from "@/pages/fees";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Admissions from "@/pages/admissions";
+import Documents from "@/pages/documents";
 import Payroll from "@/pages/payroll";
 import Homework from "@/pages/homework";
 import Results from "@/pages/results";
@@ -98,6 +99,7 @@ function AppContent() {
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/admissions" component={Admissions} />
+            <Route path="/documents" component={Documents} />
             <Route path="/calendar" component={Timetable} />
             <Route path="/teachers" component={Teachers} />
             <Route path="/attendance" component={Attendance} />
