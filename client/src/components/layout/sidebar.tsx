@@ -14,7 +14,8 @@ import {
   CalendarDays,
   Award,
   LogOut,
-  User
+  User,
+  FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +24,7 @@ import { Button } from "@/components/ui/button";
 const navigationItems = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/admissions", label: "Admissions", icon: UserPlus },
+  { href: "/documents", label: "Documents", icon: FileText },
   { href: "/calendar", label: "Timetable", icon: Clock },
   { href: "/teachers", label: "Teachers", icon: GraduationCap },
   { href: "/homework", label: "Homework", icon: BookOpen },

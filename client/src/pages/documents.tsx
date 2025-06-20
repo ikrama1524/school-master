@@ -159,13 +159,7 @@ export default function Documents() {
   };
 
   const onSubmit = (data: DocumentFormData) => {
-    const formattedData = {
-      ...data,
-      fromDate: data.fromDate ? new Date(data.fromDate) : undefined,
-      toDate: data.toDate ? new Date(data.toDate) : undefined,
-      lastAttendanceDate: data.lastAttendanceDate ? new Date(data.lastAttendanceDate) : undefined,
-    };
-    createDocumentMutation.mutate(formattedData);
+    createDocumentMutation.mutate(data);
   };
 
   if (isLoading) {
@@ -570,7 +564,7 @@ export default function Documents() {
                         <div>
                           <span className="text-muted-foreground">Created:</span>
                           <p className="font-medium">
-                            {new Date(document.createdAt).toLocaleDateString()}
+                            {document.createdAt ? new Date(document.createdAt as string).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>
                         <div>
