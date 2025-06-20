@@ -320,6 +320,38 @@ export const insertSemesterResultSchema = createInsertSchema(semesterResults).om
   createdAt: true,
 });
 
+// Documents table for certificate and application management
+export const documents = pgTable("documents", {
+  id: serial("id").primaryKey(),
+  documentType: text("document_type").notNull(), // leaving_certificate, transfer_certificate, bonafide_certificate, leave_application, etc.
+  studentId: integer("student_id").references(() => students.id),
+  studentName: text("student_name").notNull(),
+  studentClass: text("student_class").notNull(),
+  studentSection: text("student_section").notNull(),
+  rollNumber: text("roll_number").notNull(),
+  purpose: text("purpose"), // Purpose for bonafide certificate, etc.
+  fromDate: timestamp("from_date"), // For leave applications
+  toDate: timestamp("to_date"), // For leave applications
+  reason: text("reason"), // Reason for leave or transfer
+  parentName: text("parent_name").notNull(),
+  parentPhone: text("parent_phone").notNull(),
+  transferSchool: text("transfer_school"), // For transfer certificate
+  lastAttendanceDate: timestamp("last_attendance_date"), // For leaving certificate
+  conductGrade: text("conduct_grade").default("Good"), // A, B, C, Excellent, Good, Fair
+  status: text("status").notNull().default("pending"), // pending, approved, rejected, issued
+  issuedBy: integer("issued_by").references(() => users.id),
+  issuedDate: timestamp("issued_date"),
+  remarks: text("remarks"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -371,3 +403,6 @@ export type InsertSemester = z.infer<typeof insertSemesterSchema>;
 
 export type SemesterResult = typeof semesterResults.$inferSelect;
 export type InsertSemesterResult = z.infer<typeof insertSemesterResultSchema>;
+
+export type Document = typeof documents.$inferSelect;
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;

@@ -1,5 +1,5 @@
 import { 
-  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults,
+  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults, documents,
   type User, type InsertUser,
   type Student, type InsertStudent,
   type Teacher, type InsertTeacher,
@@ -11,7 +11,8 @@ import {
   type Result, type InsertResult,
   type Exam, type InsertExam,
   type Semester, type InsertSemester,
-  type SemesterResult, type InsertSemesterResult
+  type SemesterResult, type InsertSemesterResult,
+  type Document, type InsertDocument
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, count, and } from "drizzle-orm";
@@ -96,6 +97,16 @@ export interface IStorage {
   deleteSemesterResult(id: number): Promise<boolean>;
   getStudentSemesterResults(studentId: number, semesterId?: number): Promise<SemesterResult[]>;
   getSemesterResultsBySemester(semesterId: number): Promise<SemesterResult[]>;
+  
+  // Documents
+  getDocuments(): Promise<Document[]>;
+  getDocument(id: number): Promise<Document | undefined>;
+  createDocument(document: InsertDocument): Promise<Document>;
+  updateDocument(id: number, document: Partial<Document>): Promise<Document | undefined>;  
+  deleteDocument(id: number): Promise<boolean>;
+  getDocumentsByStatus(status: string): Promise<Document[]>;
+  getDocumentsByType(documentType: string): Promise<Document[]>;
+  getStudentDocuments(studentId: number): Promise<Document[]>;
   
   // Stats
   getStats(): Promise<{
@@ -507,6 +518,43 @@ export class DatabaseStorage implements IStorage {
 
   async getSemesterResultsBySemester(semesterId: number): Promise<SemesterResult[]> {
     return await db.select().from(semesterResults).where(eq(semesterResults.semesterId, semesterId));
+  }
+
+  // Document Management Methods
+  async getDocuments(): Promise<Document[]> {
+    return await db.select().from(documents);
+  }
+
+  async getDocument(id: number): Promise<Document | undefined> {
+    const [document] = await db.select().from(documents).where(eq(documents.id, id));
+    return document || undefined;
+  }
+
+  async createDocument(insertDocument: InsertDocument): Promise<Document> {
+    const [document] = await db.insert(documents).values(insertDocument).returning();
+    return document;
+  }
+
+  async updateDocument(id: number, updateData: Partial<Document>): Promise<Document | undefined> {
+    const [document] = await db.update(documents).set(updateData).where(eq(documents.id, id)).returning();
+    return document || undefined;
+  }
+
+  async deleteDocument(id: number): Promise<boolean> {
+    const deleted = await db.delete(documents).where(eq(documents.id, id));
+    return deleted.rowCount ? deleted.rowCount > 0 : false;
+  }
+
+  async getDocumentsByStatus(status: string): Promise<Document[]> {
+    return await db.select().from(documents).where(eq(documents.status, status));
+  }
+
+  async getDocumentsByType(documentType: string): Promise<Document[]> {
+    return await db.select().from(documents).where(eq(documents.documentType, documentType));
+  }
+
+  async getStudentDocuments(studentId: number): Promise<Document[]> {
+    return await db.select().from(documents).where(eq(documents.studentId, studentId));
   }
 }
 
