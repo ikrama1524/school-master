@@ -969,6 +969,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Document Management Routes
+  app.get("/api/documents", authenticateToken, async (req, res) => {
+    try {
+      const documents = await storage.getDocuments();
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  app.get("/api/documents/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const document = await storage.getDocument(id);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      res.json(document);
+    } catch (error) {
+      console.error("Error fetching document:", error);
+      res.status(500).json({ message: "Failed to fetch document" });
+    }
+  });
+
+  app.post("/api/documents", authenticateToken, async (req, res) => {
+    try {
+      const document = await storage.createDocument(req.body);
+      res.status(201).json(document);
+    } catch (error) {
+      console.error("Error creating document:", error);
+      res.status(500).json({ message: "Failed to create document" });
+    }
+  });
+
+  app.put("/api/documents/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const document = await storage.updateDocument(id, req.body);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      res.json(document);
+    } catch (error) {
+      console.error("Error updating document:", error);
+      res.status(500).json({ message: "Failed to update document" });
+    }
+  });
+
+  app.delete("/api/documents/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteDocument(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      res.json({ message: "Document deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      res.status(500).json({ message: "Failed to delete document" });
+    }
+  });
+
+  app.post("/api/documents/:id/approve", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.id;
+      
+      const document = await storage.updateDocument(id, {
+        status: "approved",
+        issuedBy: userId,
+        issuedDate: new Date(),
+        remarks: req.body.remarks || null
+      });
+      
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      
+      res.json(document);
+    } catch (error) {
+      console.error("Error approving document:", error);
+      res.status(500).json({ message: "Failed to approve document" });
+    }
+  });
+
+  app.post("/api/documents/:id/reject", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.id;
+      
+      const document = await storage.updateDocument(id, {
+        status: "rejected",
+        issuedBy: userId,
+        issuedDate: new Date(),
+        remarks: req.body.remarks || "Document rejected"
+      });
+      
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      
+      res.json(document);
+    } catch (error) {
+      console.error("Error rejecting document:", error);
+      res.status(500).json({ message: "Failed to reject document" });
+    }
+  });
+
   // Stats route
   app.get("/api/stats", async (req, res) => {
     try {
