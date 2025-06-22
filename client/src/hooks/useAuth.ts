@@ -18,15 +18,41 @@ export function useAuth() {
     enabled: !!token,
   });
 
-  const isAuthenticated = !!user && !!token;
+  // If there's an auth error, clear the token
+  if (error && token) {
+    localStorage.removeItem('token');
+  }
+
+  const isAuthenticated = !!user && !!token && !error;
 
   return {
-    user,
-    isLoading,
+    user: user || null,
+    isLoading: isLoading && !!token,
     isAuthenticated,
-    hasModuleAccess: (module: ModuleName) => user ? hasModuleAccess(user.role, module) : false,
-    canWrite: (module: ModuleName) => user ? canWrite(user.role, module) : false,
-    canAdmin: (module: ModuleName) => user ? canAdmin(user.role, module) : false,
-    accessibleModules: user ? getAccessibleModules(user.role) : [],
+    hasModuleAccess: (module: ModuleName) => {
+      if (!user || !user.role) return false;
+      try {
+        return hasModuleAccess(user.role, module);
+      } catch {
+        return false;
+      }
+    },
+    canWrite: (module: ModuleName) => {
+      if (!user || !user.role) return false;
+      try {
+        return canWrite(user.role, module);
+      } catch {
+        return false;
+      }
+    },
+    canAdmin: (module: ModuleName) => {
+      if (!user || !user.role) return false;
+      try {
+        return canAdmin(user.role, module);
+      } catch {
+        return false;
+      }
+    },
+    accessibleModules: user && user.role ? getAccessibleModules(user.role) : [],
   };
 }

@@ -35,7 +35,18 @@ function ProtectedRoute({ children, module }: { children: React.ReactNode; modul
     );
   }
   
-  if (!user || !hasModuleAccess(user.role, module as any)) {
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Access Denied</h2>
+          <p className="text-gray-600 dark:text-gray-400">Please log in to access this module.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasModuleAccess(user.role, module as any)) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
