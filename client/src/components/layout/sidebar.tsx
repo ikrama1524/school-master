@@ -15,30 +15,41 @@ import {
   Award,
   LogOut,
   User,
-  FileText
+  FileText,
+  LayoutDashboard,
+  UserCheck,
+  CreditCard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModules } from "@/contexts/ModuleContext";
 import { Button } from "@/components/ui/button";
 
-const navigationItems = [
-  { href: "/", label: "Dashboard", icon: Home },
-  { href: "/admissions", label: "Admissions", icon: UserPlus },
-  { href: "/documents", label: "Documents", icon: FileText },
-  { href: "/calendar", label: "Timetable", icon: Clock },
-  { href: "/teachers", label: "Teachers", icon: GraduationCap },
-  { href: "/homework", label: "Homework", icon: BookOpen },
-  { href: "/results", label: "Results", icon: Award },
-  { href: "/attendance", label: "Attendance", icon: Calendar },
-  { href: "/fees", label: "Fee Management", icon: DollarSign },
-  { href: "/payroll", label: "Payroll", icon: Wallet },
-  { href: "/reports", label: "Reports", icon: BarChart },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+// Icon mapping for dynamic modules
+const iconMap: Record<string, any> = {
+  LayoutDashboard: LayoutDashboard,
+  Users: Users,
+  UserCheck: UserCheck,
+  Calendar: Calendar,
+  Clock: Clock,
+  BookOpen: BookOpen,
+  Trophy: Award,
+  FileText: FileText,
+  CreditCard: CreditCard,
+  DollarSign: DollarSign,
+  UserPlus: UserPlus,
+  Settings: Settings,
+  Home: Home,
+  GraduationCap: GraduationCap,
+  CalendarDays: CalendarDays,
+  Wallet: Wallet,
+  BarChart: BarChart,
+};
 
 export default function Sidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const { modules, isLoading: modulesLoading } = useModules();
 
   const handleLogout = () => {
     logout();

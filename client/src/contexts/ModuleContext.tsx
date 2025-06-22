@@ -38,19 +38,12 @@ interface ModuleProviderProps {
 
 export const ModuleProvider = ({ children }: ModuleProviderProps) => {
   const { isAuthenticated, user } = useAuth();
-  const [modules, setModules] = useState<Module[]>([]);
 
-  const { data: userModules = [], isLoading } = useQuery<Module[]>({
+  const { data: modules = [], isLoading } = useQuery<Module[]>({
     queryKey: ["/api/user-modules"],
     enabled: isAuthenticated && !!user,
     retry: false,
   });
-
-  useEffect(() => {
-    if (userModules) {
-      setModules(userModules);
-    }
-  }, [userModules]);
 
   const hasModuleAccess = (moduleName: string): boolean => {
     const module = modules.find(m => m.name === moduleName);
