@@ -161,7 +161,7 @@ export default function Login() {
 
           <div className="mt-4 text-center">
             <p className="text-xs text-muted-foreground">
-              Demo accounts: admin/admin, teacher/teacher, student/student
+              Demo accounts: admin/password, teacher1/password, student1/password
             </p>
           </div>
         </CardContent>

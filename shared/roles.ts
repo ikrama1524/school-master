@@ -109,29 +109,42 @@ export function hasPermission(
   module: ModuleName,
   permission: Permission
 ): boolean {
-  const rolePermissions = ROLE_PERMISSIONS[userRole];
-  const modulePermissions = rolePermissions[module];
+  if (!userRole || !module || !permission) return false;
   
+  const rolePermissions = ROLE_PERMISSIONS[userRole];
+  if (!rolePermissions) return false;
+  
+  const modulePermissions = rolePermissions[module];
   if (!modulePermissions) return false;
   
   return modulePermissions.includes(permission);
 }
 
 export function hasModuleAccess(userRole: UserRole, module: ModuleName): boolean {
+  if (!userRole || !module) return false;
+  
   const rolePermissions = ROLE_PERMISSIONS[userRole];
+  if (!rolePermissions) return false;
+  
   return !!rolePermissions[module];
 }
 
 export function getAccessibleModules(userRole: UserRole): ModuleName[] {
+  if (!userRole) return [];
+  
   const rolePermissions = ROLE_PERMISSIONS[userRole];
+  if (!rolePermissions) return [];
+  
   return Object.keys(rolePermissions) as ModuleName[];
 }
 
 export function canWrite(userRole: UserRole, module: ModuleName): boolean {
+  if (!userRole || !module) return false;
   return hasPermission(userRole, module, 'write') || hasPermission(userRole, module, 'admin');
 }
 
 export function canAdmin(userRole: UserRole, module: ModuleName): boolean {
+  if (!userRole || !module) return false;
   return hasPermission(userRole, module, 'admin');
 }
 

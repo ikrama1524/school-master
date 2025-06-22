@@ -181,41 +181,34 @@ function AuthenticatedRouter() {
 }
 
 function AppContent() {
-  try {
-    const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, error } = useAuth();
 
-    if (isLoading) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-        </div>
-      );
-    }
-
-    if (!isAuthenticated) {
-      return (
-        <Switch>
-          <Route path="/register" component={Register} />
-          <Route path="/login" component={Login} />
-          <Route component={Login} />
-        </Switch>
-      );
-    }
-
-    return <AuthenticatedRouter />;
-  } catch (error) {
-    console.error('AppContent error:', error);
+  // Show loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-red-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="text-center">
-          <h1 className="text-xl font-bold text-red-600 mb-4">Authentication Error</h1>
-          <p className="text-gray-600 mb-4">Please refresh the page or clear your browser data.</p>
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if there's an authentication error
+  if (error) {
+    console.error('Authentication error:', error);
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-red-50 dark:bg-red-900/10">
+        <div className="text-center p-8">
+          <h1 className="text-xl font-bold text-red-600 dark:text-red-400 mb-4">Authentication Error</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">Please refresh the page or clear your browser data.</p>
           <button 
             onClick={() => {
               localStorage.clear();
               window.location.reload();
             }}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
           >
             Reset Application
           </button>
@@ -223,6 +216,20 @@ function AppContent() {
       </div>
     );
   }
+
+  // Show login/register if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/register" component={Register} />
+        <Route path="/login" component={Login} />
+        <Route component={Login} />
+      </Switch>
+    );
+  }
+
+  // Show authenticated app
+  return <AuthenticatedRouter />;
 }
 
 function App() {
