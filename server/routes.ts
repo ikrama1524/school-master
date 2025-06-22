@@ -1004,7 +1004,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/documents/:id", authenticateToken, async (req, res) => {
+  app.put("/api/documents/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const document = await storage.updateDocument(id, req.body);
@@ -1018,7 +1018,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/documents/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/documents/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteDocument(id);
