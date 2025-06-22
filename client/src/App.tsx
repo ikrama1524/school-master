@@ -17,6 +17,7 @@ import Documents from "@/pages/documents-simple";
 import Payroll from "@/pages/payroll";
 import Homework from "@/pages/homework";
 import Results from "@/pages/results";
+import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import MobileMenu from "@/components/layout/mobile-menu";
@@ -109,6 +110,7 @@ function AppContent() {
             <Route path="/payroll" component={Payroll} />
             <Route path="/homework" component={Homework} />
             <Route path="/results" component={Results} />
+            <Route path="/users" component={Users} />
             <Route component={NotFound} />
           </Switch>
         </div>
