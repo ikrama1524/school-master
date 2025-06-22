@@ -135,6 +135,11 @@ export default function Users() {
     deleteUserMutation.mutate(userId);
   };
 
+  const isFirstUser = (user: any) => {
+    // The first registered user has the lowest ID and is super_admin
+    return users.length > 0 && user.id === Math.min(...users.map((u: any) => u.id)) && user.role === 'super_admin';
+  };
+
   const getRoleBadge = (role: string) => {
     const roleInfo = roles.find(r => r.value === role);
     if (!roleInfo) return <Badge variant="outline">{role}</Badge>;
@@ -313,13 +318,20 @@ export default function Users() {
                   
                   <div className="flex items-center space-x-3">
                     <div className="text-right">
-                      <div className="mb-2">{getRoleBadge(user.role)}</div>
+                      <div className="mb-2 flex items-center gap-2">
+                        {getRoleBadge(user.role)}
+                        {isFirstUser(user) && (
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                            Protected
+                          </Badge>
+                        )}
+                      </div>
                       <Select
                         value={user.role}
                         onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
-                        disabled={updateRoleMutation.isPending}
+                        disabled={updateRoleMutation.isPending || isFirstUser(user)}
                       >
-                        <SelectTrigger className="w-40">
+                        <SelectTrigger className={`w-40 ${isFirstUser(user) ? 'opacity-50 cursor-not-allowed' : ''}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -332,34 +344,46 @@ export default function Users() {
                       </Select>
                     </div>
                     
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete User</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete {user.name}? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="bg-red-600 hover:bg-red-700"
+                    {!isFirstUser(user) ? (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete User</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete {user.name}? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled
+                        className="opacity-50 cursor-not-allowed"
+                        title="Protected super admin cannot be deleted"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>

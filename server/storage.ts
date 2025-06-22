@@ -130,6 +130,7 @@ export interface IStorage {
   updateUserRole(id: number, role: string): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
   isFirstUser(): Promise<boolean>;
+  isFirstRegisteredUser(userId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -647,6 +648,12 @@ export class DatabaseStorage implements IStorage {
   async isFirstUser(): Promise<boolean> {
     const userCount = await db.select({ count: count() }).from(users);
     return userCount[0]?.count === 0;
+  }
+
+  async isFirstRegisteredUser(userId: number): Promise<boolean> {
+    // Find the first registered user (lowest ID)
+    const firstUser = await db.select().from(users).orderBy(users.id).limit(1);
+    return firstUser.length > 0 && firstUser[0].id === userId;
   }
 }
 

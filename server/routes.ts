@@ -198,7 +198,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.params.id);
       
-      // Prevent deleting the last super admin
+      // Get the user to be deleted
+      const userToDelete = await storage.getUser(userId);
+      if (!userToDelete) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Prevent deleting the first registered user (super admin)
+      const isFirstUser = await storage.isFirstRegisteredUser(userId);
+      if (isFirstUser) {
+        return res.status(400).json({ message: "Cannot delete the first registered super admin user" });
+      }
+
+      // Prevent deleting yourself if you're a super admin
       if (req.user!.id === userId && req.user!.role === 'super_admin') {
         return res.status(400).json({ message: "Cannot delete yourself as the super admin" });
       }
