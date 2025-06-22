@@ -3,9 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, GraduationCap, DollarSign, TrendingUp, Bell, BarChart3 } from "lucide-react";
 
 export function AdminDashboard() {
-  const { data: stats } = useQuery({ queryKey: ['/api/stats'] });
-  const { data: notices } = useQuery({ queryKey: ['/api/notices'] });
-  const { data: fees } = useQuery({ queryKey: ['/api/fees'] });
+  const { data: stats = {} } = useQuery<{
+    totalStudents: number;
+    totalTeachers: number;
+    feeCollection: number;
+    attendanceRate: number;
+    pendingFees: number;
+  }>({ queryKey: ['/api/stats'] });
+  const { data: notices = [] } = useQuery<any[]>({ queryKey: ['/api/notices'] });
+  const { data: fees = [] } = useQuery<any[]>({ queryKey: ['/api/fees'] });
 
   return (
     <div className="space-y-6">
@@ -16,7 +22,7 @@ export function AdminDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalStudents || 0}</div>
+            <div className="text-2xl font-bold">{(stats as any)?.totalStudents || 0}</div>
             <p className="text-xs text-muted-foreground">Active enrollments</p>
           </CardContent>
         </Card>
@@ -27,7 +33,7 @@ export function AdminDashboard() {
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalTeachers || 0}</div>
+            <div className="text-2xl font-bold">{(stats as any)?.totalTeachers || 0}</div>
             <p className="text-xs text-muted-foreground">Faculty members</p>
           </CardContent>
         </Card>
@@ -38,7 +44,7 @@ export function AdminDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{stats?.feeCollection || 0}</div>
+            <div className="text-2xl font-bold">₹{(stats as any)?.feeCollection || 0}</div>
             <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
