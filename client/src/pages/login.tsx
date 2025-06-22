@@ -39,12 +39,18 @@ export default function Login() {
     }
 
     try {
-      const result = await login(formData.username, formData.password);
+      const response = await apiRequest('POST', '/api/auth/login', {
+        username: formData.username,
+        password: formData.password,
+      });
       
-      if (result.success) {
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
         setLocation('/');
       } else {
-        setError(result.error || 'Login failed');
+        const errorData = await response.json();
+        setError(errorData.message || 'Login failed');
       }
     } catch (error) {
       setError('An unexpected error occurred');
@@ -53,7 +59,7 @@ export default function Login() {
     }
   };
 
-  if (isLoading) {
+  if (isSubmitting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -146,10 +152,8 @@ export default function Login() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link href="/register">
-                <a className="text-primary hover:underline font-medium">
-                  Create one here
-                </a>
+              <Link href="/register" className="text-primary hover:underline font-medium">
+                Create one here
               </Link>
             </p>
           </div>
