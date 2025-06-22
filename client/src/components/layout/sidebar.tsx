@@ -164,7 +164,9 @@ export default function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{user?.name}</p>
-            <p className="text-xs text-muted-foreground capitalize truncate">{user?.role}</p>
+            <Badge variant="outline" className={`text-xs ${getRoleBadgeColor(user?.role || 'student')}`}>
+              {getRoleLabel(user?.role || 'student')}
+            </Badge>
           </div>
         </div>
         <Button 
