@@ -3,7 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertStudentSchema, insertTeacherSchema, insertNoticeSchema, insertTimetableSchema, insertCalendarEventSchema, insertPeriodSchema } from "@shared/schema";
 import { z } from "zod";
-import { authenticateToken, generateToken, hashPassword, comparePassword, AuthenticatedRequest } from "./auth";
+import { authenticateToken, generateToken, hashPassword, comparePassword, AuthenticatedRequest, requireModuleRead, requireModuleWrite, requireModuleAdmin } from "./auth";
+import { UserRole } from "@shared/roles";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication Routes
@@ -34,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Generate token
-      const token = generateToken(newUser.id, newUser.username, newUser.email || '', newUser.role);
+      const token = generateToken(newUser.id, newUser.username, newUser.email || '', newUser.role as UserRole);
 
       res.status(201).json({
         message: "User registered successfully",
@@ -82,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserLastLogin(user.id);
 
       // Generate token
-      const token = generateToken(user.id, user.username, user.email || '', user.role);
+      const token = generateToken(user.id, user.username, user.email || '', user.role as UserRole);
 
       res.json({
         message: "Login successful",
@@ -124,107 +125,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", authenticateToken, (req, res) => {
     // In a real application, you might want to blacklist the token
     res.json({ message: "Logout successful" });
-  });
-
-  // Check if this is the first user registration (for super admin setup)
-  app.get('/api/auth/is-first-user', async (req, res) => {
-    try {
-      const isFirst = await storage.isFirstUser();
-      res.json({ isFirstUser: isFirst });
-    } catch (error) {
-      console.error("Error checking first user:", error);
-      res.status(500).json({ message: "Failed to check user status" });
-    }
-  });
-
-  // Get user's accessible modules based on role
-  app.get('/api/user-modules', authenticateToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userRole = req.user!.role;
-      const modules = await storage.getUserModules(userRole);
-      res.json(modules);
-    } catch (error) {
-      console.error("Error fetching user modules:", error);
-      res.status(500).json({ message: "Failed to fetch user modules" });
-    }
-  });
-
-  // Check specific module access
-  app.get('/api/check-access/:moduleName', authenticateToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userRole = req.user!.role;
-      const moduleName = req.params.moduleName;
-      const access = await storage.checkModuleAccess(userRole, moduleName);
-      res.json(access || { canRead: false, canWrite: false, canDelete: false });
-    } catch (error) {
-      console.error("Error checking module access:", error);
-      res.status(500).json({ message: "Failed to check module access" });
-    }
-  });
-
-  // User Management Routes (Super Admin only)
-  app.get('/api/users', authenticateToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const users = await storage.getAllUsers();
-      res.json(users);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ message: "Failed to fetch users" });
-    }
-  });
-
-  app.put('/api/users/:id/role', authenticateToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      const { role } = req.body;
-      
-      if (!role) {
-        return res.status(400).json({ message: "Role is required" });
-      }
-
-      const updatedUser = await storage.updateUserRole(userId, role);
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json(updatedUser);
-    } catch (error) {
-      console.error("Error updating user role:", error);
-      res.status(500).json({ message: "Failed to update user role" });
-    }
-  });
-
-  app.delete('/api/users/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      
-      // Get the user to be deleted
-      const userToDelete = await storage.getUser(userId);
-      if (!userToDelete) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Prevent deleting the first registered user (super admin)
-      const isFirstUser = await storage.isFirstRegisteredUser(userId);
-      if (isFirstUser) {
-        return res.status(400).json({ message: "Cannot delete the first registered super admin user" });
-      }
-
-      // Prevent deleting yourself if you're a super admin
-      if (req.user!.id === userId && req.user!.role === 'super_admin') {
-        return res.status(400).json({ message: "Cannot delete yourself as the super admin" });
-      }
-
-      const deleted = await storage.deleteUser(userId);
-      if (!deleted) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json({ message: "User deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ message: "Failed to delete user" });
-    }
   });
 
   // In-memory storage for admissions (temporary until proper database implementation)
@@ -1105,7 +1005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/documents/:id", authenticateToken, async (req, res) => {
+  app.put("/api/documents/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const document = await storage.updateDocument(id, req.body);
@@ -1119,7 +1019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/documents/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/documents/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteDocument(id);
@@ -1133,15 +1033,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/documents/:id/approve", authenticateToken, async (req, res) => {
+  app.post("/api/documents/:id/approve", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const authReq = req as AuthenticatedRequest;
-      const userId = authReq.user?.id;
       
       const document = await storage.updateDocument(id, {
         status: "approved",
-        issuedBy: userId,
+        issuedBy: 1, // Default admin user
         issuedDate: new Date(),
         remarks: req.body.remarks || null
       });
@@ -1157,15 +1055,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/documents/:id/reject", authenticateToken, async (req, res) => {
+  app.post("/api/documents/:id/reject", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const authReq = req as AuthenticatedRequest;
-      const userId = authReq.user?.id;
       
       const document = await storage.updateDocument(id, {
         status: "rejected",
-        issuedBy: userId,
+        issuedBy: 1, // Default admin user
         issuedDate: new Date(),
         remarks: req.body.remarks || "Document rejected"
       });

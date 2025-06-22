@@ -1,5 +1,5 @@
 import { 
-  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults, documents, modules, roleModules,
+  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults, documents,
   type User, type InsertUser,
   type Student, type InsertStudent,
   type Teacher, type InsertTeacher,
@@ -15,7 +15,7 @@ import {
   type Document, type InsertDocument
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, count, and, desc } from "drizzle-orm";
+import { eq, count, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -116,21 +116,6 @@ export interface IStorage {
     feeCollection: number;
     pendingFees: number;
   }>;
-  
-  // Role-Module Access Control
-  getUserModules(role: string): Promise<any[]>;
-  checkModuleAccess(role: string, moduleName: string): Promise<{
-    canRead: boolean;
-    canWrite: boolean;
-    canDelete: boolean;
-  } | null>;
-  
-  // User Management
-  getAllUsers(): Promise<User[]>;
-  updateUserRole(id: number, role: string): Promise<User | undefined>;
-  deleteUser(id: number): Promise<boolean>;
-  isFirstUser(): Promise<boolean>;
-  isFirstRegisteredUser(userId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -570,90 +555,6 @@ export class DatabaseStorage implements IStorage {
 
   async getStudentDocuments(studentId: number): Promise<Document[]> {
     return await db.select().from(documents).where(eq(documents.studentId, studentId));
-  }
-
-  // Role-Module Access Control
-  async getUserModules(role: string): Promise<any[]> {
-    const userModules = await db
-      .select({
-        id: modules.id,
-        name: modules.name,
-        displayName: modules.displayName,
-        description: modules.description,
-        icon: modules.icon,
-        route: modules.route,
-        canRead: roleModules.canRead,
-        canWrite: roleModules.canWrite,
-        canDelete: roleModules.canDelete,
-      })
-      .from(modules)
-      .innerJoin(roleModules, eq(modules.id, roleModules.moduleId))
-      .where(and(
-        eq(roleModules.role, role),
-        eq(modules.isActive, true)
-      ))
-      .orderBy(modules.name);
-    
-    return userModules;
-  }
-
-  async checkModuleAccess(role: string, moduleName: string): Promise<{
-    canRead: boolean;
-    canWrite: boolean;
-    canDelete: boolean;
-  } | null> {
-    const access = await db
-      .select({
-        canRead: roleModules.canRead,
-        canWrite: roleModules.canWrite,
-        canDelete: roleModules.canDelete,
-      })
-      .from(roleModules)
-      .innerJoin(modules, eq(roleModules.moduleId, modules.id))
-      .where(and(
-        eq(roleModules.role, role),
-        eq(modules.name, moduleName)
-      ))
-      .limit(1);
-
-    if (access.length === 0) return null;
-    
-    const result = access[0];
-    return {
-      canRead: result.canRead ?? false,
-      canWrite: result.canWrite ?? false,
-      canDelete: result.canDelete ?? false,
-    };
-  }
-
-  // User Management
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(users.name);
-  }
-
-  async updateUserRole(id: number, role: string): Promise<User | undefined> {
-    const [updatedUser] = await db
-      .update(users)
-      .set({ role, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return updatedUser;
-  }
-
-  async deleteUser(id: number): Promise<boolean> {
-    const result = await db.delete(users).where(eq(users.id, id));
-    return result.rowCount !== null && result.rowCount > 0;
-  }
-
-  async isFirstUser(): Promise<boolean> {
-    const userCount = await db.select({ count: count() }).from(users);
-    return userCount[0]?.count === 0;
-  }
-
-  async isFirstRegisteredUser(userId: number): Promise<boolean> {
-    // Find the first registered user (lowest ID)
-    const firstUser = await db.select().from(users).orderBy(users.id).limit(1);
-    return firstUser.length > 0 && firstUser[0].id === userId;
   }
 }
 

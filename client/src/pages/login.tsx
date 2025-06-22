@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,10 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, GraduationCap, LogIn } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const { login, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -40,12 +39,19 @@ export default function Login() {
     }
 
     try {
-      const result = await login(formData.username, formData.password);
+      const response = await apiRequest('POST', '/api/auth/login', {
+        username: formData.username,
+        password: formData.password,
+      });
       
-      if (result.success) {
-        setLocation('/');
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        // Force page reload to ensure proper authentication state
+        window.location.href = '/';
       } else {
-        setError(result.error || 'Login failed');
+        const errorData = await response.json();
+        setError(errorData.message || 'Login failed');
       }
     } catch (error) {
       setError('An unexpected error occurred');
@@ -54,7 +60,7 @@ export default function Login() {
     }
   };
 
-  if (isLoading) {
+  if (isSubmitting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -147,17 +153,15 @@ export default function Login() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link href="/register">
-                <a className="text-primary hover:underline font-medium">
-                  Create one here
-                </a>
+              <Link href="/register" className="text-primary hover:underline font-medium">
+                Create one here
               </Link>
             </p>
           </div>
 
           <div className="mt-4 text-center">
             <p className="text-xs text-muted-foreground">
-              Demo accounts: admin/admin, teacher/teacher, student/student
+              Demo accounts: admin/password, teacher1/password, student1/password
             </p>
           </div>
         </CardContent>

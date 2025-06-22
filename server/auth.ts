@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { Request, Response, NextFunction } from 'express';
 import { storage } from './storage';
+import { UserRole, hasModuleAccess, hasPermission, type ModuleName, type Permission } from '@shared/roles';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN = '7d';
@@ -11,11 +12,11 @@ export interface AuthenticatedRequest extends Request {
     id: number;
     username: string;
     email: string;
-    role: string;
+    role: UserRole;
   };
 }
 
-export const generateToken = (userId: number, username: string, email: string, role: string): string => {
+export const generateToken = (userId: number, username: string, email: string, role: UserRole): string => {
   return jwt.sign(
     { id: userId, username, email, role },
     JWT_SECRET,
@@ -63,7 +64,7 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
       id: user.id,
       username: user.username,
       email: user.email || '',
-      role: user.role
+      role: user.role as UserRole
     };
     
     next();
@@ -72,7 +73,7 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
   }
 };
 
-export const requireRole = (roles: string[]) => {
+export const requireRole = (roles: UserRole[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Authentication required' });
@@ -85,3 +86,21 @@ export const requireRole = (roles: string[]) => {
     next();
   };
 };
+
+export const requireModuleAccess = (module: ModuleName, permission: Permission = 'read') => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    if (!hasPermission(req.user.role, module, permission)) {
+      return res.status(403).json({ message: `Access denied: ${permission} permission required for ${module}` });
+    }
+
+    next();
+  };
+};
+
+export const requireModuleRead = (module: ModuleName) => requireModuleAccess(module, 'read');
+export const requireModuleWrite = (module: ModuleName) => requireModuleAccess(module, 'write');
+export const requireModuleAdmin = (module: ModuleName) => requireModuleAccess(module, 'admin');

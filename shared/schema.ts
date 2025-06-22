@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, varchar, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -6,7 +6,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role").notNull().default("admin"), // admin, teacher, student, parent
+  role: text("role").notNull().default("student"), // student, parent, subject_teacher, class_teacher, non_teaching_staff, accountant, principal, super_admin
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
@@ -406,41 +406,3 @@ export type InsertSemesterResult = z.infer<typeof insertSemesterResultSchema>;
 
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
-
-// Role-Module Access Control Tables
-export const modules = pgTable("modules", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull().unique(),
-  displayName: varchar("display_name", { length: 100 }).notNull(),
-  description: text("description"),
-  icon: varchar("icon", { length: 50 }),
-  route: varchar("route", { length: 100 }),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const roleModules = pgTable("role_modules", {
-  id: serial("id").primaryKey(),
-  role: varchar("role", { length: 50 }).notNull(),
-  moduleId: integer("module_id").notNull().references(() => modules.id),
-  canRead: boolean("can_read").default(true),
-  canWrite: boolean("can_write").default(false),
-  canDelete: boolean("can_delete").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertModuleSchema = createInsertSchema(modules).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertRoleModuleSchema = createInsertSchema(roleModules).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type Module = typeof modules.$inferSelect;
-export type InsertModule = z.infer<typeof insertModuleSchema>;
-
-export type RoleModule = typeof roleModules.$inferSelect;
-export type InsertRoleModule = z.infer<typeof insertRoleModuleSchema>;
