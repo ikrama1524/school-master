@@ -19,7 +19,7 @@ import Homework from "@/pages/homework";
 import Results from "@/pages/results";
 import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
-import Sidebar from "@/components/layout/sidebar";
+import Sidebar from "@/components/layout/sidebar-fixed";
 import MobileMenu from "@/components/layout/mobile-menu";
 import TopBar from "@/components/layout/top-bar";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";

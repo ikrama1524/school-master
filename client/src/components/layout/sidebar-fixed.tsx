@@ -51,12 +51,9 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const { modules, isLoading: modulesLoading } = useModules();
 
-  const handleLogout = () => {
-    logout();
-  };
-
   return (
-    <aside className="w-64 bg-card border-r border-border hidden md:block fixed h-full z-30 animate-fade-in flex flex-col">
+    <aside className="hidden md:flex md:w-64 md:flex-col fixed inset-y-0 z-50 bg-card border-r border-border shadow-lg">
+      {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center shadow-lg">
@@ -69,6 +66,7 @@ export default function Sidebar() {
         </div>
       </div>
       
+      {/* Navigation */}
       <nav className="mt-6 px-4 flex-1">
         <div className="space-y-1">
           {modulesLoading ? (
@@ -81,58 +79,61 @@ export default function Sidebar() {
               const href = module.route || `/${module.name}`;
               const isActive = location === href || 
                 (href !== "/" && location.startsWith(href));
-            
-            return (
-              <Link key={module.id} href={href}>
-                <div
-                  className={cn(
-                    "flex items-center px-4 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer group",
-                    "hover:bg-muted/60 hover:shadow-sm hover:translate-x-1",
-                    isActive
-                      ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  style={{
-                    animationDelay: `${index * 50}ms`,
-                  }}
-                >
-                  <Icon className={cn(
-                    "mr-3 h-5 w-5 transition-all duration-200",
-                    isActive ? "text-primary" : "group-hover:text-primary/80"
-                  )} />
-                  <span className="transition-all duration-200">
-                    {item.label}
-                  </span>
-                  {isActive && (
-                    <div className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />
-                  )}
-                </div>
-              </Link>
-            );
-          })}
+              
+              return (
+                <Link key={module.id} href={href}>
+                  <div
+                    className={cn(
+                      "flex items-center px-4 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer group",
+                      "hover:bg-muted/60 hover:shadow-sm hover:translate-x-1",
+                      isActive
+                        ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    style={{
+                      animationDelay: `${index * 50}ms`,
+                    }}
+                  >
+                    <Icon className={cn(
+                      "w-5 h-5 mr-3 transition-colors duration-200",
+                      isActive 
+                        ? "text-primary" 
+                        : "text-muted-foreground group-hover:text-foreground"
+                    )} />
+                    <span>{module.displayName}</span>
+                  </div>
+                </Link>
+              );
+            })
+          )}
         </div>
       </nav>
 
-      {/* User Profile and Logout */}
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center space-x-3 mb-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-            <User className="w-5 h-5 text-white" />
+      {/* User Profile */}
+      <div className="p-4 border-t border-border mt-auto">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {user?.name || 'User'}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user?.role || 'Role'}
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user?.name}</p>
-            <p className="text-xs text-muted-foreground capitalize truncate">{user?.role}</p>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={logout}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="w-4 h-4" />
+          </Button>
         </div>
-        <Button 
-          onClick={handleLogout}
-          variant="outline"
-          size="sm"
-          className="w-full flex items-center justify-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
-        >
-          <LogOut className="w-4 h-4" />
-          Logout
-        </Button>
       </div>
     </aside>
   );
