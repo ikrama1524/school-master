@@ -3,8 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertStudentSchema, insertTeacherSchema, insertNoticeSchema, insertTimetableSchema, insertCalendarEventSchema, insertPeriodSchema } from "@shared/schema";
 import { z } from "zod";
-import { authenticateToken, generateToken, hashPassword, comparePassword, AuthenticatedRequest, requireModuleRead, requireModuleWrite, requireModuleAdmin } from "./auth";
-import { UserRole } from "@shared/roles";
+import { authenticateToken, generateToken, hashPassword, comparePassword, AuthenticatedRequest } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication Routes
@@ -35,7 +34,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Generate token
-      const token = generateToken(newUser.id, newUser.username, newUser.email || '', newUser.role as UserRole);
+      const token = generateToken(newUser.id, newUser.username, newUser.email || '', newUser.role);
 
       res.status(201).json({
         message: "User registered successfully",
@@ -83,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserLastLogin(user.id);
 
       // Generate token
-      const token = generateToken(user.id, user.username, user.email || '', user.role as UserRole);
+      const token = generateToken(user.id, user.username, user.email || '', user.role);
 
       res.json({
         message: "Login successful",
@@ -1005,7 +1004,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/documents/:id", async (req, res) => {
+  app.put("/api/documents/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const document = await storage.updateDocument(id, req.body);
@@ -1019,7 +1018,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/documents/:id", async (req, res) => {
+  app.delete("/api/documents/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteDocument(id);
@@ -1033,13 +1032,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/documents/:id/approve", async (req, res) => {
+  app.post("/api/documents/:id/approve", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.id;
       
       const document = await storage.updateDocument(id, {
         status: "approved",
-        issuedBy: 1, // Default admin user
+        issuedBy: userId,
         issuedDate: new Date(),
         remarks: req.body.remarks || null
       });
@@ -1055,13 +1056,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/documents/:id/reject", async (req, res) => {
+  app.post("/api/documents/:id/reject", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.id;
       
       const document = await storage.updateDocument(id, {
         status: "rejected",
-        issuedBy: 1, // Default admin user
+        issuedBy: userId,
         issuedDate: new Date(),
         remarks: req.body.remarks || "Document rejected"
       });
