@@ -116,6 +116,14 @@ export interface IStorage {
     feeCollection: number;
     pendingFees: number;
   }>;
+  
+  // Role-Module Access Control
+  getUserModules(role: string): Promise<any[]>;
+  checkModuleAccess(role: string, moduleName: string): Promise<{
+    canRead: boolean;
+    canWrite: boolean;
+    canDelete: boolean;
+  } | null>;
 }
 
 export class DatabaseStorage implements IStorage {

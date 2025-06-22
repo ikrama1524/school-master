@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, varchar, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -427,9 +427,7 @@ export const roleModules = pgTable("role_modules", {
   canWrite: boolean("can_write").default(false),
   canDelete: boolean("can_delete").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  uniqueRoleModule: unique().on(table.role, table.moduleId),
-}));
+});
 
 export const insertModuleSchema = createInsertSchema(modules).omit({
   id: true,
