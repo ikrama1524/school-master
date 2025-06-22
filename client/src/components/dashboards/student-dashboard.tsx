@@ -9,10 +9,10 @@ export function StudentDashboard() {
   const { data: fees } = useQuery({ queryKey: ['/api/fees'] });
   const { data: timetable } = useQuery({ queryKey: ['/api/timetables'] });
 
-  const todayTimetable = timetable?.filter((entry: any) => {
+  const todayTimetable = Array.isArray(timetable) ? timetable.filter((entry: any) => {
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
     return entry.day === today;
-  });
+  }) : [];
 
   return (
     <div className="space-y-6">
@@ -34,7 +34,7 @@ export function StudentDashboard() {
             <ClipboardList className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.attendanceRate || 0}%</div>
+            <div className="text-2xl font-bold">{(stats as any)?.attendanceRate || 0}%</div>
             <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
@@ -45,7 +45,7 @@ export function StudentDashboard() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{stats?.pendingFees || 0}</div>
+            <div className="text-2xl font-bold">₹{(stats as any)?.pendingFees || 0}</div>
             <p className="text-xs text-muted-foreground">Due this month</p>
           </CardContent>
         </Card>
@@ -72,7 +72,7 @@ export function StudentDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {notices?.slice(0, 5).map((notice: any) => (
+              {Array.isArray(notices) ? notices.slice(0, 5).map((notice: any) => (
                 <div key={notice.id} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">{notice.title}</h4>
@@ -82,7 +82,7 @@ export function StudentDashboard() {
                     </p>
                   </div>
                 </div>
-              )) || (
+              )) : (
                 <p className="text-sm text-muted-foreground">No notices available</p>
               )}
             </div>
@@ -98,7 +98,7 @@ export function StudentDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {todayTimetable?.map((entry: any) => (
+              {todayTimetable.map((entry: any) => (
                 <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div>
                     <h4 className="font-medium text-sm">{entry.subject}</h4>

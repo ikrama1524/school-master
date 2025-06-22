@@ -10,15 +10,20 @@ interface User {
 }
 
 export function useAuth() {
-  const { data: user, isLoading } = useQuery<User>({
+  const token = localStorage.getItem('token');
+  
+  const { data: user, isLoading, error } = useQuery<User>({
     queryKey: ["/api/auth/me"],
     retry: false,
+    enabled: !!token,
   });
+
+  const isAuthenticated = !!user && !!token;
 
   return {
     user,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated,
     hasModuleAccess: (module: ModuleName) => user ? hasModuleAccess(user.role, module) : false,
     canWrite: (module: ModuleName) => user ? canWrite(user.role, module) : false,
     canAdmin: (module: ModuleName) => user ? canAdmin(user.role, module) : false,

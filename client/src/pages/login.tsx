@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,10 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, GraduationCap, LogIn } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const { login, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
