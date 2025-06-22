@@ -564,6 +564,53 @@ export class DatabaseStorage implements IStorage {
   async getStudentDocuments(studentId: number): Promise<Document[]> {
     return await db.select().from(documents).where(eq(documents.studentId, studentId));
   }
+
+  // Role-Module Access Control
+  async getUserModules(role: string): Promise<any[]> {
+    const userModules = await db
+      .select({
+        id: modules.id,
+        name: modules.name,
+        displayName: modules.displayName,
+        description: modules.description,
+        icon: modules.icon,
+        route: modules.route,
+        canRead: roleModules.canRead,
+        canWrite: roleModules.canWrite,
+        canDelete: roleModules.canDelete,
+      })
+      .from(modules)
+      .innerJoin(roleModules, eq(modules.id, roleModules.moduleId))
+      .where(and(
+        eq(roleModules.role, role),
+        eq(modules.isActive, true)
+      ))
+      .orderBy(modules.name);
+    
+    return userModules;
+  }
+
+  async checkModuleAccess(role: string, moduleName: string): Promise<{
+    canRead: boolean;
+    canWrite: boolean;
+    canDelete: boolean;
+  } | null> {
+    const access = await db
+      .select({
+        canRead: roleModules.canRead,
+        canWrite: roleModules.canWrite,
+        canDelete: roleModules.canDelete,
+      })
+      .from(roleModules)
+      .innerJoin(modules, eq(roleModules.moduleId, modules.id))
+      .where(and(
+        eq(roleModules.role, role),
+        eq(modules.name, moduleName)
+      ))
+      .limit(1);
+
+    return access.length > 0 ? access[0] : null;
+  }
 }
 
 export const storage = new DatabaseStorage();
