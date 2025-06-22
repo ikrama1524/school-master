@@ -17,11 +17,13 @@ import Documents from "@/pages/documents-simple";
 import Payroll from "@/pages/payroll";
 import Homework from "@/pages/homework";
 import Results from "@/pages/results";
+import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import MobileMenu from "@/components/layout/mobile-menu";
 import TopBar from "@/components/layout/top-bar";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ModuleProvider } from "@/contexts/ModuleContext";
 import { useState } from "react";
 
 function AuthenticatedRouter() {
@@ -58,6 +60,8 @@ function AuthenticatedRouter() {
       <Route path="/payroll" component={Payroll} />
       <Route path="/homework" component={Homework} />
       <Route path="/results" component={Results} />
+      <Route path="/users" component={Users} />
+      <Route path="/documents" component={Documents} />
       <Route component={NotFound} />
     </Switch>
   );
