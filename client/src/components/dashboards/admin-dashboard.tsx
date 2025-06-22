@@ -55,7 +55,7 @@ export function AdminDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.attendanceRate || 0}%</div>
+            <div className="text-2xl font-bold">{(stats as any)?.attendanceRate || 0}%</div>
             <p className="text-xs text-muted-foreground">Overall average</p>
           </CardContent>
         </Card>
@@ -99,7 +99,7 @@ export function AdminDashboard() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Pending Fees</span>
-                <span className="font-medium">₹{stats?.pendingFees || 0}</span>
+                <span className="font-medium">₹{(stats as any)?.pendingFees || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Active Classes</span>

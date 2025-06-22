@@ -3,17 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Users, BookOpen, ClipboardList, Bell, Clock } from "lucide-react";
 
 export function TeacherDashboard() {
-  const { data: stats } = useQuery({ queryKey: ['/api/stats'] });
-  const { data: notices } = useQuery({ queryKey: ['/api/notices'] });
-  const { data: timetable } = useQuery({ queryKey: ['/api/timetables'] });
-  const { data: attendance } = useQuery({ queryKey: ['/api/attendance'] });
+  const { data: stats = {} } = useQuery({ queryKey: ['/api/stats'] });
+  const { data: notices = [] } = useQuery({ queryKey: ['/api/notices'] });
+  const { data: timetable = [] } = useQuery({ queryKey: ['/api/timetables'] });
+  const { data: attendance = [] } = useQuery({ queryKey: ['/api/attendance'] });
 
-  const todayTimetable = timetable?.filter((entry: any) => {
+  const todayTimetable = timetable.filter((entry: any) => {
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
     return entry.day === today;
   });
 
-  const todayAttendance = attendance?.filter((entry: any) => {
+  const todayAttendance = attendance.filter((entry: any) => {
     const today = new Date().toDateString();
     return new Date(entry.date).toDateString() === today;
   });
@@ -38,7 +38,7 @@ export function TeacherDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalStudents || 0}</div>
+            <div className="text-2xl font-bold">{(stats as any)?.totalStudents || 0}</div>
             <p className="text-xs text-muted-foreground">Enrolled students</p>
           </CardContent>
         </Card>
@@ -76,7 +76,7 @@ export function TeacherDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {notices?.slice(0, 5).map((notice: any) => (
+              {notices.slice(0, 5).map((notice: any) => (
                 <div key={notice.id} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">{notice.title}</h4>
