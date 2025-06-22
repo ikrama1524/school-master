@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,10 +7,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Eye, EyeOff, GraduationCap, UserPlus } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function Register() {
   const [, setLocation] = useLocation();
-  const { register, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -78,18 +77,21 @@ export default function Register() {
     }
 
     try {
-      const result = await register(
-        formData.username,
-        formData.password,
-        formData.name,
-        formData.email || undefined,
-        formData.role
-      );
+      const response = await apiRequest('POST', '/api/auth/register', {
+        username: formData.username,
+        password: formData.password,
+        name: formData.name,
+        email: formData.email || undefined,
+        role: formData.role
+      });
       
-      if (result.success) {
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
         setLocation('/');
       } else {
-        setError(result.error || 'Registration failed');
+        const errorData = await response.json();
+        setError(errorData.message || 'Registration failed');
       }
     } catch (error) {
       setError('An unexpected error occurred');
@@ -98,7 +100,7 @@ export default function Register() {
     }
   };
 
-  if (isLoading) {
+  if (isSubmitting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -264,10 +266,8 @@ export default function Register() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link href="/login">
-                <a className="text-primary hover:underline font-medium">
-                  Sign in here
-                </a>
+              <Link href="/login" className="text-primary hover:underline font-medium">
+                Sign in here
               </Link>
             </p>
           </div>
