@@ -3,7 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertStudentSchema, insertTeacherSchema, insertNoticeSchema, insertTimetableSchema, insertCalendarEventSchema, insertPeriodSchema } from "@shared/schema";
 import { z } from "zod";
-import { authenticateToken, generateToken, hashPassword, comparePassword, AuthenticatedRequest } from "./auth";
+import { authenticateToken, generateToken, hashPassword, comparePassword, AuthenticatedRequest, requireModuleRead, requireModuleWrite, requireModuleAdmin } from "./auth";
+import { UserRole } from "@shared/roles";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication Routes
@@ -34,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Generate token
-      const token = generateToken(newUser.id, newUser.username, newUser.email || '', newUser.role);
+      const token = generateToken(newUser.id, newUser.username, newUser.email || '', newUser.role as UserRole);
 
       res.status(201).json({
         message: "User registered successfully",
@@ -82,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserLastLogin(user.id);
 
       // Generate token
-      const token = generateToken(user.id, user.username, user.email || '', user.role);
+      const token = generateToken(user.id, user.username, user.email || '', user.role as UserRole);
 
       res.json({
         message: "Login successful",

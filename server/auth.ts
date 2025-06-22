@@ -73,7 +73,7 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
   }
 };
 
-export const requireRole = (roles: string[]) => {
+export const requireRole = (roles: UserRole[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Authentication required' });
@@ -86,3 +86,21 @@ export const requireRole = (roles: string[]) => {
     next();
   };
 };
+
+export const requireModuleAccess = (module: ModuleName, permission: Permission = 'read') => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    if (!hasPermission(req.user.role, module, permission)) {
+      return res.status(403).json({ message: `Access denied: ${permission} permission required for ${module}` });
+    }
+
+    next();
+  };
+};
+
+export const requireModuleRead = (module: ModuleName) => requireModuleAccess(module, 'read');
+export const requireModuleWrite = (module: ModuleName) => requireModuleAccess(module, 'write');
+export const requireModuleAdmin = (module: ModuleName) => requireModuleAccess(module, 'admin');
