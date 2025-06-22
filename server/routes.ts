@@ -126,6 +126,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Logout successful" });
   });
 
+  // Check if this is the first user registration (for super admin setup)
+  app.get('/api/auth/is-first-user', async (req, res) => {
+    try {
+      const isFirst = await storage.isFirstUser();
+      res.json({ isFirstUser: isFirst });
+    } catch (error) {
+      console.error("Error checking first user:", error);
+      res.status(500).json({ message: "Failed to check user status" });
+    }
+  });
+
+  // Get user's accessible modules based on role
+  app.get('/api/user-modules', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userRole = req.user!.role;
+      const modules = await storage.getUserModules(userRole);
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching user modules:", error);
+      res.status(500).json({ message: "Failed to fetch user modules" });
+    }
+  });
+
+  // Check specific module access
+  app.get('/api/check-access/:moduleName', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userRole = req.user!.role;
+      const moduleName = req.params.moduleName;
+      const access = await storage.checkModuleAccess(userRole, moduleName);
+      res.json(access || { canRead: false, canWrite: false, canDelete: false });
+    } catch (error) {
+      console.error("Error checking module access:", error);
+      res.status(500).json({ message: "Failed to check module access" });
+    }
+  });
+
+  // User Management Routes (Super Admin only)
+  app.get('/api/users', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.put('/api/users/:id/role', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { role } = req.body;
+      
+      if (!role) {
+        return res.status(400).json({ message: "Role is required" });
+      }
+
+      const updatedUser = await storage.updateUserRole(userId, role);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  app.delete('/api/users/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Prevent deleting the last super admin
+      if (req.user!.id === userId && req.user!.role === 'super_admin') {
+        return res.status(400).json({ message: "Cannot delete yourself as the super admin" });
+      }
+
+      const deleted = await storage.deleteUser(userId);
+      if (!deleted) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // In-memory storage for admissions (temporary until proper database implementation)
   const admissionsStore = new Map();
   
