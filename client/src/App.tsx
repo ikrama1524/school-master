@@ -90,34 +90,37 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen flex bg-[var(--edu-bg)]">
-      <Sidebar />
-      <MobileMenu 
-        isOpen={isMobileMenuOpen} 
-        onClose={() => setIsMobileMenuOpen(false)} 
-      />
-      
-      <main className="flex-1 md:ml-64">
-        <TopBar onMobileMenuToggle={() => setIsMobileMenuOpen(true)} />
-        <div className="p-4 md:p-6">
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/admissions" component={Admissions} />
-            <Route path="/documents" component={Documents} />
-            <Route path="/calendar" component={Timetable} />
-            <Route path="/teachers" component={Teachers} />
-            <Route path="/attendance" component={Attendance} />
-            <Route path="/fees" component={Fees} />
-            <Route path="/reports" component={Reports} />
-            <Route path="/settings" component={Settings} />
-            <Route path="/payroll" component={Payroll} />
-            <Route path="/homework" component={Homework} />
-            <Route path="/results" component={Results} />
-            <Route component={NotFound} />
-          </Switch>
-        </div>
-      </main>
-    </div>
+    <ModuleProvider>
+      <div className="min-h-screen flex bg-[var(--edu-bg)]">
+        <Sidebar />
+        <MobileMenu 
+          isOpen={isMobileMenuOpen} 
+          onClose={() => setIsMobileMenuOpen(false)} 
+        />
+        
+        <main className="flex-1 md:ml-64">
+          <TopBar onMobileMenuToggle={() => setIsMobileMenuOpen(true)} />
+          <div className="p-4 md:p-6">
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/admissions" component={Admissions} />
+              <Route path="/documents" component={Documents} />
+              <Route path="/calendar" component={Timetable} />
+              <Route path="/teachers" component={Teachers} />
+              <Route path="/attendance" component={Attendance} />
+              <Route path="/fees" component={Fees} />
+              <Route path="/reports" component={Reports} />
+              <Route path="/settings" component={Settings} />
+              <Route path="/payroll" component={Payroll} />
+              <Route path="/homework" component={Homework} />
+              <Route path="/results" component={Results} />
+              <Route path="/users" component={Users} />
+              <Route component={NotFound} />
+            </Switch>
+          </div>
+        </main>
+      </div>
+    </ModuleProvider>
   );
 }
 
