@@ -181,27 +181,48 @@ function AuthenticatedRouter() {
 }
 
 function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  try {
+    const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) {
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      );
+    }
+
+    if (!isAuthenticated) {
+      return (
+        <Switch>
+          <Route path="/register" component={Register} />
+          <Route path="/login" component={Login} />
+          <Route component={Login} />
+        </Switch>
+      );
+    }
+
+    return <AuthenticatedRouter />;
+  } catch (error) {
+    console.error('AppContent error:', error);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center bg-red-50">
+        <div className="text-center">
+          <h1 className="text-xl font-bold text-red-600 mb-4">Authentication Error</h1>
+          <p className="text-gray-600 mb-4">Please refresh the page or clear your browser data.</p>
+          <button 
+            onClick={() => {
+              localStorage.clear();
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Reset Application
+          </button>
+        </div>
       </div>
     );
   }
-
-  if (!isAuthenticated) {
-    return (
-      <Switch>
-        <Route path="/register" component={Register} />
-        <Route path="/login" component={Login} />
-        <Route component={Login} />
-      </Switch>
-    );
-  }
-
-  return <AuthenticatedRouter />;
 }
 
 function App() {

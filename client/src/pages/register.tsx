@@ -88,7 +88,8 @@ export default function Register() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('token', data.token);
-        setLocation('/');
+        // Force page reload to ensure proper authentication state
+        window.location.href = '/';
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Registration failed');
