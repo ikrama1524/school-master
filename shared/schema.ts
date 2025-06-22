@@ -6,10 +6,13 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role").notNull().default("admin"), // admin, teacher, student, parent
+  role: text("role").notNull().default("student"), // student, parent, subject_teacher, class_teacher, non_teaching_staff, accountant, principal, admin, super_admin
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
+  assignedClass: text("assigned_class"), // For class teachers
+  assignedSubject: text("assigned_subject"), // For subject teachers
+  permissions: text("permissions").array().default([]), // Additional custom permissions
   isActive: boolean("is_active").default(true),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
