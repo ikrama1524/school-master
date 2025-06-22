@@ -46,20 +46,20 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     reports: ['read'],
   },
   subject_teacher: {
-    dashboard: ['read'],
-    timetable: ['read'],
+    dashboard: ['read'], // Notices, holidays, Attendance-own
+    timetable: ['read', 'write'],
     homework: ['read', 'write'],
     results: ['read', 'write'],
     reports: ['read'],
   },
   class_teacher: {
-    dashboard: ['read'],
+    dashboard: ['read'], // Notices, holidays, attendance
     attendance: ['read', 'write'],
-    timetable: ['read'],
+    timetable: ['read', 'write'],
     homework: ['read', 'write'],
     results: ['read', 'write'],
     reports: ['read'],
-    fees: ['read'],
+    fees: ['read'], // Fees Management (read only)
   },
   non_teaching_staff: {
     dashboard: ['read'],

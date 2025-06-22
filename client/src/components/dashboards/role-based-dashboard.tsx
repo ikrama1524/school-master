@@ -1,9 +1,10 @@
 import { useAuth } from "@/hooks/useAuth";
-import { StudentDashboard } from "./student-dashboard";
-import { TeacherDashboard } from "./teacher-dashboard";
+import { StudentParentDashboard } from "./student-parent-dashboard";
+import { EnhancedTeacherDashboard } from "./enhanced-teacher-dashboard";
 import { AdminDashboard } from "./admin-dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, User } from "lucide-react";
+import { Bell, User, CreditCard, DollarSign } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 function NonTeachingStaffDashboard() {
   return (
