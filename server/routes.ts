@@ -141,7 +141,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user-modules', authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const userRole = req.user!.role;
+      const userId = req.user!.id;
+      console.log(`[DEBUG] User ${userId} with role "${userRole}" requesting modules`);
       const modules = await storage.getUserModules(userRole);
+      console.log(`[DEBUG] Found ${modules.length} modules for role "${userRole}":`, modules.map(m => m.name));
       res.json(modules);
     } catch (error) {
       console.error("Error fetching user modules:", error);
