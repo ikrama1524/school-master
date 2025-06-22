@@ -1,5 +1,5 @@
 import { 
-  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults, documents,
+  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults, documents, modules, roleModules,
   type User, type InsertUser,
   type Student, type InsertStudent,
   type Teacher, type InsertTeacher,
@@ -15,7 +15,7 @@ import {
   type Document, type InsertDocument
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, count, and } from "drizzle-orm";
+import { eq, count, and, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -124,6 +124,12 @@ export interface IStorage {
     canWrite: boolean;
     canDelete: boolean;
   } | null>;
+  
+  // User Management
+  getAllUsers(): Promise<User[]>;
+  updateUserRole(id: number, role: string): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
+  isFirstUser(): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -609,7 +615,38 @@ export class DatabaseStorage implements IStorage {
       ))
       .limit(1);
 
-    return access.length > 0 ? access[0] : null;
+    if (access.length === 0) return null;
+    
+    const result = access[0];
+    return {
+      canRead: result.canRead ?? false,
+      canWrite: result.canWrite ?? false,
+      canDelete: result.canDelete ?? false,
+    };
+  }
+
+  // User Management
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.name);
+  }
+
+  async updateUserRole(id: number, role: string): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async isFirstUser(): Promise<boolean> {
+    const userCount = await db.select({ count: count() }).from(users);
+    return userCount[0]?.count === 0;
   }
 }
 
