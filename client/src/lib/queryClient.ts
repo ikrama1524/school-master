@@ -19,7 +19,7 @@ export async function apiRequest(
   }
   
   // Add JWT token if available
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('auth_token');
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
@@ -33,7 +33,8 @@ export async function apiRequest(
 
   // Handle 401 Unauthorized responses
   if (res.status === 401) {
-    localStorage.removeItem('token');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
     window.location.href = '/login';
     return res;
   }
@@ -51,7 +52,7 @@ export const getQueryFn: <T>(options: {
     const headers: Record<string, string> = {};
     
     // Add JWT token if available
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
@@ -67,7 +68,8 @@ export const getQueryFn: <T>(options: {
 
     // Handle 401 Unauthorized responses
     if (res.status === 401) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
       window.location.href = '/login';
       return null;
     }
