@@ -970,7 +970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Document Management Routes
-  app.get("/api/documents", authenticateToken, async (req, res) => {
+  app.get("/api/documents", async (req, res) => {
     try {
       const documents = await storage.getDocuments();
       res.json(documents);
@@ -980,7 +980,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/documents/:id", authenticateToken, async (req, res) => {
+  app.get("/api/documents/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const document = await storage.getDocument(id);
@@ -994,7 +994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/documents", authenticateToken, async (req, res) => {
+  app.post("/api/documents", async (req, res) => {
     try {
       const document = await storage.createDocument(req.body);
       res.status(201).json(document);
