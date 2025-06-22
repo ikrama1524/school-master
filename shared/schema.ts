@@ -406,3 +406,43 @@ export type InsertSemesterResult = z.infer<typeof insertSemesterResultSchema>;
 
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+
+// Role-Module Access Control Tables
+export const modules = pgTable("modules", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  displayName: varchar("display_name", { length: 100 }).notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 50 }),
+  route: varchar("route", { length: 100 }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const roleModules = pgTable("role_modules", {
+  id: serial("id").primaryKey(),
+  role: varchar("role", { length: 50 }).notNull(),
+  moduleId: integer("module_id").notNull().references(() => modules.id),
+  canRead: boolean("can_read").default(true),
+  canWrite: boolean("can_write").default(false),
+  canDelete: boolean("can_delete").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueRoleModule: unique().on(table.role, table.moduleId),
+}));
+
+export const insertModuleSchema = createInsertSchema(modules).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertRoleModuleSchema = createInsertSchema(roleModules).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Module = typeof modules.$inferSelect;
+export type InsertModule = z.infer<typeof insertModuleSchema>;
+
+export type RoleModule = typeof roleModules.$inferSelect;
+export type InsertRoleModule = z.infer<typeof insertRoleModuleSchema>;
