@@ -435,7 +435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Subjects routes
-  app.get("/api/subjects", async (req, res) => {
+  app.get("/api/subjects", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       // Mock subjects data with teacher assignments
       const mockSubjects = [
@@ -452,7 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Timetable routes
-  app.get("/api/timetable", async (req, res) => {
+  app.get("/api/timetable", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const { class: className, section } = req.query;
       const timetables = await storage.getTimetables(
@@ -465,7 +465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/timetable", async (req, res) => {
+  app.post("/api/timetable", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const validatedData = insertTimetableSchema.parse(req.body);
       const timetableEntry = await storage.createTimetable(validatedData);
@@ -478,26 +478,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/timetable/:id", async (req, res) => {
+  app.put("/api/timetable/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const updatedEntry = { id, ...req.body, updatedAt: new Date() };
+      const updatedEntry = await storage.updateTimetable(id, req.body);
+      if (!updatedEntry) {
+        return res.status(404).json({ message: "Timetable entry not found" });
+      }
       res.json(updatedEntry);
     } catch (error) {
       res.status(500).json({ message: "Failed to update timetable entry" });
     }
   });
 
-  app.delete("/api/timetable/:id", async (req, res) => {
+  app.delete("/api/timetable/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      res.json({ message: "Timetable entry deleted", id });
+      const deleted = await storage.deleteTimetable(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Timetable entry not found" });
+      }
+      res.json({ message: "Timetable entry deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete timetable entry" });
     }
   });
 
-  app.post("/api/timetable/bulk", async (req, res) => {
+  app.post("/api/timetable/bulk", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const { entries } = req.body;
       
@@ -748,7 +755,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Period management routes
-  app.get("/api/periods", async (req, res) => {
+  app.get("/api/periods", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const periods = await storage.getPeriods();
       res.json(periods);
@@ -757,7 +764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/periods", async (req, res) => {
+  app.post("/api/periods", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const validatedData = insertPeriodSchema.parse(req.body);
       const period = await storage.createPeriod(validatedData);
@@ -770,7 +777,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/periods/:id", async (req, res) => {
+  app.put("/api/periods/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const period = await storage.updatePeriod(id, req.body);
@@ -783,7 +790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/periods/:id", async (req, res) => {
+  app.delete("/api/periods/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deletePeriod(id);
