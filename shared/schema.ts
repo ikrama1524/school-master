@@ -409,3 +409,48 @@ export type InsertSemesterResult = z.infer<typeof insertSemesterResultSchema>;
 
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+
+// Admissions table for managing student applications
+export const admissions = pgTable("admissions", {
+  id: serial("id").primaryKey(),
+  applicationNumber: text("application_number").notNull().unique(),
+  studentName: text("student_name").notNull(),
+  dateOfBirth: timestamp("date_of_birth").notNull(),
+  gender: text("gender").notNull(),
+  parentName: text("parent_name").notNull(),
+  parentPhone: text("parent_phone").notNull(),
+  parentEmail: text("parent_email"),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  previousSchool: text("previous_school"),
+  class: text("class").notNull(),
+  section: text("section").notNull(),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected, document_review, interview_scheduled
+  priority: text("priority").notNull().default("normal"), // normal, high, urgent
+  applicationDate: timestamp("application_date").defaultNow(),
+  interviewDate: timestamp("interview_date"),
+  documents: text("documents").array().default([]), // Array of document IDs or filenames
+  remarks: text("remarks"),
+  approvedBy: integer("approved_by").references(() => users.id),
+  approvedDate: timestamp("approved_date"),
+  studentId: integer("student_id").references(() => students.id), // Set when student is created
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertAdmissionSchema = createInsertSchema(admissions).omit({
+  id: true,
+  applicationNumber: true,
+  createdAt: true,
+  updatedAt: true,
+  approvedBy: true,
+  approvedDate: true,
+  studentId: true,
+}).extend({
+  dateOfBirth: z.string().transform((str) => new Date(str)),
+  interviewDate: z.string().transform((str) => new Date(str)).optional(),
+});
+
+export type Admission = typeof admissions.$inferSelect;
+export type InsertAdmission = z.infer<typeof insertAdmissionSchema>;

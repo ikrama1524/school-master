@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertStudentSchema, insertTeacherSchema, insertNoticeSchema, insertTimetableSchema, insertCalendarEventSchema, insertPeriodSchema } from "@shared/schema";
+import { insertStudentSchema, insertTeacherSchema, insertNoticeSchema, insertTimetableSchema, insertCalendarEventSchema, insertPeriodSchema, insertAdmissionSchema } from "@shared/schema";
 import { z } from "zod";
 import { authenticateToken, generateToken, hashPassword, comparePassword, AuthenticatedRequest } from "./auth";
 
@@ -126,81 +126,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Logout successful" });
   });
 
-  // In-memory storage for admissions (temporary until proper database implementation)
-  const admissionsStore = new Map();
-  
-  // Initialize with some sample applications
-  const sampleApplications = [
-    {
-      id: 1,
-      applicationNumber: "ADM001",
-      studentName: "Alice Johnson",
-      dateOfBirth: "2010-03-15",
-      parentName: "Robert Johnson",
-      email: "robert.johnson@email.com",
-      phone: "+1234567890",
-      address: "123 Main Street, City",
-      previousSchool: "ABC Elementary",
-      class: "Grade 6",
-      section: "A",
-      gender: "female",
-      status: "pending",
-      applicationDate: new Date("2024-01-15"),
-      documents: [
-        { id: "1", name: "Birth Certificate", type: "pdf", status: "verified", uploadDate: new Date(), size: "2.1 MB" },
-        { id: "2", name: "Previous School Records", type: "pdf", status: "pending", uploadDate: new Date(), size: "1.8 MB" }
-      ],
-      priority: "normal"
-    },
-    {
-      id: 2,
-      applicationNumber: "ADM002",
-      studentName: "Michael Chen",
-      dateOfBirth: "2009-07-22",
-      parentName: "David Chen",
-      email: "david.chen@email.com",
-      phone: "+1234567891",
-      address: "456 Oak Avenue, City",
-      previousSchool: "XYZ School",
-      class: "Grade 7",
-      section: "B",
-      gender: "male",
-      status: "document_review",
-      applicationDate: new Date("2024-01-20"),
-      documents: [
-        { id: "3", name: "Birth Certificate", type: "pdf", status: "verified", uploadDate: new Date(), size: "2.3 MB" },
-        { id: "4", name: "Medical Records", type: "pdf", status: "rejected", uploadDate: new Date(), size: "1.5 MB" }
-      ],
-      priority: "high"
-    }
-  ];
-  
-  // Initialize store with sample data
-  sampleApplications.forEach(app => admissionsStore.set(app.id, app));
+
 
   // Admissions routes (replaces direct student creation)
   app.post("/api/admissions", async (req, res) => {
     try {
-      const applicationData = req.body;
-      // Generate application number and ID
-      const applicationNumber = `ADM${Date.now().toString().slice(-6)}`;
-      const id = Date.now();
-      
-      const admission = {
-        id,
-        ...applicationData,
-        applicationNumber,
-        status: "pending",
-        applicationDate: new Date(),
-        documents: applicationData.documents || [
-          { id: `${id}_1`, name: "Birth Certificate", type: "pdf", status: "pending", uploadDate: new Date(), size: "0 MB" },
-          { id: `${id}_2`, name: "Previous School Records", type: "pdf", status: "pending", uploadDate: new Date(), size: "0 MB" }
-        ],
-        priority: applicationData.priority || "normal"
-      };
-      
-      // Store admission application
-      admissionsStore.set(id, admission);
+      const validatedData = insertAdmissionSchema.parse(req.body);
+      const admission = await storage.createAdmission(validatedData);
       res.status(201).json(admission);
     } catch (error) {
       console.error("Error creating admission:", error);
@@ -210,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admissions", async (req, res) => {
     try {
-      const admissions = Array.from(admissionsStore.values());
+      const admissions = await storage.getAdmissions();
       res.json(admissions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch admissions" });
@@ -220,37 +152,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admissions/:id/approve", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const { approvedBy } = req.body;
       
-      // Get the admission application from storage
-      const admission = admissionsStore.get(id);
-      if (!admission) {
-        return res.status(404).json({ message: "Admission application not found" });
-      }
+      const result = await storage.approveAdmission(id, approvedBy);
       
-      // Create student from the actual admission data
-      const studentData = {
-        name: admission.studentName,
-        rollNumber: `2025${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-        class: admission.class,
-        section: admission.section || "A",
-        dateOfBirth: new Date(admission.dateOfBirth),
-        gender: admission.gender || "male",
-        parentName: admission.parentName,
-        parentPhone: admission.phone,
-        email: admission.email,
-        address: admission.address,
-        previousSchool: admission.previousSchool || null,
-        admissionDate: new Date()
-      };
-
-      const student = await storage.createStudent(studentData);
-      
-      // Update admission status to approved
-      admission.status = "approved";
-      admission.approvedDate = new Date();
-      admissionsStore.set(id, admission);
-      
-      res.json({ message: "Application approved and student created", student, admission });
+      res.json({ 
+        message: "Admission approved and student created successfully",
+        admission: result.admission,
+        student: result.student
+      });
     } catch (error) {
       console.error("Error approving admission:", error);
       res.status(500).json({ message: "Failed to approve admission" });
