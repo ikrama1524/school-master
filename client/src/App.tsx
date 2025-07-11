@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import Timetable from "@/pages/timetable";
 import Teachers from "@/pages/teachers";
 import Attendance from "@/pages/attendance";
 import Fees from "@/pages/fees";
@@ -49,6 +50,7 @@ function AuthenticatedRouter() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/admissions" component={Admissions} />
+      <Route path="/calendar" component={Timetable} />
       <Route path="/teachers" component={Teachers} />
       <Route path="/attendance" component={Attendance} />
       <Route path="/fees" component={Fees} />
@@ -99,6 +101,7 @@ function AppContent() {
             <Route path="/" component={Dashboard} />
             <Route path="/admissions" component={Admissions} />
             <Route path="/documents" component={Documents} />
+            <Route path="/calendar" component={Timetable} />
             <Route path="/teachers" component={Teachers} />
             <Route path="/attendance" component={Attendance} />
             <Route path="/fees" component={Fees} />
