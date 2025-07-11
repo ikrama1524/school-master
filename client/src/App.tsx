@@ -9,6 +9,7 @@ import Register from "@/pages/register";
 import Timetable from "@/pages/timetable";
 import Calendar from "@/pages/calendar";
 import Teachers from "@/pages/teachers";
+import Students from "@/pages/students";
 import Attendance from "@/pages/attendance";
 import Fees from "@/pages/fees";
 import Reports from "@/pages/reports";
@@ -51,6 +52,7 @@ function AuthenticatedRouter() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/admissions" component={Admissions} />
+      <Route path="/students" component={Students} />
       <Route path="/calendar" component={Calendar} />
       <Route path="/timetable" component={Timetable} />
       <Route path="/teachers" component={Teachers} />
