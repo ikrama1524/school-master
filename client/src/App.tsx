@@ -7,6 +7,7 @@ import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Timetable from "@/pages/timetable";
+import Calendar from "@/pages/calendar";
 import Teachers from "@/pages/teachers";
 import Attendance from "@/pages/attendance";
 import Fees from "@/pages/fees";
@@ -50,7 +51,8 @@ function AuthenticatedRouter() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/admissions" component={Admissions} />
-      <Route path="/calendar" component={Timetable} />
+      <Route path="/calendar" component={Calendar} />
+      <Route path="/timetable" component={Timetable} />
       <Route path="/teachers" component={Teachers} />
       <Route path="/attendance" component={Attendance} />
       <Route path="/fees" component={Fees} />
@@ -59,6 +61,8 @@ function AuthenticatedRouter() {
       <Route path="/payroll" component={Payroll} />
       <Route path="/homework" component={Homework} />
       <Route path="/results" component={Results} />
+      <Route path="/users" component={Users} />
+      <Route path="/documents" component={Documents} />
       <Route component={NotFound} />
     </Switch>
   );
