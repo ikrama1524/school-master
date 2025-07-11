@@ -30,7 +30,6 @@ const allNavigationItems = [
   { href: "/students", label: "Students", icon: Users, module: "students" },
   { href: "/teachers", label: "Teachers", icon: UserCheck, module: "teachers" },
   { href: "/attendance", label: "Attendance", icon: Calendar, module: "attendance" },
-  { href: "/timetable", label: "Timetable", icon: Clock, module: "timetable" },
   { href: "/homework", label: "Homework", icon: BookOpen, module: "homework" },
   { href: "/results", label: "Results", icon: Trophy, module: "results" },
   { href: "/reports", label: "Reports", icon: FileText, module: "reports" },
@@ -45,15 +44,15 @@ const allNavigationItems = [
 
 // Role-based permission system
 const ROLE_PERMISSIONS = {
-  student: ["dashboard", "timetable", "homework", "results", "reports"],
-  parent: ["dashboard", "timetable", "homework", "results", "reports"],
-  subject_teacher: ["dashboard", "timetable", "homework", "results", "reports"],
-  class_teacher: ["dashboard", "attendance", "timetable", "homework", "results", "reports", "fees"],
+  student: ["dashboard", "homework", "results", "reports"],
+  parent: ["dashboard", "homework", "results", "reports"],
+  subject_teacher: ["dashboard", "homework", "results", "reports"],
+  class_teacher: ["dashboard", "attendance", "homework", "results", "reports", "fees"],
   non_teaching_staff: ["dashboard"],
   accountant: ["fees", "payroll", "attendance"],
-  principal: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
-  admin: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
-  super_admin: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings", "users"],
+  principal: ["dashboard", "students", "teachers", "attendance", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
+  admin: ["dashboard", "students", "teachers", "attendance", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
+  super_admin: ["dashboard", "students", "teachers", "attendance", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings", "users"],
 };
 
 const getRoleBadgeColor = (role: string) => {

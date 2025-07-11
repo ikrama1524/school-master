@@ -1,12 +1,11 @@
 import { 
-  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults, documents,
+  users, students, teachers, attendance, fees, notices, periods, results, exams, semesters, semesterResults, documents,
   type User, type InsertUser,
   type Student, type InsertStudent,
   type Teacher, type InsertTeacher,
   type Attendance, type InsertAttendance,
   type Fee, type InsertFee,
   type Notice, type InsertNotice,
-  type Timetable, type InsertTimetable,
   type Period, type InsertPeriod,
   type Result, type InsertResult,
   type Exam, type InsertExam,
@@ -56,12 +55,7 @@ export interface IStorage {
   getNotices(): Promise<Notice[]>;
   createNotice(notice: InsertNotice): Promise<Notice>;
   
-  // Timetable
-  getTimetables(className?: string, section?: string): Promise<Timetable[]>;
-  createTimetable(timetableEntry: InsertTimetable): Promise<Timetable>;
-  updateTimetable(id: number, timetableEntry: Partial<Timetable>): Promise<Timetable | undefined>;
-  deleteTimetable(id: number): Promise<boolean>;
-  bulkCreateTimetables(entries: InsertTimetable[]): Promise<Timetable[]>;
+
   
   // Periods
   getPeriods(): Promise<Period[]>;
@@ -326,41 +320,7 @@ export class DatabaseStorage implements IStorage {
     return notice;
   }
 
-  // Timetable methods
-  async getTimetables(className?: string, section?: string): Promise<Timetable[]> {
-    if (className && section) {
-      return await db.select().from(timetable)
-        .where(and(eq(timetable.class, className), eq(timetable.section, section)));
-    } else if (className) {
-      return await db.select().from(timetable)
-        .where(eq(timetable.class, className));
-    }
-    
-    return await db.select().from(timetable);
-  }
 
-  async createTimetable(timetableEntry: InsertTimetable): Promise<Timetable> {
-    const [entry] = await db.insert(timetable).values(timetableEntry).returning();
-    return entry;
-  }
-
-  async updateTimetable(id: number, timetableEntry: Partial<Timetable>): Promise<Timetable | undefined> {
-    const [entry] = await db.update(timetable)
-      .set(timetableEntry)
-      .where(eq(timetable.id, id))
-      .returning();
-    return entry;
-  }
-
-  async deleteTimetable(id: number): Promise<boolean> {
-    const result = await db.delete(timetable).where(eq(timetable.id, id));
-    return (result.rowCount ?? 0) > 0;
-  }
-
-  async bulkCreateTimetables(entries: InsertTimetable[]): Promise<Timetable[]> {
-    const createdEntries = await db.insert(timetable).values(entries).returning();
-    return createdEntries;
-  }
 
   // Period methods
   async getPeriods(): Promise<Period[]> {

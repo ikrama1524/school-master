@@ -51,7 +51,6 @@ The system supports the following roles with specific permissions:
 - **Students**: Student management and enrollment
 - **Teachers**: Staff management and assignments
 - **Attendance**: Daily attendance tracking with multiple methods
-- **Timetable**: Class scheduling and period management
 - **Fees**: Payment processing and financial tracking
 - **Results**: Academic performance and grading
 - **Reports**: Data analysis and export functionality
@@ -114,3 +113,4 @@ Preferred communication style: Simple, everyday language.
 
 Changelog:
 - July 08, 2025. Initial setup
+- July 11, 2025. Removed timetable module - eliminated all timetable-related functionality including API routes, frontend components, navigation items, and database interfaces

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertStudentSchema, insertTeacherSchema, insertNoticeSchema, insertTimetableSchema, insertCalendarEventSchema, insertPeriodSchema } from "@shared/schema";
+import { insertStudentSchema, insertTeacherSchema, insertNoticeSchema, insertCalendarEventSchema, insertPeriodSchema } from "@shared/schema";
 import { z } from "zod";
 import { authenticateToken, generateToken, hashPassword, comparePassword, AuthenticatedRequest } from "./auth";
 
@@ -451,78 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Timetable routes
-  app.get("/api/timetable", authenticateToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { class: className, section } = req.query;
-      const timetables = await storage.getTimetables(
-        className as string, 
-        section as string
-      );
-      res.json(timetables);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch timetable" });
-    }
-  });
 
-  app.post("/api/timetable", authenticateToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const validatedData = insertTimetableSchema.parse(req.body);
-      const timetableEntry = await storage.createTimetable(validatedData);
-      res.status(201).json(timetableEntry);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create timetable entry" });
-    }
-  });
-
-  app.put("/api/timetable/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const updatedEntry = await storage.updateTimetable(id, req.body);
-      if (!updatedEntry) {
-        return res.status(404).json({ message: "Timetable entry not found" });
-      }
-      res.json(updatedEntry);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update timetable entry" });
-    }
-  });
-
-  app.delete("/api/timetable/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const deleted = await storage.deleteTimetable(id);
-      if (!deleted) {
-        return res.status(404).json({ message: "Timetable entry not found" });
-      }
-      res.json({ message: "Timetable entry deleted successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete timetable entry" });
-    }
-  });
-
-  app.post("/api/timetable/bulk", authenticateToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { entries } = req.body;
-      
-      if (!Array.isArray(entries) || entries.length === 0) {
-        return res.status(400).json({ message: "Invalid entries data" });
-      }
-      
-      const validatedEntries = entries.map(entry => insertTimetableSchema.parse(entry));
-      const savedEntries = await storage.bulkCreateTimetables(validatedEntries);
-
-      res.status(201).json(savedEntries);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to save timetable entries" });
-    }
-  });
 
   // Calendar routes
   app.get("/api/calendar", async (req, res) => {
