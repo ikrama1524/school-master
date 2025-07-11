@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
-
+import Timetable from "@/pages/timetable";
 import Teachers from "@/pages/teachers";
 import Attendance from "@/pages/attendance";
 import Fees from "@/pages/fees";
@@ -18,7 +18,6 @@ import Payroll from "@/pages/payroll";
 import Homework from "@/pages/homework";
 import Results from "@/pages/results";
 import Users from "@/pages/users";
-import Calendar from "@/pages/calendar";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import MobileMenu from "@/components/layout/mobile-menu";
@@ -51,6 +50,7 @@ function AuthenticatedRouter() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/admissions" component={Admissions} />
+      <Route path="/calendar" component={Timetable} />
       <Route path="/teachers" component={Teachers} />
       <Route path="/attendance" component={Attendance} />
       <Route path="/fees" component={Fees} />
@@ -101,6 +101,7 @@ function AppContent() {
             <Route path="/" component={Dashboard} />
             <Route path="/admissions" component={Admissions} />
             <Route path="/documents" component={Documents} />
+            <Route path="/calendar" component={Timetable} />
             <Route path="/teachers" component={Teachers} />
             <Route path="/attendance" component={Attendance} />
             <Route path="/fees" component={Fees} />
@@ -110,7 +111,6 @@ function AppContent() {
             <Route path="/homework" component={Homework} />
             <Route path="/results" component={Results} />
             <Route path="/users" component={Users} />
-            <Route path="/calendar" component={Calendar} />
             <Route component={NotFound} />
           </Switch>
         </div>
