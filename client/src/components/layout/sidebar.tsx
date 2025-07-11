@@ -45,15 +45,15 @@ const allNavigationItems = [
 
 // Role-based permission system
 const ROLE_PERMISSIONS = {
-  student: ["dashboard", "timetable", "homework", "results", "reports"],
-  parent: ["dashboard", "timetable", "homework", "results", "reports"],
-  subject_teacher: ["dashboard", "timetable", "homework", "results", "reports"],
-  class_teacher: ["dashboard", "attendance", "timetable", "homework", "results", "reports", "fees"],
+  student: ["dashboard", "calendar", "homework", "results", "reports"],
+  parent: ["dashboard", "calendar", "homework", "results", "reports"],
+  subject_teacher: ["dashboard", "calendar", "homework", "results", "reports"],
+  class_teacher: ["dashboard", "attendance", "calendar", "homework", "results", "reports", "fees"],
   non_teaching_staff: ["dashboard"],
   accountant: ["fees", "payroll", "attendance"],
-  principal: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
-  admin: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
-  super_admin: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings", "users"],
+  principal: ["dashboard", "students", "teachers", "attendance", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
+  admin: ["dashboard", "students", "teachers", "attendance", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
+  super_admin: ["dashboard", "students", "teachers", "attendance", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings", "users"],
 };
 
 const getRoleBadgeColor = (role: string) => {

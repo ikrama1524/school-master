@@ -39,8 +39,7 @@ export interface Permission {
 // Define role-based permissions
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   student: [
-    { module: 'dashboard', access: 'read', restrictions: ['notices', 'attendance_graph', 'results', 'pending_fees', 'timetable'] },
-    { module: 'timetable', access: 'read' },
+    { module: 'dashboard', access: 'read', restrictions: ['notices', 'attendance_graph', 'results', 'pending_fees'] },
     { module: 'calendar', access: 'read' },
     { module: 'homework', access: 'read' },
     { module: 'results', access: 'read' },
@@ -48,8 +47,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 
   parent: [
-    { module: 'dashboard', access: 'read', restrictions: ['notices', 'attendance_graph', 'results', 'pending_fees', 'timetable'] },
-    { module: 'timetable', access: 'read' },
+    { module: 'dashboard', access: 'read', restrictions: ['notices', 'attendance_graph', 'results', 'pending_fees'] },
     { module: 'calendar', access: 'read' },
     { module: 'homework', access: 'read' },
     { module: 'results', access: 'read' },
@@ -58,7 +56,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
   subject_teacher: [
     { module: 'dashboard', access: 'read', restrictions: ['notices', 'holidays', 'attendance_own'] },
-    { module: 'timetable', access: 'read' },
     { module: 'calendar', access: 'read' },
     { module: 'homework', access: 'write' },
     { module: 'results', access: 'write' },
@@ -68,7 +65,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   class_teacher: [
     { module: 'dashboard', access: 'read', restrictions: ['notices', 'holidays', 'attendance'] },
     { module: 'attendance', access: 'write' },
-    { module: 'timetable', access: 'read' },
     { module: 'calendar', access: 'read' },
     { module: 'homework', access: 'write' },
     { module: 'results', access: 'write' },
@@ -91,7 +87,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { module: 'students', access: 'admin' },
     { module: 'teachers', access: 'admin' },
     { module: 'attendance', access: 'admin' },
-    { module: 'timetable', access: 'admin' },
     { module: 'homework', access: 'admin' },
     { module: 'results', access: 'admin' },
     { module: 'reports', access: 'admin' },
@@ -108,7 +103,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { module: 'students', access: 'admin' },
     { module: 'teachers', access: 'admin' },
     { module: 'attendance', access: 'admin' },
-    { module: 'timetable', access: 'admin' },
     { module: 'homework', access: 'admin' },
     { module: 'results', access: 'admin' },
     { module: 'reports', access: 'admin' },
@@ -125,7 +119,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { module: 'students', access: 'admin' },
     { module: 'teachers', access: 'admin' },
     { module: 'attendance', access: 'admin' },
-    { module: 'timetable', access: 'admin' },
     { module: 'homework', access: 'admin' },
     { module: 'results', access: 'admin' },
     { module: 'reports', access: 'admin' },
