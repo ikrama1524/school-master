@@ -82,11 +82,9 @@ export default function Students() {
         <Button 
           onClick={() => setIsModalOpen(true)}
           className="bg-[var(--edu-primary)] hover:bg-[var(--edu-primary)]/90 text-white"
-          disabled
-          title="Students are now created through the admission approval process"
         >
           <UserPlus className="h-4 w-4 mr-2" />
-          Add Student (Via Admissions)
+          Add Student
         </Button>
       </div>
 

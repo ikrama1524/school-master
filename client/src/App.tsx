@@ -7,9 +7,7 @@ import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Timetable from "@/pages/timetable";
-import Calendar from "@/pages/calendar";
 import Teachers from "@/pages/teachers";
-import Students from "@/pages/students";
 import Attendance from "@/pages/attendance";
 import Fees from "@/pages/fees";
 import Reports from "@/pages/reports";
@@ -27,7 +25,44 @@ import TopBar from "@/components/layout/top-bar";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 
+function AuthenticatedRouter() {
+  const { isAuthenticated, isLoading } = useAuth();
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/register" component={Register} />
+        <Route path="/login" component={Login} />
+        <Route component={Login} />
+      </Switch>
+    );
+  }
+
+  return (
+    <Switch>
+      <Route path="/" component={Dashboard} />
+      <Route path="/admissions" component={Admissions} />
+      <Route path="/calendar" component={Timetable} />
+      <Route path="/teachers" component={Teachers} />
+      <Route path="/attendance" component={Attendance} />
+      <Route path="/fees" component={Fees} />
+      <Route path="/reports" component={Reports} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/payroll" component={Payroll} />
+      <Route path="/homework" component={Homework} />
+      <Route path="/results" component={Results} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
 
 function AppContent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -65,10 +100,8 @@ function AppContent() {
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/admissions" component={Admissions} />
-            <Route path="/students" component={Students} />
             <Route path="/documents" component={Documents} />
-            <Route path="/calendar" component={Calendar} />
-            <Route path="/timetable" component={Timetable} />
+            <Route path="/calendar" component={Timetable} />
             <Route path="/teachers" component={Teachers} />
             <Route path="/attendance" component={Attendance} />
             <Route path="/fees" component={Fees} />

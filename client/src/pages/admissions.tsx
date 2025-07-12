@@ -113,7 +113,6 @@ export default function Admissions() {
     religion: "",
     category: "",
     class: "",
-    section: "",
     rollNumber: "",
     
     // Parent/Guardian Information
@@ -162,13 +161,7 @@ export default function Admissions() {
   // Submit new application
   const submitApplicationMutation = useMutation({
     mutationFn: async (applicationData: any) => {
-      // Transform the data to match the expected schema
-      const transformedData = {
-        ...applicationData,
-        parentPhone: applicationData.phone, // Map phone to parentPhone
-        parentEmail: applicationData.email,
-      };
-      return await apiRequest("POST", "/api/admissions", transformedData);
+      return await apiRequest("POST", "/api/admissions", applicationData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admissions"] });
@@ -245,7 +238,7 @@ export default function Admissions() {
   const validateStep = (stepIndex: number): boolean => {
     switch (stepIndex) {
       case 0: // Basic Info
-        return !!(newApplication.studentName && newApplication.dateOfBirth && newApplication.gender && newApplication.class && newApplication.section);
+        return !!(newApplication.studentName && newApplication.dateOfBirth && newApplication.gender && newApplication.class);
       case 1: // Guardian Info
         return !!(newApplication.parentName && newApplication.email && newApplication.phone);
       case 2: // Address
@@ -310,7 +303,6 @@ export default function Admissions() {
       religion: "",
       category: "",
       class: "",
-      section: "",
       rollNumber: "",
       parentName: "",
       parentOccupation: "",
@@ -533,23 +525,6 @@ export default function Admissions() {
                             <SelectItem value="10">Class 10</SelectItem>
                             <SelectItem value="11">Class 11</SelectItem>
                             <SelectItem value="12">Class 12</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="section">Section *</Label>
-                        <Select value={newApplication.section} onValueChange={(value) => setNewApplication({ ...newApplication, section: value })}>
-                          <SelectTrigger className="mt-1">
-                            <SelectValue placeholder="Select section" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="A">Section A</SelectItem>
-                            <SelectItem value="B">Section B</SelectItem>
-                            <SelectItem value="C">Section C</SelectItem>
-                            <SelectItem value="D">Section D</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

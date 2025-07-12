@@ -1,5 +1,5 @@
 import { 
-  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults, documents, admissions,
+  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults, documents,
   type User, type InsertUser,
   type Student, type InsertStudent,
   type Teacher, type InsertTeacher,
@@ -12,8 +12,7 @@ import {
   type Exam, type InsertExam,
   type Semester, type InsertSemester,
   type SemesterResult, type InsertSemesterResult,
-  type Document, type InsertDocument,
-  type Admission, type InsertAdmission
+  type Document, type InsertDocument
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, count, and } from "drizzle-orm";
@@ -111,14 +110,6 @@ export interface IStorage {
   getDocumentsByStatus(status: string): Promise<Document[]>;
   getDocumentsByType(documentType: string): Promise<Document[]>;
   getStudentDocuments(studentId: number): Promise<Document[]>;
-  
-  // Admissions
-  getAdmissions(): Promise<Admission[]>;
-  getAdmission(id: number): Promise<Admission | undefined>;
-  createAdmission(admission: InsertAdmission): Promise<Admission>;
-  updateAdmission(id: number, admission: Partial<Admission>): Promise<Admission | undefined>;
-  deleteAdmission(id: number): Promise<boolean>;
-  approveAdmission(id: number, approvedBy: number): Promise<{ admission: Admission; student: Student }>;
   
   // Stats
   getStats(): Promise<{
@@ -585,86 +576,6 @@ export class DatabaseStorage implements IStorage {
 
   async getStudentDocuments(studentId: number): Promise<Document[]> {
     return await db.select().from(documents).where(eq(documents.studentId, studentId));
-  }
-
-  // Admissions methods
-  async getAdmissions(): Promise<Admission[]> {
-    return await db.select().from(admissions);
-  }
-
-  async getAdmission(id: number): Promise<Admission | undefined> {
-    const [admission] = await db.select().from(admissions).where(eq(admissions.id, id));
-    return admission || undefined;
-  }
-
-  async createAdmission(insertAdmission: InsertAdmission): Promise<Admission> {
-    // Generate unique application number
-    const applicationNumber = `ADM${Date.now().toString().slice(-6)}`;
-    
-    const [admission] = await db.insert(admissions).values({
-      ...insertAdmission,
-      applicationNumber,
-    }).returning();
-    
-    return admission;
-  }
-
-  async updateAdmission(id: number, updateData: Partial<Admission>): Promise<Admission | undefined> {
-    const [admission] = await db.update(admissions).set({
-      ...updateData,
-      updatedAt: new Date(),
-    }).where(eq(admissions.id, id)).returning();
-    
-    return admission || undefined;
-  }
-
-  async deleteAdmission(id: number): Promise<boolean> {
-    const deleted = await db.delete(admissions).where(eq(admissions.id, id));
-    return deleted.rowCount ? deleted.rowCount > 0 : false;
-  }
-
-  async approveAdmission(id: number, approvedBy: number): Promise<{ admission: Admission; student: Student }> {
-    const admission = await this.getAdmission(id);
-    if (!admission) {
-      throw new Error('Admission not found');
-    }
-
-    if (admission.status === 'approved') {
-      throw new Error('Admission already approved');
-    }
-
-    // Generate unique roll number
-    const rollNumber = `${new Date().getFullYear()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-
-    // Create student record
-    const studentData: InsertStudent = {
-      rollNumber,
-      name: admission.studentName,
-      email: admission.email,
-      phone: admission.phone,
-      dateOfBirth: admission.dateOfBirth,
-      gender: admission.gender,
-      class: admission.class,
-      section: admission.section,
-      parentName: admission.parentName,
-      parentPhone: admission.parentPhone,
-      parentEmail: admission.parentEmail,
-      address: admission.address,
-      isActive: true,
-    };
-
-    const [student] = await db.insert(students).values(studentData).returning();
-
-    // Update admission status
-    const [updatedAdmission] = await db.update(admissions).set({
-      status: 'approved',
-      approvedBy,
-      approvedDate: new Date(),
-      studentId: student.id,
-      updatedAt: new Date(),
-    }).where(eq(admissions.id, id)).returning();
-
-    return { admission: updatedAdmission, student };
   }
 }
 
