@@ -4,16 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Search, Eye, Edit, Trash2 } from "lucide-react";
-import StudentModal from "@/components/modals/student-modal";
+import { Search, Eye, Trash2 } from "lucide-react";
 import { Student } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Students() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const { toast } = useToast();
 
   const { data: students = [], isLoading } = useQuery<Student[]>({
@@ -46,20 +43,10 @@ export default function Students() {
     student.class.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleEdit = (student: Student) => {
-    setSelectedStudent(student);
-    setIsModalOpen(true);
-  };
-
   const handleDelete = (id: number) => {
     if (window.confirm("Are you sure you want to delete this student?")) {
       deleteStudentMutation.mutate(id);
     }
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedStudent(null);
   };
 
   if (isLoading) {
@@ -79,13 +66,9 @@ export default function Students() {
           <h1 className="text-2xl font-bold text-[var(--edu-text)]">Students</h1>
           <p className="text-gray-600">Manage student information and records</p>
         </div>
-        <Button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-[var(--edu-primary)] hover:bg-[var(--edu-primary)]/90 text-white"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add Student
-        </Button>
+        <div className="text-sm text-muted-foreground">
+          Students are automatically added when admission applications are approved
+        </div>
       </div>
 
       <Card>
@@ -136,13 +119,7 @@ export default function Students() {
                       <Button variant="ghost" size="sm">
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEdit(student)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+
                       <Button 
                         variant="ghost" 
                         size="sm"
@@ -160,11 +137,7 @@ export default function Students() {
         </CardContent>
       </Card>
 
-      <StudentModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        student={selectedStudent}
-      />
+
     </div>
   );
 }
