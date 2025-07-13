@@ -17,6 +17,7 @@ import Documents from "@/pages/documents-simple";
 import Payroll from "@/pages/payroll";
 import Homework from "@/pages/homework";
 import Results from "@/pages/results";
+import Students from "@/pages/students";
 import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
@@ -99,6 +100,7 @@ function AppContent() {
         <div className="p-4 md:p-6">
           <Switch>
             <Route path="/" component={Dashboard} />
+            <Route path="/students" component={Students} />
             <Route path="/admissions" component={Admissions} />
             <Route path="/documents" component={Documents} />
             <Route path="/calendar" component={Timetable} />
