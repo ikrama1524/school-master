@@ -52,6 +52,9 @@ Preferred communication style: Simple, everyday language.
 - **Fee Analytics Dashboard**: Real-time collection metrics with class-wise performance tracking
 - **Advanced Payment Processing**: Multiple payment methods (cash, card, UPI, online, cheque) with detailed tracking
 - **Tabbed Interface**: Organized overview, fees, structures, and analytics sections for better user experience
+- **Enhanced Admission Workflow**: Fixed disappearing approved applications issue and improved admission-to-student creation process
+- **Proper Module Hierarchy**: Implemented Admissions → Student → Division → Class workflow with sequential roll number generation
+- **Database Schema Updates**: Added admission_number, division, and previous_school fields to student records
 
 ### Permission System
 - Hierarchical role-based permissions

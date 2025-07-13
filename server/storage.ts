@@ -310,15 +310,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
-    // Generate roll number if not provided
-    const rollNumber = insertStudent.rollNumber || `${new Date().getFullYear()}${String(Date.now()).slice(-3)}`;
-    
     const [student] = await db
       .insert(students)
-      .values({
-        ...insertStudent,
-        rollNumber,
-      })
+      .values(insertStudent)
       .returning();
     return student;
   }

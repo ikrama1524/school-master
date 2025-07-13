@@ -22,6 +22,7 @@ export const users = pgTable("users", {
 export const students = pgTable("students", {
   id: serial("id").primaryKey(),
   rollNumber: text("roll_number").notNull().unique(),
+  admissionNumber: text("admission_number").notNull().unique(),
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
@@ -29,10 +30,12 @@ export const students = pgTable("students", {
   gender: text("gender").notNull(),
   class: text("class").notNull(),
   section: text("section").notNull(),
+  division: text("division").notNull(), // Division is the key organizational unit
   parentName: text("parent_name").notNull(),
   parentPhone: text("parent_phone").notNull(),
   parentEmail: text("parent_email"),
   address: text("address"),
+  previousSchool: text("previous_school"),
   admissionDate: timestamp("admission_date").defaultNow(),
   isActive: boolean("is_active").default(true),
 });

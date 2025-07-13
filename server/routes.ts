@@ -217,6 +217,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to generate unique roll number
+  const generateRollNumber = async (className: string, academicYear: string = "2025") => {
+    const students = await storage.getStudents();
+    const classStudents = students.filter(s => s.class === className);
+    const nextNumber = classStudents.length + 1;
+    return `${academicYear}${className.toUpperCase().padStart(2, '0')}${nextNumber.toString().padStart(3, '0')}`;
+  };
+
   app.post("/api/admissions/:id/approve", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -227,16 +235,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Admission application not found" });
       }
       
-      // Create student from the actual admission data
+      // Generate unique roll number and admission number
+      const rollNumber = await generateRollNumber(admission.class);
+      const admissionNumber = admission.applicationNumber; // Use application number as admission number
+      
+      // Create student from the actual admission data following the workflow:
+      // Admissions → Student → Division → Class
       const studentData = {
         name: admission.studentName,
-        rollNumber: `2025${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+        rollNumber: rollNumber,
+        admissionNumber: admissionNumber,
         class: admission.class,
-        section: admission.section || "A",
+        section: admission.section || "A", 
+        division: `${admission.class}-${admission.section || "A"}`, // Class-Section as division
         dateOfBirth: new Date(admission.dateOfBirth),
         gender: admission.gender || "male",
         parentName: admission.parentName,
         parentPhone: admission.phone,
+        parentEmail: admission.email,
         email: admission.email,
         address: admission.address,
         previousSchool: admission.previousSchool || null,
@@ -248,9 +264,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update admission status to approved
       admission.status = "approved";
       admission.approvedDate = new Date();
+      admission.studentId = student.id; // Link admission to student
       admissionsStore.set(id, admission);
       
-      res.json({ message: "Application approved and student created", student, admission });
+      res.json({ 
+        message: "Application approved and student created", 
+        student, 
+        admission,
+        rollNumber: rollNumber,
+        admissionNumber: admissionNumber
+      });
     } catch (error) {
       console.error("Error approving admission:", error);
       res.status(500).json({ message: "Failed to approve admission" });

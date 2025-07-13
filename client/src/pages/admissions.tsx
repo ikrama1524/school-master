@@ -113,6 +113,7 @@ export default function Admissions() {
     religion: "",
     category: "",
     class: "",
+    section: "",
     rollNumber: "",
     
     // Parent/Guardian Information
@@ -256,7 +257,7 @@ export default function Admissions() {
   const validateStep = (stepIndex: number): boolean => {
     switch (stepIndex) {
       case 0: // Basic Info
-        return !!(newApplication.studentName && newApplication.dateOfBirth && newApplication.gender && newApplication.class);
+        return !!(newApplication.studentName && newApplication.dateOfBirth && newApplication.gender && newApplication.class && newApplication.section);
       case 1: // Guardian Info
         return !!(newApplication.parentName && newApplication.email && newApplication.phone);
       case 2: // Address
@@ -324,6 +325,7 @@ export default function Admissions() {
       religion: "",
       category: "",
       class: "",
+      section: "",
       rollNumber: "",
       parentName: "",
       parentOccupation: "",
@@ -546,6 +548,21 @@ export default function Admissions() {
                             <SelectItem value="10">Class 10</SelectItem>
                             <SelectItem value="11">Class 11</SelectItem>
                             <SelectItem value="12">Class 12</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="section">Section *</Label>
+                        <Select value={newApplication.section} onValueChange={(value) => setNewApplication({ ...newApplication, section: value })}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select section" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="A">Section A</SelectItem>
+                            <SelectItem value="B">Section B</SelectItem>
+                            <SelectItem value="C">Section C</SelectItem>
+                            <SelectItem value="D">Section D</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
