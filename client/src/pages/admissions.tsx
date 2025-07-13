@@ -149,6 +149,19 @@ export default function Admissions() {
     queryKey: ["/api/admissions"],
   });
 
+  // Filter applications based on search term, status, and class
+  const filteredApplications = admissions?.filter((app: AdmissionApplication) => {
+    const matchesSearch = app.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          app.applicationNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          app.parentName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || app.status === statusFilter;
+    const matchesClass = classFilter === "all" || app.class === classFilter;
+    return matchesSearch && matchesStatus && matchesClass;
+  }) || [];
+
+  // Get unique classes for filter
+  const uniqueClasses = Array.from(new Set(admissions?.map((app: AdmissionApplication) => app.class) || []));
+
   // Status statistics
   const statusStats = {
     pending: admissions?.filter((app: AdmissionApplication) => app.status === "pending").length || 0,
@@ -876,21 +889,9 @@ export default function Admissions() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Classes</SelectItem>
-                  <SelectItem value="nursery">Nursery</SelectItem>
-                  <SelectItem value="lkg">LKG</SelectItem>
-                  <SelectItem value="ukg">UKG</SelectItem>
-                  <SelectItem value="1">Class 1</SelectItem>
-                  <SelectItem value="2">Class 2</SelectItem>
-                  <SelectItem value="3">Class 3</SelectItem>
-                  <SelectItem value="4">Class 4</SelectItem>
-                  <SelectItem value="5">Class 5</SelectItem>
-                  <SelectItem value="6">Class 6</SelectItem>
-                  <SelectItem value="7">Class 7</SelectItem>
-                  <SelectItem value="8">Class 8</SelectItem>
-                  <SelectItem value="9">Class 9</SelectItem>
-                  <SelectItem value="10">Class 10</SelectItem>
-                  <SelectItem value="11">Class 11</SelectItem>
-                  <SelectItem value="12">Class 12</SelectItem>
+                  {uniqueClasses.map(cls => (
+                    <SelectItem key={cls} value={cls}>Class {cls}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -903,7 +904,12 @@ export default function Admissions() {
             </div>
           ) : (
             <div className="space-y-4">
-              {admissions?.map((application: AdmissionApplication) => (
+              {filteredApplications.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No applications found matching your criteria.</p>
+                </div>
+              ) : (
+                filteredApplications.map((application: AdmissionApplication) => (
                 <div key={application.id} className="border rounded-lg p-4 hover:shadow-md transition-all">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex-1">
@@ -956,7 +962,8 @@ export default function Admissions() {
                     </div>
                   </div>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           )}
         </CardContent>
