@@ -1,0 +1,120 @@
+ Module-to-Module Relationship Summary
+1. Admissions → Students
+On successful admission, a Student is created.
+
+Fields inherited: name, DOB, class, division, parent info, etc.
+
+Relation: One Admission → One Student
+
+2. Students → Class & Division
+Each student belongs to a Class and a Division.
+
+Relation: Many Students → One Division → One Class
+
+3. Students → Attendance
+Attendance is marked per student per day.
+
+Usually filtered by Class + Division.
+
+Relation: One Student → Many Attendance records
+
+4. Students → Fee Management
+Fees are assigned based on Class/Division.
+
+Each student has:
+
+Fee structure
+
+Payment history
+
+Outstanding balance
+
+Relation: One Student → Many Fee Records
+
+5. Students → Homework
+Homework is assigned to a class/division.
+
+Students can submit or view status.
+
+Relation: Many Students ← One Homework ← One Teacher
+
+6. Students → Results
+Each result is tied to:
+
+A student
+
+An exam
+
+A subject
+
+Relation: One Student → Many Result records
+
+7. Students → Reports
+Reports are compiled summaries from:
+
+Attendance
+
+Fees
+
+Results
+
+Homework completion
+
+Relation: One Student → One Composite Report
+
+8. Teachers → Class/Division
+Each teacher may be assigned to one or more divisions
+
+Responsible for:
+
+Assigning homework
+
+Entering results
+
+Viewing attendance
+
+Relation: Many Teachers ↔ Many Divisions (many-to-many)
+
+9. Teachers → Homework, Results
+Teacher creates and manages:
+
+Homework → for specific division/class
+
+Results → per exam and subject
+
+Relation: One Teacher → Many Homework, Many Results
+
+10. Teachers → Payroll
+Payroll is calculated from:
+
+Attendance (optional)
+
+Fixed salary or hourly rate
+
+Relation: One Teacher → One Payroll record per month
+
+11. Calendar → All Time-Based Events
+Aggregates:
+
+Attendance holidays
+
+Homework deadlines
+
+Fee due dates
+
+Exam schedules
+
+School-wide events
+
+Relation: Calendar ← Events from all major modules
+
+12. Documents → Students / Homework / Results
+Documents are uploaded for:
+
+Admission forms
+
+Report cards
+
+Homework PDFs
+
+Relation: Many Documents → One Student / One Homework
