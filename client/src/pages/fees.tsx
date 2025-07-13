@@ -111,10 +111,12 @@ export default function Fees() {
       
       // Create structure items
       for (const item of items) {
+        if (!item.amount || !item.dueDay || !item.feeType) continue;
+        
         await apiRequest("POST", `/api/fee-structures/${createdStructure.id}/items`, {
           ...item,
-          amount: parseFloat(item.amount),
-          dueDay: parseInt(item.dueDay)
+          amount: parseFloat(item.amount) || 0,
+          dueDay: parseInt(item.dueDay) || 15
         });
       }
       
@@ -237,7 +239,26 @@ export default function Fees() {
       });
       return;
     }
-    createStructureMutation.mutate(newStructure);
+    
+    // Validate fee items
+    const validItems = newStructure.items.filter(item => 
+      item.feeType && item.amount && !isNaN(parseFloat(item.amount)) && 
+      item.dueDay && !isNaN(parseInt(item.dueDay))
+    );
+    
+    if (validItems.length === 0) {
+      toast({
+        title: "Invalid Fee Items",
+        description: "Please fill in all required fields for fee items",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createStructureMutation.mutate({
+      ...newStructure,
+      items: validItems
+    });
   };
 
   const handleProcessPayment = () => {

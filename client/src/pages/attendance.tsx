@@ -49,6 +49,7 @@ export default function Attendance() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [classFilter, setClassFilter] = useState("all");
+  const [divisionFilter, setDivisionFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isMarkAttendanceOpen, setIsMarkAttendanceOpen] = useState(false);
   const [isBulkAttendanceOpen, setIsBulkAttendanceOpen] = useState(false);
@@ -95,11 +96,13 @@ export default function Attendance() {
     const matchesSearch = record.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           record.student.rollNumber.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesClass = classFilter === "all" || record.student.class === classFilter;
+    const matchesDivision = divisionFilter === "all" || record.student.division === divisionFilter;
     const matchesStatus = statusFilter === "all" || record.status === statusFilter;
-    return matchesSearch && matchesClass && matchesStatus;
+    return matchesSearch && matchesClass && matchesDivision && matchesStatus;
   });
 
   const uniqueClasses = Array.from(new Set(students.map(s => s.class)));
+  const uniqueDivisions = Array.from(new Set(students.map(s => s.division)));
 
   const markAttendanceMutation = useMutation({
     mutationFn: async (data: { studentId: number; status: string; remarks?: string }) => {
@@ -471,6 +474,20 @@ export default function Attendance() {
                   {uniqueClasses.map((className) => (
                     <SelectItem key={className} value={className}>
                       {className}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={divisionFilter} onValueChange={setDivisionFilter}>
+                <SelectTrigger className="w-32">
+                  <Users className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Divisions</SelectItem>
+                  {uniqueDivisions.map((division) => (
+                    <SelectItem key={division} value={division}>
+                      {division}
                     </SelectItem>
                   ))}
                 </SelectContent>
