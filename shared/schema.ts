@@ -123,13 +123,15 @@ export const subjects = pgTable("subjects", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const assignments = pgTable("assignments", {
+// Homework module - Teacher assigns homework to students
+export const homework = pgTable("homework", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   subjectId: integer("subject_id").references(() => subjects.id).notNull(),
   teacherId: integer("teacher_id").references(() => teachers.id).notNull(),
   class: text("class").notNull(),
+  section: text("section").notNull(),
   dueDate: timestamp("due_date").notNull(),
   totalMarks: integer("total_marks").notNull(),
   status: text("status").notNull().default("active"), // active, closed, archived
@@ -137,9 +139,9 @@ export const assignments = pgTable("assignments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const submissions = pgTable("submissions", {
+export const homeworkSubmissions = pgTable("homework_submissions", {
   id: serial("id").primaryKey(),
-  assignmentId: integer("assignment_id").references(() => assignments.id).notNull(),
+  homeworkId: integer("homework_id").references(() => homework.id).notNull(),
   studentId: integer("student_id").references(() => students.id).notNull(),
   content: text("content"),
   attachments: text("attachments").array(),
@@ -252,14 +254,14 @@ export const insertSubjectSchema = createInsertSchema(subjects).omit({
   createdAt: true,
 });
 
-export const insertAssignmentSchema = createInsertSchema(assignments).omit({
+export const insertHomeworkSchema = createInsertSchema(homework).omit({
   id: true,
   createdAt: true,
 }).extend({
   dueDate: z.string().transform((str) => new Date(str)),
 });
 
-export const insertSubmissionSchema = createInsertSchema(submissions).omit({
+export const insertHomeworkSubmissionSchema = createInsertSchema(homeworkSubmissions).omit({
   id: true,
   submittedAt: true,
 });
@@ -362,6 +364,24 @@ export const insertSemesterResultSchema = createInsertSchema(semesterResults).om
   createdAt: true,
 });
 
+// Reports module - Comprehensive reporting system
+export const reports = pgTable("reports", {
+  id: serial("id").primaryKey(),
+  reportType: text("report_type").notNull(), // attendance, fees, results, academic, behavioral
+  title: text("title").notNull(),
+  description: text("description"),
+  class: text("class"), // null for school-wide reports
+  section: text("section"),
+  studentId: integer("student_id").references(() => students.id),
+  teacherId: integer("teacher_id").references(() => teachers.id),
+  subjectId: integer("subject_id").references(() => subjects.id),
+  dateFrom: timestamp("date_from").notNull(),
+  dateTo: timestamp("date_to").notNull(),
+  reportData: jsonb("report_data").notNull(), // Contains the actual report data
+  generatedBy: integer("generated_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Documents table for certificate and application management
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
@@ -386,6 +406,14 @@ export const documents = pgTable("documents", {
   remarks: text("remarks"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertReportSchema = createInsertSchema(reports).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  dateFrom: z.string().transform((str) => new Date(str)),
+  dateTo: z.string().transform((str) => new Date(str)),
 });
 
 export const insertDocumentSchema = createInsertSchema(documents).omit({
@@ -422,11 +450,14 @@ export type InsertNotice = z.infer<typeof insertNoticeSchema>;
 export type Subject = typeof subjects.$inferSelect;
 export type InsertSubject = z.infer<typeof insertSubjectSchema>;
 
-export type Assignment = typeof assignments.$inferSelect;
-export type InsertAssignment = z.infer<typeof insertAssignmentSchema>;
+export type Homework = typeof homework.$inferSelect;
+export type InsertHomework = z.infer<typeof insertHomeworkSchema>;
 
-export type Submission = typeof submissions.$inferSelect;
-export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
+export type HomeworkSubmission = typeof homeworkSubmissions.$inferSelect;
+export type InsertHomeworkSubmission = z.infer<typeof insertHomeworkSubmissionSchema>;
+
+export type Report = typeof reports.$inferSelect;
+export type InsertReport = z.infer<typeof insertReportSchema>;
 
 export type Timetable = typeof timetable.$inferSelect;
 export type InsertTimetable = z.infer<typeof insertTimetableSchema>;

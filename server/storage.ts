@@ -1,5 +1,5 @@
 import { 
-  users, students, teachers, attendance, fees, feeStructures, feeStructureItems, notices, timetable, periods, results, exams, semesters, semesterResults, documents,
+  users, students, teachers, attendance, fees, feeStructures, feeStructureItems, notices, timetable, periods, results, exams, semesters, semesterResults, documents, homework, homeworkSubmissions, reports,
   type User, type InsertUser,
   type Student, type InsertStudent,
   type Teacher, type InsertTeacher,
@@ -14,7 +14,10 @@ import {
   type Exam, type InsertExam,
   type Semester, type InsertSemester,
   type SemesterResult, type InsertSemesterResult,
-  type Document, type InsertDocument
+  type Document, type InsertDocument,
+  type Homework, type InsertHomework,
+  type HomeworkSubmission, type InsertHomeworkSubmission,
+  type Report, type InsertReport
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, count, and } from "drizzle-orm";
