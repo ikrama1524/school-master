@@ -411,6 +411,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/fees", async (req, res) => {
+    try {
+      const fee = await storage.createFee(req.body);
+      res.status(201).json(fee);
+    } catch (error) {
+      console.error("Error creating fee:", error);
+      res.status(500).json({ message: "Failed to create fee" });
+    }
+  });
+
+  app.put("/api/fees/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const fee = await storage.updateFee(id, req.body);
+      if (!fee) {
+        return res.status(404).json({ message: "Fee not found" });
+      }
+      res.json(fee);
+    } catch (error) {
+      console.error("Error updating fee:", error);
+      res.status(500).json({ message: "Failed to update fee" });
+    }
+  });
+
+  app.post("/api/fees/:id/pay", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { paymentMethod, remarks } = req.body;
+      
+      const fee = await storage.updateFee(id, {
+        status: "paid",
+        paidDate: new Date(),
+        paymentMethod,
+        remarks
+      });
+      
+      if (!fee) {
+        return res.status(404).json({ message: "Fee not found" });
+      }
+      
+      res.json({ message: "Payment processed successfully", fee });
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      res.status(500).json({ message: "Failed to process payment" });
+    }
+  });
+
+  app.post("/api/fees/bulk", async (req, res) => {
+    try {
+      const { studentIds, feeType, amount, dueDate } = req.body;
+      const fees = [];
+      
+      for (const studentId of studentIds) {
+        const fee = await storage.createFee({
+          studentId,
+          feeType,
+          amount,
+          dueDate: new Date(dueDate),
+          status: "pending"
+        });
+        fees.push(fee);
+      }
+      
+      res.status(201).json({ message: `${fees.length} fees created successfully`, fees });
+    } catch (error) {
+      console.error("Error creating bulk fees:", error);
+      res.status(500).json({ message: "Failed to create bulk fees" });
+    }
+  });
+
   // Notices routes
   app.get("/api/notices", async (req, res) => {
     try {

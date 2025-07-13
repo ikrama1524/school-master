@@ -142,6 +142,91 @@ export class DatabaseStorage implements IStorage {
           phone: "+1234567890",
         });
       }
+
+      // Add sample fee data if no fees exist
+      const existingFees = await db.select().from(fees).limit(1);
+      if (existingFees.length === 0) {
+        const allStudents = await db.select().from(students);
+        if (allStudents.length > 0) {
+          const sampleFees = [
+            {
+              studentId: allStudents[0].id,
+              feeType: "Tuition",
+              amount: "15000.00",
+              dueDate: new Date("2025-02-15"),
+              status: "pending",
+              remarks: "First semester tuition fee"
+            },
+            {
+              studentId: allStudents[0].id,
+              feeType: "Transport",
+              amount: "5000.00",
+              dueDate: new Date("2025-02-10"),
+              status: "paid",
+              paidDate: new Date("2025-01-05"),
+              paymentMethod: "online",
+              remarks: "Transport fee for semester 1"
+            },
+            {
+              studentId: allStudents[0].id,
+              feeType: "Library",
+              amount: "2000.00",
+              dueDate: new Date("2025-01-20"),
+              status: "overdue",
+              remarks: "Library fee past due"
+            }
+          ];
+
+          // Add fees for multiple students if they exist
+          if (allStudents.length > 1) {
+            sampleFees.push(
+              {
+                studentId: allStudents[1].id,
+                feeType: "Tuition",
+                amount: "15000.00",
+                dueDate: new Date("2025-02-15"),
+                status: "paid",
+                paidDate: new Date("2025-01-10"),
+                paymentMethod: "card",
+                remarks: "First semester tuition fee"
+              },
+              {
+                studentId: allStudents[1].id,
+                feeType: "Sports",
+                amount: "3000.00",
+                dueDate: new Date("2025-02-20"),
+                status: "pending",
+                remarks: "Sports activity fee"
+              }
+            );
+          }
+
+          if (allStudents.length > 2) {
+            sampleFees.push(
+              {
+                studentId: allStudents[2].id,
+                feeType: "Tuition",
+                amount: "15000.00",
+                dueDate: new Date("2025-02-15"),
+                status: "pending",
+                remarks: "First semester tuition fee"
+              },
+              {
+                studentId: allStudents[2].id,
+                feeType: "Exam",
+                amount: "1500.00",
+                dueDate: new Date("2025-02-05"),
+                status: "paid",
+                paidDate: new Date("2025-01-15"),
+                paymentMethod: "cash",
+                remarks: "Annual examination fee"
+              }
+            );
+          }
+
+          await db.insert(fees).values(sampleFees);
+        }
+      }
     } catch (error) {
       console.error("Error initializing data:", error);
     }

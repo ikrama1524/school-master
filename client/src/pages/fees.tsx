@@ -3,38 +3,34 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  Search, Filter, Download, DollarSign, Clock, CheckCircle, 
-  AlertCircle, CreditCard, Smartphone, Globe, Receipt,
-  TrendingUp, Calendar, Users, FileText, Send, Plus,
-  ArrowUpRight, ArrowDownRight, PieChart, BarChart3
+  Search, DollarSign, Clock, CheckCircle, 
+  AlertCircle, CreditCard, Receipt, Plus,
+  ArrowUpRight, ArrowDownRight, Users, FileText,
+  Calendar, Filter, Download
 } from "lucide-react";
 import { Fee, Student } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-
-interface PaymentGateway {
-  name: string;
-  icon: any;
-  description: string;
-  fees: string;
-  supported: string[];
-  status: "active" | "inactive";
-}
+import { format } from "date-fns";
 
 export default function Fees() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
-  const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
+  const [selectedFees, setSelectedFees] = useState<number[]>([]);
+  const [isCreateFeeModalOpen, setIsCreateFeeModalOpen] = useState(false);
+  const [isBulkFeeModalOpen, setIsBulkFeeModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [isFeeStructureModalOpen, setIsFeeStructureModalOpen] = useState(false);
+  const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
   const { toast } = useToast();
 
   const { data: fees = [], isLoading: feesLoading } = useQuery<Fee[]>({
@@ -45,96 +41,183 @@ export default function Fees() {
     queryKey: ["/api/students"],
   });
 
-  const paymentGateways: PaymentGateway[] = [
-    {
-      name: "Razorpay",
-      icon: CreditCard,
-      description: "Accept UPI, Cards, Net Banking & Wallets",
-      fees: "2% + GST",
-      supported: ["UPI", "Cards", "Net Banking", "Wallets"],
-      status: "active"
-    },
-    {
-      name: "Stripe",
-      icon: Globe,
-      description: "Global payment processing",
-      fees: "2.9% + $0.30",
-      supported: ["Cards", "Digital Wallets", "Bank Transfers"],
-      status: "active"
-    },
-    {
-      name: "Paytm",
-      icon: Smartphone,
-      description: "Indian payment gateway",
-      fees: "1.99% + GST",
-      supported: ["UPI", "Paytm Wallet", "Cards"],
-      status: "inactive"
-    }
-  ];
+  const [newFee, setNewFee] = useState({
+    studentId: "",
+    feeType: "",
+    amount: "",
+    dueDate: "",
+    remarks: ""
+  });
 
-  const processPaymentMutation = useMutation({
-    mutationFn: async (data: { feeId: number; gateway: string; amount: number }) => {
-      return await apiRequest("POST", "/api/fees/payment", data);
+  const [bulkFee, setBulkFee] = useState({
+    studentIds: [] as number[],
+    feeType: "",
+    amount: "",
+    dueDate: "",
+    remarks: ""
+  });
+
+  const [payment, setPayment] = useState({
+    paymentMethod: "",
+    remarks: ""
+  });
+
+  // Create single fee
+  const createFeeMutation = useMutation({
+    mutationFn: async (feeData: any) => {
+      return await apiRequest("POST", "/api/fees", {
+        ...feeData,
+        studentId: parseInt(feeData.studentId),
+        amount: parseFloat(feeData.amount),
+        dueDate: new Date(feeData.dueDate)
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/fees"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      setIsCreateFeeModalOpen(false);
+      resetNewFee();
       toast({
-        title: "Payment Processed",
-        description: "Payment has been successfully processed",
+        title: "Fee Created",
+        description: "Fee has been created successfully",
       });
-      setIsPaymentModalOpen(false);
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
-        title: "Payment Failed",
-        description: "Failed to process payment. Please try again.",
+        title: "Error",
+        description: error.message || "Failed to create fee",
         variant: "destructive",
       });
     },
   });
 
-  const sendReminderMutation = useMutation({
-    mutationFn: async (feeId: number) => {
-      return await apiRequest("POST", `/api/fees/${feeId}/reminder`);
+  // Create bulk fees
+  const createBulkFeesMutation = useMutation({
+    mutationFn: async (bulkData: any) => {
+      return await apiRequest("POST", "/api/fees/bulk", {
+        ...bulkData,
+        amount: parseFloat(bulkData.amount),
+        dueDate: new Date(bulkData.dueDate)
+      });
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/fees"] });
+      setIsBulkFeeModalOpen(false);
+      resetBulkFee();
       toast({
-        title: "Reminder Sent",
-        description: "Payment reminder has been sent to the student/parent",
+        title: "Bulk Fees Created",
+        description: `${data.fees.length} fees created successfully`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create bulk fees",
+        variant: "destructive",
       });
     },
   });
 
+  // Process payment
+  const processPaymentMutation = useMutation({
+    mutationFn: async ({ feeId, paymentData }: { feeId: number; paymentData: any }) => {
+      return await apiRequest("POST", `/api/fees/${feeId}/pay`, paymentData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/fees"] });
+      setIsPaymentModalOpen(false);
+      setSelectedFee(null);
+      resetPayment();
+      toast({
+        title: "Payment Processed",
+        description: "Payment has been processed successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to process payment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetNewFee = () => {
+    setNewFee({
+      studentId: "",
+      feeType: "",
+      amount: "",
+      dueDate: "",
+      remarks: ""
+    });
+  };
+
+  const resetBulkFee = () => {
+    setBulkFee({
+      studentIds: [],
+      feeType: "",
+      amount: "",
+      dueDate: "",
+      remarks: ""
+    });
+  };
+
+  const resetPayment = () => {
+    setPayment({
+      paymentMethod: "",
+      remarks: ""
+    });
+  };
+
+  const handleCreateFee = () => {
+    if (!newFee.studentId || !newFee.feeType || !newFee.amount || !newFee.dueDate) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    createFeeMutation.mutate(newFee);
+  };
+
+  const handleCreateBulkFees = () => {
+    if (!bulkFee.studentIds.length || !bulkFee.feeType || !bulkFee.amount || !bulkFee.dueDate) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields and select students",
+        variant: "destructive",
+      });
+      return;
+    }
+    createBulkFeesMutation.mutate(bulkFee);
+  };
+
+  const handleProcessPayment = () => {
+    if (!selectedFee || !payment.paymentMethod) {
+      toast({
+        title: "Missing Information",
+        description: "Please select payment method",
+        variant: "destructive",
+      });
+      return;
+    }
+    processPaymentMutation.mutate({ feeId: selectedFee.id, paymentData: payment });
+  };
+
+  const openPaymentModal = (fee: Fee) => {
+    setSelectedFee(fee);
+    setIsPaymentModalOpen(true);
+  };
+
   const filteredFees = fees.filter(fee => {
     const student = students.find(s => s.id === fee.studentId);
     const matchesSearch = student?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          student?.rollNumber.toLowerCase().includes(searchTerm.toLowerCase());
+                         student?.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         fee.feeType.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || fee.status === statusFilter;
     const matchesClass = classFilter === "all" || student?.class === classFilter;
     return matchesSearch && matchesStatus && matchesClass;
   });
-
-  const totalAmount = fees.reduce((sum, fee) => sum + parseFloat(fee.amount.toString()), 0);
-  const paidAmount = fees.filter(fee => fee.status === "paid").reduce((sum, fee) => sum + parseFloat(fee.amount.toString()), 0);
-  const pendingAmount = totalAmount - paidAmount;
-  const overdueAmount = fees.filter(fee => fee.status === "overdue").reduce((sum, fee) => sum + parseFloat(fee.amount.toString()), 0);
-  const collectionRate = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
-
-  const uniqueClasses = Array.from(new Set(students.map(s => s.class)));
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "paid":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "pending":
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "overdue":
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return null;
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -149,523 +232,446 @@ export default function Fees() {
     }
   };
 
-  const handlePayment = (fee: Fee) => {
-    setSelectedFee(fee);
-    setIsPaymentModalOpen(true);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "paid":
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case "pending":
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      case "overdue":
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return null;
+    }
   };
 
-  const processPayment = (gateway: string) => {
-    if (!selectedFee) return;
-    
-    processPaymentMutation.mutate({
-      feeId: selectedFee.id,
-      gateway,
-      amount: parseFloat(selectedFee.amount.toString())
-    });
-  };
+  const totalFees = fees.reduce((sum, fee) => sum + parseFloat(fee.amount), 0);
+  const paidFees = fees.filter(fee => fee.status === "paid").reduce((sum, fee) => sum + parseFloat(fee.amount), 0);
+  const pendingFees = fees.filter(fee => fee.status === "pending").reduce((sum, fee) => sum + parseFloat(fee.amount), 0);
+  const overdueFees = fees.filter(fee => fee.status === "overdue").reduce((sum, fee) => sum + parseFloat(fee.amount), 0);
+
+  const uniqueClasses = [...new Set(students.map(s => s.class))];
+  const feeTypes = ["Tuition", "Transport", "Library", "Sports", "Exam", "Laboratory", "Activity", "Other"];
+
+  if (feesLoading || studentsLoading) {
+    return (
+      <div className="p-4 md:p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Fee Management & Payment Gateway
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Comprehensive fee collection with multiple payment options
-          </p>
+          <h1 className="text-2xl font-bold text-[var(--edu-text)]">Fee Management</h1>
+          <p className="text-gray-600">Manage student fees and payment processing</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
-            Export Report
+            Export
           </Button>
-          <Dialog open={isFeeStructureModalOpen} onOpenChange={setIsFeeStructureModalOpen}>
+          <Dialog open={isBulkFeeModalOpen} onOpenChange={setIsBulkFeeModalOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Fee Structure
+              <Button variant="outline">
+                <Users className="w-4 h-4 mr-2" />
+                Bulk Create
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Fee Structure Management</DialogTitle>
+                <DialogTitle>Create Bulk Fees</DialogTitle>
               </DialogHeader>
-              <Tabs defaultValue="setup" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="setup">Setup</TabsTrigger>
-                  <TabsTrigger value="templates">Templates</TabsTrigger>
-                  <TabsTrigger value="bulk">Bulk Actions</TabsTrigger>
-                </TabsList>
-                <TabsContent value="setup" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">Fee Type</label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select fee type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="tuition">Tuition Fee</SelectItem>
-                          <SelectItem value="transport">Transport Fee</SelectItem>
-                          <SelectItem value="examination">Examination Fee</SelectItem>
-                          <SelectItem value="library">Library Fee</SelectItem>
-                          <SelectItem value="sports">Sports Fee</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Class</label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select class" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {uniqueClasses.map((className) => (
-                            <SelectItem key={className} value={className}>
-                              {className}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Amount (₹)</label>
-                      <Input type="number" placeholder="Enter amount" />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Due Date</label>
-                      <Input type="date" />
-                    </div>
-                  </div>
-                  <Button className="w-full">Create Fee Structure</Button>
-                </TabsContent>
-                <TabsContent value="templates">
-                  <div className="space-y-3">
-                    <div className="p-4 border rounded-lg">
-                      <h3 className="font-semibold">Annual Fee Package</h3>
-                      <p className="text-sm text-muted-foreground">Complete academic year fees</p>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="font-medium">₹45,000</span>
-                        <Button size="sm" variant="outline">Use Template</Button>
+              <div className="space-y-4">
+                <div>
+                  <Label>Select Students</Label>
+                  <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
+                    {students.map(student => (
+                      <div key={student.id} className="flex items-center space-x-2 py-1">
+                        <Checkbox
+                          checked={bulkFee.studentIds.includes(student.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setBulkFee({
+                                ...bulkFee,
+                                studentIds: [...bulkFee.studentIds, student.id]
+                              });
+                            } else {
+                              setBulkFee({
+                                ...bulkFee,
+                                studentIds: bulkFee.studentIds.filter(id => id !== student.id)
+                              });
+                            }
+                          }}
+                        />
+                        <span className="text-sm">
+                          {student.name} ({student.rollNumber}) - Class {student.class}
+                        </span>
                       </div>
-                    </div>
-                    <div className="p-4 border rounded-lg">
-                      <h3 className="font-semibold">Monthly Installment</h3>
-                      <p className="text-sm text-muted-foreground">Monthly payment plan</p>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="font-medium">₹5,000/month</span>
-                        <Button size="sm" variant="outline">Use Template</Button>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                </TabsContent>
-                <TabsContent value="bulk">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Apply to Classes</label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select classes" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Classes</SelectItem>
-                          {uniqueClasses.map((className) => (
-                            <SelectItem key={className} value={className}>
-                              {className}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button className="w-full">Apply to Selected Classes</Button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Fee Type</Label>
+                    <Select value={bulkFee.feeType} onValueChange={(value) => setBulkFee({...bulkFee, feeType: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select fee type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {feeTypes.map(type => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                </TabsContent>
-              </Tabs>
+                  <div>
+                    <Label>Amount</Label>
+                    <Input
+                      type="number"
+                      value={bulkFee.amount}
+                      onChange={(e) => setBulkFee({...bulkFee, amount: e.target.value})}
+                      placeholder="Enter amount"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Due Date</Label>
+                  <Input
+                    type="date"
+                    value={bulkFee.dueDate}
+                    onChange={(e) => setBulkFee({...bulkFee, dueDate: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Remarks</Label>
+                  <Textarea
+                    value={bulkFee.remarks}
+                    onChange={(e) => setBulkFee({...bulkFee, remarks: e.target.value})}
+                    placeholder="Optional remarks"
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsBulkFeeModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateBulkFees} disabled={createBulkFeesMutation.isPending}>
+                    {createBulkFeesMutation.isPending ? "Creating..." : "Create Fees"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={isCreateFeeModalOpen} onOpenChange={setIsCreateFeeModalOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Fee
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Fee</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Student</Label>
+                  <Select value={newFee.studentId} onValueChange={(value) => setNewFee({...newFee, studentId: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select student" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {students.map(student => (
+                        <SelectItem key={student.id} value={student.id.toString()}>
+                          {student.name} ({student.rollNumber}) - Class {student.class}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Fee Type</Label>
+                    <Select value={newFee.feeType} onValueChange={(value) => setNewFee({...newFee, feeType: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select fee type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {feeTypes.map(type => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Amount</Label>
+                    <Input
+                      type="number"
+                      value={newFee.amount}
+                      onChange={(e) => setNewFee({...newFee, amount: e.target.value})}
+                      placeholder="Enter amount"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Due Date</Label>
+                  <Input
+                    type="date"
+                    value={newFee.dueDate}
+                    onChange={(e) => setNewFee({...newFee, dueDate: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Remarks</Label>
+                  <Textarea
+                    value={newFee.remarks}
+                    onChange={(e) => setNewFee({...newFee, remarks: e.target.value})}
+                    placeholder="Optional remarks"
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsCreateFeeModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateFee} disabled={createFeeMutation.isPending}>
+                    {createFeeMutation.isPending ? "Creating..." : "Create Fee"}
+                  </Button>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-      {/* Enhanced Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up">
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800 hover:shadow-lg transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-600 dark:text-green-400">Collected</p>
-                <p className="text-2xl font-bold text-green-700 dark:text-green-300">
-                  ₹{paidAmount.toLocaleString()}
-                </p>
-                <div className="flex items-center gap-1 mt-1">
-                  <ArrowUpRight className="h-3 w-3 text-green-600" />
-                  <span className="text-xs text-green-600">{fees.filter(f => f.status === "paid").length} payments</span>
-                </div>
-              </div>
-              <div className="p-3 bg-green-500 rounded-full">
-                <CheckCircle className="h-6 w-6 text-white" />
-              </div>
-            </div>
+      {/* Fee Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Fees</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{totalFees.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              {fees.length} total fees
+            </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950 dark:to-yellow-900 border-yellow-200 dark:border-yellow-800 hover:shadow-lg transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Pending</p>
-                <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
-                  ₹{pendingAmount.toLocaleString()}
-                </p>
-                <div className="flex items-center gap-1 mt-1">
-                  <Clock className="h-3 w-3 text-yellow-600" />
-                  <span className="text-xs text-yellow-600">{fees.filter(f => f.status === "pending").length} pending</span>
-                </div>
-              </div>
-              <div className="p-3 bg-yellow-500 rounded-full">
-                <Clock className="h-6 w-6 text-white" />
-              </div>
-            </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Collected</CardTitle>
+            <ArrowDownRight className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">₹{paidFees.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              {fees.filter(f => f.status === "paid").length} paid fees
+            </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800 hover:shadow-lg transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-red-600 dark:text-red-400">Overdue</p>
-                <p className="text-2xl font-bold text-red-700 dark:text-red-300">
-                  ₹{overdueAmount.toLocaleString()}
-                </p>
-                <div className="flex items-center gap-1 mt-1">
-                  <ArrowDownRight className="h-3 w-3 text-red-600" />
-                  <span className="text-xs text-red-600">{fees.filter(f => f.status === "overdue").length} overdue</span>
-                </div>
-              </div>
-              <div className="p-3 bg-red-500 rounded-full">
-                <AlertCircle className="h-6 w-6 text-white" />
-              </div>
-            </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">₹{pendingFees.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              {fees.filter(f => f.status === "pending").length} pending fees
+            </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800 hover:shadow-lg transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Collection Rate</p>
-                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                  {collectionRate.toFixed(1)}%
-                </p>
-                <Progress value={collectionRate} className="h-2 mt-2" />
-              </div>
-              <div className="p-3 bg-blue-500 rounded-full">
-                <TrendingUp className="h-6 w-6 text-white" />
-              </div>
-            </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+            <AlertCircle className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">₹{overdueFees.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              {fees.filter(f => f.status === "overdue").length} overdue fees
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Payment Gateway Overview */}
-      <Card className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+      {/* Filters */}
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Payment Gateway Integration
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {paymentGateways.map((gateway, index) => (
-              <Card key={index} className={`border-2 transition-all duration-300 hover:shadow-md ${
-                gateway.status === "active" 
-                  ? "border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20" 
-                  : "border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-800/20"
-              }`}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      gateway.status === "active" ? "bg-green-100 dark:bg-green-900" : "bg-gray-100 dark:bg-gray-800"
-                    }`}>
-                      <gateway.icon className={`h-5 w-5 ${
-                        gateway.status === "active" ? "text-green-600 dark:text-green-400" : "text-gray-500"
-                      }`} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{gateway.name}</h3>
-                        <Badge variant={gateway.status === "active" ? "default" : "secondary"} className="text-xs">
-                          {gateway.status}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{gateway.description}</p>
-                      <p className="text-xs font-medium text-green-600 mt-1">Processing: {gateway.fees}</p>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <div className="flex flex-wrap gap-1">
-                      {gateway.supported.map((method, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">
-                          {method}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Enhanced Filters */}
-      <Card className="animate-slide-up" style={{ animationDelay: '200ms' }}>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search by student name or roll number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={classFilter} onValueChange={setClassFilter}>
-                <SelectTrigger className="w-32">
-                  <Users className="w-4 h-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Classes</SelectItem>
-                  {uniqueClasses.map((className) => (
-                    <SelectItem key={className} value={className}>
-                      {className}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Enhanced Fee Records Table */}
-      <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Fee Records & Payment Management</CardTitle>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Send className="w-4 h-4 mr-2" />
-              Bulk Reminder
-            </Button>
-            <Button variant="outline" size="sm">
-              <FileText className="w-4 h-4 mr-2" />
-              Receipt Template
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {feesLoading || studentsLoading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4 animate-pulse">
-                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/6"></div>
-                  </div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                </div>
-              ))}
-            </div>
-          ) : fees.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                <DollarSign className="w-12 h-12 text-gray-400" />
+          <CardTitle>Fee Records</CardTitle>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search by student name, roll number, or fee type..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No Fee Records Found</h3>
-              <p className="text-muted-foreground mb-4">Create fee structures to start managing payments</p>
-              <Button onClick={() => setIsFeeStructureModalOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Fee Structure
-              </Button>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="overdue">Overdue</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={classFilter} onValueChange={setClassFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Class" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Classes</SelectItem>
+                {uniqueClasses.map(cls => (
+                  <SelectItem key={cls} value={cls}>Class {cls}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Fee Type</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Payment Method</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredFees.length === 0 ? (
                   <TableRow>
-                    <TableHead>Student Details</TableHead>
-                    <TableHead>Fee Information</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Payment Actions</TableHead>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="text-gray-500">
+                        <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p>No fees found</p>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredFees.map((fee) => {
+                ) : (
+                  filteredFees.map((fee) => {
                     const student = students.find(s => s.id === fee.studentId);
-                    const isOverdue = fee.dueDate && new Date(fee.dueDate) < new Date() && fee.status !== "paid";
                     return (
-                      <TableRow key={fee.id} className="hover:bg-muted/50 transition-colors">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
-                              {student?.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                            </div>
-                            <div>
-                              <p className="font-medium">{student?.name}</p>
-                              <p className="text-sm text-muted-foreground">{student?.rollNumber} • {student?.class}</p>
-                            </div>
-                          </div>
-                        </TableCell>
+                      <TableRow key={fee.id}>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{fee.type}</p>
-                            <p className="text-sm text-muted-foreground">{fee.description || 'Regular fee payment'}</p>
+                            <div className="font-medium">{student?.name || "Unknown"}</div>
+                            <div className="text-sm text-gray-500">
+                              {student?.rollNumber} - Class {student?.class}
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell className="font-semibold text-lg">₹{parseFloat(fee.amount.toString()).toLocaleString()}</TableCell>
+                        <TableCell>{fee.feeType}</TableCell>
+                        <TableCell className="font-medium">₹{parseFloat(fee.amount).toLocaleString()}</TableCell>
+                        <TableCell>{format(new Date(fee.dueDate), 'MMM dd, yyyy')}</TableCell>
                         <TableCell>
-                          <div className={isOverdue ? "text-red-600 font-medium" : ""}>
-                            {fee.dueDate ? new Date(fee.dueDate).toLocaleDateString() : 'N/A'}
-                            {isOverdue && <div className="text-xs text-red-500 font-medium">OVERDUE</div>}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`${getStatusColor(fee.status)} flex items-center gap-1 w-fit`}>
+                          <div className="flex items-center gap-2">
                             {getStatusIcon(fee.status)}
-                            {fee.status.charAt(0).toUpperCase() + fee.status.slice(1)}
-                          </Badge>
+                            <Badge className={getStatusColor(fee.status)}>
+                              {fee.status}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {fee.paymentMethod && (
+                            <div className="flex items-center gap-1">
+                              <CreditCard className="w-4 h-4" />
+                              <span className="capitalize">{fee.paymentMethod}</span>
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            {fee.status !== "paid" ? (
-                              <>
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => handlePayment(fee)}
-                                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
-                                >
-                                  <CreditCard className="w-3 h-3 mr-1" />
-                                  Pay Now
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => sendReminderMutation.mutate(fee.id)}
-                                  disabled={sendReminderMutation.isPending}
-                                >
-                                  <Send className="w-3 h-3 mr-1" />
-                                  Remind
-                                </Button>
-                              </>
-                            ) : (
-                              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                            {fee.status === "pending" && (
+                              <Button
+                                size="sm"
+                                onClick={() => openPaymentModal(fee)}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <Receipt className="w-4 h-4 mr-1" />
+                                Pay
+                              </Button>
+                            )}
+                            {fee.status === "paid" && (
+                              <Badge variant="outline" className="text-green-600">
                                 <CheckCircle className="w-3 h-3 mr-1" />
                                 Paid
                               </Badge>
                             )}
-                            <Button size="sm" variant="outline">
-                              <Receipt className="w-3 h-3 mr-1" />
-                              Receipt
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
                     );
-                  })}
-                </TableBody>
-              </Table>
-              {filteredFees.length === 0 && fees.length > 0 && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No fee records match your search criteria</p>
-                </div>
-              )}
-            </div>
-          )}
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Payment Processing Modal */}
+      {/* Payment Modal */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Secure Payment Processing</DialogTitle>
+            <DialogTitle>Process Payment</DialogTitle>
           </DialogHeader>
           {selectedFee && (
             <div className="space-y-4">
-              <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg border">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-semibold text-sm">
-                    {students.find(s => s.id === selectedFee.studentId)?.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{selectedFee.type}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {students.find(s => s.id === selectedFee.studentId)?.name}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-primary">
-                    ₹{parseFloat(selectedFee.amount.toString()).toLocaleString()}
-                  </span>
-                  <Badge variant="outline">
-                    Due: {selectedFee.dueDate ? new Date(selectedFee.dueDate).toLocaleDateString() : 'N/A'}
-                  </Badge>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Fee Details</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>Student: {students.find(s => s.id === selectedFee.studentId)?.name}</div>
+                  <div>Fee Type: {selectedFee.feeType}</div>
+                  <div>Amount: ₹{parseFloat(selectedFee.amount).toLocaleString()}</div>
+                  <div>Due Date: {format(new Date(selectedFee.dueDate), 'MMM dd, yyyy')}</div>
                 </div>
               </div>
-              
-              <div className="space-y-3">
-                <h4 className="font-medium">Select Payment Gateway</h4>
-                {paymentGateways.filter(g => g.status === "active").map((gateway, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="w-full justify-start p-4 h-auto hover:border-primary transition-all"
-                    onClick={() => processPayment(gateway.name.toLowerCase())}
-                    disabled={processPaymentMutation.isPending}
-                  >
-                    <gateway.icon className="h-5 w-5 mr-3" />
-                    <div className="text-left flex-1">
-                      <div className="font-medium">{gateway.name}</div>
-                      <div className="text-sm text-muted-foreground">{gateway.description}</div>
-                      <div className="text-xs text-green-600 mt-1">Processing: {gateway.fees}</div>
-                    </div>
-                    <div className="flex flex-wrap gap-1 ml-2">
-                      {gateway.supported.slice(0, 2).map((method, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {method}
-                        </Badge>
-                      ))}
-                    </div>
-                  </Button>
-                ))}
+              <div>
+                <Label>Payment Method</Label>
+                <Select value={payment.paymentMethod} onValueChange={(value) => setPayment({...payment, paymentMethod: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="card">Card</SelectItem>
+                    <SelectItem value="online">Online Transfer</SelectItem>
+                    <SelectItem value="upi">UPI</SelectItem>
+                    <SelectItem value="cheque">Cheque</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              
-              <div className="text-xs text-muted-foreground text-center p-3 bg-muted/30 rounded">
-                <span className="flex items-center justify-center gap-1">
-                  <span>🔒</span>
-                  Secure payment processing with SSL encryption
-                </span>
+              <div>
+                <Label>Payment Remarks</Label>
+                <Textarea
+                  value={payment.remarks}
+                  onChange={(e) => setPayment({...payment, remarks: e.target.value})}
+                  placeholder="Optional payment remarks"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleProcessPayment} disabled={processPaymentMutation.isPending}>
+                  {processPaymentMutation.isPending ? "Processing..." : "Process Payment"}
+                </Button>
               </div>
             </div>
           )}
