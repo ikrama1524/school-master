@@ -161,9 +161,13 @@ export default function Admissions() {
   // Submit new application
   const submitApplicationMutation = useMutation({
     mutationFn: async (applicationData: any) => {
-      return await apiRequest("POST", "/api/admissions", applicationData);
+      console.log("Sending application data:", applicationData);
+      const response = await apiRequest("POST", "/api/admissions", applicationData);
+      console.log("API Response:", response);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Application submitted successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/admissions"] });
       setIsNewApplicationOpen(false);
       resetForm();
@@ -174,6 +178,7 @@ export default function Admissions() {
       });
     },
     onError: (error: any) => {
+      console.error("Submission error:", error);
       toast({
         title: "Submission Failed",
         description: error.message || "Failed to submit application. Please try again.",
@@ -290,6 +295,9 @@ export default function Admissions() {
       return;
     }
 
+    // Log the application data for debugging
+    console.log("Submitting application:", newApplication);
+    
     submitApplicationMutation.mutate(newApplication);
   };
 
