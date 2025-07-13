@@ -61,6 +61,29 @@ export const attendance = pgTable("attendance", {
   remarks: text("remarks"),
 });
 
+// Fee Structure Management
+export const feeStructures = pgTable("fee_structures", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  class: text("class").notNull(),
+  academicYear: text("academic_year").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const feeStructureItems = pgTable("fee_structure_items", {
+  id: serial("id").primaryKey(),
+  feeStructureId: integer("fee_structure_id").references(() => feeStructures.id).notNull(),
+  feeType: text("fee_type").notNull(), // tuition, transport, library, etc.
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  frequency: text("frequency").notNull().default("monthly"), // monthly, quarterly, annually, one_time
+  dueDay: integer("due_day").notNull().default(15), // day of month when due
+  isOptional: boolean("is_optional").default(false),
+  description: text("description"),
+});
+
 export const fees = pgTable("fees", {
   id: serial("id").primaryKey(),
   studentId: integer("student_id").references(() => students.id).notNull(),
@@ -71,6 +94,9 @@ export const fees = pgTable("fees", {
   status: text("status").notNull().default("pending"), // pending, paid, overdue
   paymentMethod: text("payment_method"), // cash, card, online
   remarks: text("remarks"),
+  academicYear: text("academic_year"),
+  installmentNumber: integer("installment_number").default(1),
+  totalInstallments: integer("total_installments").default(1),
 });
 
 export const notices = pgTable("notices", {
@@ -196,6 +222,16 @@ export const insertTeacherSchema = createInsertSchema(teachers).omit({
 });
 
 export const insertAttendanceSchema = createInsertSchema(attendance).omit({
+  id: true,
+});
+
+export const insertFeeStructureSchema = createInsertSchema(feeStructures).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFeeStructureItemSchema = createInsertSchema(feeStructureItems).omit({
   id: true,
 });
 
@@ -367,6 +403,12 @@ export type InsertTeacher = z.infer<typeof insertTeacherSchema>;
 
 export type Attendance = typeof attendance.$inferSelect;
 export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
+
+export type FeeStructure = typeof feeStructures.$inferSelect;
+export type InsertFeeStructure = z.infer<typeof insertFeeStructureSchema>;
+
+export type FeeStructureItem = typeof feeStructureItems.$inferSelect;
+export type InsertFeeStructureItem = z.infer<typeof insertFeeStructureItemSchema>;
 
 export type Fee = typeof fees.$inferSelect;
 export type InsertFee = z.infer<typeof insertFeeSchema>;

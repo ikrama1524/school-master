@@ -1,10 +1,12 @@
 import { 
-  users, students, teachers, attendance, fees, notices, timetable, periods, results, exams, semesters, semesterResults, documents,
+  users, students, teachers, attendance, fees, feeStructures, feeStructureItems, notices, timetable, periods, results, exams, semesters, semesterResults, documents,
   type User, type InsertUser,
   type Student, type InsertStudent,
   type Teacher, type InsertTeacher,
   type Attendance, type InsertAttendance,
   type Fee, type InsertFee,
+  type FeeStructure, type InsertFeeStructure,
+  type FeeStructureItem, type InsertFeeStructureItem,
   type Notice, type InsertNotice,
   type Timetable, type InsertTimetable,
   type Period, type InsertPeriod,
@@ -46,11 +48,25 @@ export interface IStorage {
   getStudentAttendance(studentId: number): Promise<Attendance[]>;
   createAttendance(attendance: InsertAttendance): Promise<Attendance>;
   
+  // Fee Structures
+  getFeeStructures(): Promise<FeeStructure[]>;
+  getFeeStructure(id: number): Promise<FeeStructure | undefined>;
+  createFeeStructure(structure: InsertFeeStructure): Promise<FeeStructure>;
+  updateFeeStructure(id: number, structure: Partial<FeeStructure>): Promise<FeeStructure | undefined>;
+  deleteFeeStructure(id: number): Promise<boolean>;
+  
+  // Fee Structure Items
+  getFeeStructureItems(structureId: number): Promise<FeeStructureItem[]>;
+  createFeeStructureItem(item: InsertFeeStructureItem): Promise<FeeStructureItem>;
+  updateFeeStructureItem(id: number, item: Partial<FeeStructureItem>): Promise<FeeStructureItem | undefined>;
+  deleteFeeStructureItem(id: number): Promise<boolean>;
+  
   // Fees
   getFees(): Promise<Fee[]>;
   getStudentFees(studentId: number): Promise<Fee[]>;
   createFee(fee: InsertFee): Promise<Fee>;
   updateFee(id: number, fee: Partial<Fee>): Promise<Fee | undefined>;
+  generateFeesFromStructure(structureId: number, studentIds: number[]): Promise<Fee[]>;
   
   // Notices
   getNotices(): Promise<Notice[]>;
@@ -155,6 +171,7 @@ export class DatabaseStorage implements IStorage {
               amount: "15000.00",
               dueDate: new Date("2025-02-15"),
               status: "pending",
+              academicYear: "2024-25",
               remarks: "First semester tuition fee"
             },
             {
@@ -165,6 +182,7 @@ export class DatabaseStorage implements IStorage {
               status: "paid",
               paidDate: new Date("2025-01-05"),
               paymentMethod: "online",
+              academicYear: "2024-25",
               remarks: "Transport fee for semester 1"
             },
             {
@@ -173,6 +191,7 @@ export class DatabaseStorage implements IStorage {
               amount: "2000.00",
               dueDate: new Date("2025-01-20"),
               status: "overdue",
+              academicYear: "2024-25",
               remarks: "Library fee past due"
             }
           ];
@@ -188,6 +207,7 @@ export class DatabaseStorage implements IStorage {
                 status: "paid",
                 paidDate: new Date("2025-01-10"),
                 paymentMethod: "card",
+                academicYear: "2024-25",
                 remarks: "First semester tuition fee"
               },
               {
@@ -196,6 +216,7 @@ export class DatabaseStorage implements IStorage {
                 amount: "3000.00",
                 dueDate: new Date("2025-02-20"),
                 status: "pending",
+                academicYear: "2024-25",
                 remarks: "Sports activity fee"
               }
             );
@@ -209,6 +230,7 @@ export class DatabaseStorage implements IStorage {
                 amount: "15000.00",
                 dueDate: new Date("2025-02-15"),
                 status: "pending",
+                academicYear: "2024-25",
                 remarks: "First semester tuition fee"
               },
               {
@@ -219,6 +241,7 @@ export class DatabaseStorage implements IStorage {
                 status: "paid",
                 paidDate: new Date("2025-01-15"),
                 paymentMethod: "cash",
+                academicYear: "2024-25",
                 remarks: "Annual examination fee"
               }
             );
@@ -396,6 +419,106 @@ export class DatabaseStorage implements IStorage {
       .where(eq(fees.id, id))
       .returning();
     return fee || undefined;
+  }
+
+  // Fee Structure methods
+  async getFeeStructures(): Promise<FeeStructure[]> {
+    return await db.select().from(feeStructures).where(eq(feeStructures.isActive, true));
+  }
+
+  async getFeeStructure(id: number): Promise<FeeStructure | undefined> {
+    const [structure] = await db.select().from(feeStructures).where(eq(feeStructures.id, id));
+    return structure || undefined;
+  }
+
+  async createFeeStructure(insertStructure: InsertFeeStructure): Promise<FeeStructure> {
+    const [structure] = await db
+      .insert(feeStructures)
+      .values(insertStructure)
+      .returning();
+    return structure;
+  }
+
+  async updateFeeStructure(id: number, updateData: Partial<FeeStructure>): Promise<FeeStructure | undefined> {
+    const [structure] = await db
+      .update(feeStructures)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(feeStructures.id, id))
+      .returning();
+    return structure || undefined;
+  }
+
+  async deleteFeeStructure(id: number): Promise<boolean> {
+    const [structure] = await db
+      .update(feeStructures)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(feeStructures.id, id))
+      .returning();
+    return !!structure;
+  }
+
+  // Fee Structure Item methods
+  async getFeeStructureItems(structureId: number): Promise<FeeStructureItem[]> {
+    return await db.select().from(feeStructureItems).where(eq(feeStructureItems.feeStructureId, structureId));
+  }
+
+  async createFeeStructureItem(insertItem: InsertFeeStructureItem): Promise<FeeStructureItem> {
+    const [item] = await db
+      .insert(feeStructureItems)
+      .values(insertItem)
+      .returning();
+    return item;
+  }
+
+  async updateFeeStructureItem(id: number, updateData: Partial<FeeStructureItem>): Promise<FeeStructureItem | undefined> {
+    const [item] = await db
+      .update(feeStructureItems)
+      .set(updateData)
+      .where(eq(feeStructureItems.id, id))
+      .returning();
+    return item || undefined;
+  }
+
+  async deleteFeeStructureItem(id: number): Promise<boolean> {
+    const result = await db.delete(feeStructureItems).where(eq(feeStructureItems.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async generateFeesFromStructure(structureId: number, studentIds: number[]): Promise<Fee[]> {
+    const structure = await this.getFeeStructure(structureId);
+    const items = await this.getFeeStructureItems(structureId);
+    
+    if (!structure || !items.length) {
+      return [];
+    }
+
+    const fees: Fee[] = [];
+    
+    for (const studentId of studentIds) {
+      for (const item of items) {
+        // Calculate due date based on frequency
+        const dueDate = new Date();
+        dueDate.setDate(item.dueDay);
+        
+        const feeData = {
+          studentId,
+          feeType: item.feeType,
+          amount: item.amount,
+          dueDate,
+          status: "pending" as const,
+          academicYear: structure.academicYear,
+          installmentNumber: 1,
+          totalInstallments: item.frequency === "annually" ? 1 : 
+                            item.frequency === "quarterly" ? 4 : 12,
+          remarks: item.description || `Generated from ${structure.name}`,
+        };
+        
+        const fee = await this.createFee(feeData);
+        fees.push(fee);
+      }
+    }
+    
+    return fees;
   }
 
   // Notice methods

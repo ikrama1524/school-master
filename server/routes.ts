@@ -413,7 +413,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/fees", async (req, res) => {
     try {
-      const fee = await storage.createFee(req.body);
+      const feeData = {
+        ...req.body,
+        dueDate: new Date(req.body.dueDate),
+        paidDate: req.body.paidDate ? new Date(req.body.paidDate) : null
+      };
+      const fee = await storage.createFee(feeData);
       res.status(201).json(fee);
     } catch (error) {
       console.error("Error creating fee:", error);
@@ -478,6 +483,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating bulk fees:", error);
       res.status(500).json({ message: "Failed to create bulk fees" });
+    }
+  });
+
+  // Fee Structure routes
+  app.get("/api/fee-structures", async (req, res) => {
+    try {
+      const structures = await storage.getFeeStructures();
+      res.json(structures);
+    } catch (error) {
+      console.error("Error fetching fee structures:", error);
+      res.status(500).json({ message: "Failed to fetch fee structures" });
+    }
+  });
+
+  app.get("/api/fee-structures/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const structure = await storage.getFeeStructure(id);
+      if (!structure) {
+        return res.status(404).json({ message: "Fee structure not found" });
+      }
+      res.json(structure);
+    } catch (error) {
+      console.error("Error fetching fee structure:", error);
+      res.status(500).json({ message: "Failed to fetch fee structure" });
+    }
+  });
+
+  app.post("/api/fee-structures", async (req, res) => {
+    try {
+      const structure = await storage.createFeeStructure(req.body);
+      res.status(201).json(structure);
+    } catch (error) {
+      console.error("Error creating fee structure:", error);
+      res.status(500).json({ message: "Failed to create fee structure" });
+    }
+  });
+
+  app.put("/api/fee-structures/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const structure = await storage.updateFeeStructure(id, req.body);
+      if (!structure) {
+        return res.status(404).json({ message: "Fee structure not found" });
+      }
+      res.json(structure);
+    } catch (error) {
+      console.error("Error updating fee structure:", error);
+      res.status(500).json({ message: "Failed to update fee structure" });
+    }
+  });
+
+  app.delete("/api/fee-structures/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteFeeStructure(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Fee structure not found" });
+      }
+      res.json({ message: "Fee structure deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting fee structure:", error);
+      res.status(500).json({ message: "Failed to delete fee structure" });
+    }
+  });
+
+  // Fee Structure Items routes
+  app.get("/api/fee-structures/:id/items", async (req, res) => {
+    try {
+      const structureId = parseInt(req.params.id);
+      const items = await storage.getFeeStructureItems(structureId);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching fee structure items:", error);
+      res.status(500).json({ message: "Failed to fetch fee structure items" });
+    }
+  });
+
+  app.post("/api/fee-structures/:id/items", async (req, res) => {
+    try {
+      const structureId = parseInt(req.params.id);
+      const item = await storage.createFeeStructureItem({
+        ...req.body,
+        feeStructureId: structureId
+      });
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Error creating fee structure item:", error);
+      res.status(500).json({ message: "Failed to create fee structure item" });
+    }
+  });
+
+  app.put("/api/fee-structure-items/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const item = await storage.updateFeeStructureItem(id, req.body);
+      if (!item) {
+        return res.status(404).json({ message: "Fee structure item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      console.error("Error updating fee structure item:", error);
+      res.status(500).json({ message: "Failed to update fee structure item" });
+    }
+  });
+
+  app.delete("/api/fee-structure-items/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteFeeStructureItem(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Fee structure item not found" });
+      }
+      res.json({ message: "Fee structure item deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting fee structure item:", error);
+      res.status(500).json({ message: "Failed to delete fee structure item" });
+    }
+  });
+
+  // Generate fees from structure
+  app.post("/api/fee-structures/:id/generate-fees", async (req, res) => {
+    try {
+      const structureId = parseInt(req.params.id);
+      const { studentIds } = req.body;
+      
+      const fees = await storage.generateFeesFromStructure(structureId, studentIds);
+      res.status(201).json({ 
+        message: `Generated ${fees.length} fees successfully`, 
+        fees 
+      });
+    } catch (error) {
+      console.error("Error generating fees from structure:", error);
+      res.status(500).json({ message: "Failed to generate fees from structure" });
     }
   });
 
