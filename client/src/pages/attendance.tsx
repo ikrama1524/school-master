@@ -341,11 +341,16 @@ export default function Attendance() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Present</p>
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Present Today</p>
                   <p className="text-2xl font-bold text-green-700 dark:text-green-300">{dailyStats.present}</p>
                   <p className="text-xs text-green-600 mt-1">
-                    {((dailyStats.present / dailyStats.totalStudents) * 100).toFixed(1)}%
+                    {((dailyStats.present / dailyStats.totalStudents) * 100).toFixed(1)}% of all students
                   </p>
+                  {(classFilter !== "all" || divisionFilter !== "all") && (
+                    <p className="text-xs text-green-600 mt-1">
+                      Division: {filteredRecords.filter(r => r.status === "present").length} present
+                    </p>
+                  )}
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
@@ -356,11 +361,16 @@ export default function Attendance() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Late</p>
+                  <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Late Today</p>
                   <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{dailyStats.late}</p>
                   <p className="text-xs text-yellow-600 mt-1">
-                    {((dailyStats.late / dailyStats.totalStudents) * 100).toFixed(1)}%
+                    {((dailyStats.late / dailyStats.totalStudents) * 100).toFixed(1)}% of all students
                   </p>
+                  {(classFilter !== "all" || divisionFilter !== "all") && (
+                    <p className="text-xs text-yellow-600 mt-1">
+                      Division: {filteredRecords.filter(r => r.status === "late").length} late
+                    </p>
+                  )}
                 </div>
                 <Clock className="h-8 w-8 text-yellow-500" />
               </div>
@@ -371,11 +381,16 @@ export default function Attendance() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-red-600 dark:text-red-400">Absent</p>
+                  <p className="text-sm font-medium text-red-600 dark:text-red-400">Absent Today</p>
                   <p className="text-2xl font-bold text-red-700 dark:text-red-300">{dailyStats.absent}</p>
                   <p className="text-xs text-red-600 mt-1">
-                    {((dailyStats.absent / dailyStats.totalStudents) * 100).toFixed(1)}%
+                    {((dailyStats.absent / dailyStats.totalStudents) * 100).toFixed(1)}% of all students
                   </p>
+                  {(classFilter !== "all" || divisionFilter !== "all") && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Division: {filteredRecords.filter(r => r.status === "absent").length} absent
+                    </p>
+                  )}
                 </div>
                 <UserX className="h-8 w-8 text-red-500" />
               </div>
@@ -386,11 +401,19 @@ export default function Attendance() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Rate</p>
-                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                    {dailyStats.attendanceRate.toFixed(1)}%
+                  <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                    {(classFilter !== "all" || divisionFilter !== "all") ? "Division Rate" : "Overall Rate"}
                   </p>
-                  <Progress value={dailyStats.attendanceRate} className="h-2 mt-2" />
+                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                    {(classFilter !== "all" || divisionFilter !== "all") ? 
+                      (filteredRecords.length > 0 ? ((filteredRecords.filter(r => r.status === "present").length / filteredRecords.length) * 100).toFixed(1) : "0") : 
+                      dailyStats.attendanceRate.toFixed(1)}%
+                  </p>
+                  <Progress value={
+                    (classFilter !== "all" || divisionFilter !== "all") ? 
+                      (filteredRecords.length > 0 ? ((filteredRecords.filter(r => r.status === "present").length / filteredRecords.length) * 100) : 0) : 
+                      dailyStats.attendanceRate
+                  } className="h-2 mt-2" />
                 </div>
                 <TrendingUp className="h-8 w-8 text-blue-500" />
               </div>
@@ -513,7 +536,15 @@ export default function Attendance() {
       {/* Attendance Records */}
       <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Attendance for {format(selectedDate, "MMMM d, yyyy")}</CardTitle>
+          <CardTitle>
+            Division-wise Attendance for {format(selectedDate, "MMMM d, yyyy")}
+            {(classFilter !== "all" || divisionFilter !== "all") && (
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                {classFilter !== "all" ? `Class ${classFilter}` : "All Classes"}
+                {divisionFilter !== "all" ? ` - Division ${divisionFilter}` : ""}
+              </span>
+            )}
+          </CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={markAllPresent}>
               <CheckCircle className="w-4 h-4 mr-2" />
@@ -521,7 +552,7 @@ export default function Attendance() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => setIsBulkAttendanceOpen(true)}>
               <Users className="w-4 h-4 mr-2" />
-              Bulk Mark
+              Division Attendance
             </Button>
             <Button variant="outline" size="sm">
               <MessageSquare className="w-4 h-4 mr-2" />
@@ -619,18 +650,73 @@ export default function Attendance() {
         </CardContent>
       </Card>
 
-      {/* Bulk Attendance Modal */}
+      {/* Division-wise Bulk Attendance Modal */}
       <Dialog open={isBulkAttendanceOpen} onOpenChange={setIsBulkAttendanceOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Bulk Attendance Marking</DialogTitle>
+            <DialogTitle>Division-wise Attendance Marking</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Quick Actions:</span>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={markAllPresent}>Mark All Present</Button>
-                <Button size="sm" variant="outline">Mark All Absent</Button>
+            {/* Division Selection */}
+            <div className="border-2 border-dashed border-muted rounded-lg p-4 bg-muted/30">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Select Division for Attendance</label>
+                  <div className="text-xs text-muted-foreground">
+                    Choose class and division to mark attendance
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <Select value={classFilter} onValueChange={setClassFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Class" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {uniqueClasses.map((className) => (
+                        <SelectItem key={className} value={className}>
+                          {className}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={divisionFilter} onValueChange={setDivisionFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Division" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {uniqueDivisions.map((division) => (
+                        <SelectItem key={division} value={division}>
+                          Division {division}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Button size="sm" onClick={markAllPresent} className="bg-green-600 hover:bg-green-700">
+                    Mark All Present
+                  </Button>
+                  
+                  <Button size="sm" variant="outline" onClick={() => {
+                    // Mark all filtered students as absent
+                    filteredRecords.forEach(record => {
+                      updateAttendanceStatus(record.studentId, "absent");
+                    });
+                    toast({
+                      title: "Success",
+                      description: "All students marked as absent",
+                    });
+                  }}>
+                    Mark All Absent
+                  </Button>
+                </div>
+                
+                {(classFilter !== "all" || divisionFilter !== "all") && (
+                  <div className="text-xs text-muted-foreground">
+                    <strong>Filtered Students:</strong> {filteredRecords.length} students from {classFilter !== "all" ? `Class ${classFilter}` : "All Classes"} {divisionFilter !== "all" ? `Division ${divisionFilter}` : ""}
+                  </div>
+                )}
               </div>
             </div>
             
@@ -687,31 +773,78 @@ export default function Attendance() {
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
-              {students.map((student) => (
-                <div key={student.id} className="flex items-center justify-between p-3 border rounded">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-semibold">
-                      {student.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </div>
-                    <div>
-                      <p className="font-medium">{student.name}</p>
-                      <p className="text-sm text-muted-foreground">{student.rollNumber} • {student.class}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button size="sm" variant="outline">Present</Button>
-                    <Button size="sm" variant="outline">Late</Button>
-                    <Button size="sm" variant="outline">Absent</Button>
-                  </div>
+            
+            {/* Student List with Individual Attendance Marking */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium">Students List - Division-wise</h3>
+                <div className="text-xs text-muted-foreground">
+                  {filteredRecords.length} students • Click status to mark attendance
                 </div>
-              ))}
+              </div>
+              
+              <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
+                {filteredRecords.map((record) => (
+                  <div key={record.student.id} className="flex items-center justify-between p-3 border rounded hover:bg-muted/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-semibold">
+                        {record.student.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <div>
+                        <p className="font-medium">{record.student.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {record.student.rollNumber} • {record.student.class}
+                          {record.student.division && ` - Division ${record.student.division}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button 
+                        size="sm" 
+                        variant={record.status === "present" ? "default" : "outline"}
+                        className={record.status === "present" ? "bg-green-600 hover:bg-green-700" : ""}
+                        onClick={() => updateAttendanceStatus(record.studentId, "present")}
+                      >
+                        Present
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant={record.status === "late" ? "secondary" : "outline"}
+                        onClick={() => updateAttendanceStatus(record.studentId, "late")}
+                      >
+                        Late
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant={record.status === "absent" ? "destructive" : "outline"}
+                        onClick={() => updateAttendanceStatus(record.studentId, "absent")}
+                      >
+                        Absent
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant={record.status === "excused" ? "secondary" : "outline"}
+                        onClick={() => updateAttendanceStatus(record.studentId, "excused")}
+                      >
+                        Excused
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+            
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsBulkAttendanceOpen(false)}>
                 Cancel
               </Button>
-              <Button>
+              <Button onClick={() => {
+                toast({
+                  title: "Success",
+                  description: "Attendance saved successfully for selected division",
+                });
+                setIsBulkAttendanceOpen(false);
+              }}>
                 Save Attendance
               </Button>
             </div>
