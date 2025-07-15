@@ -4,19 +4,54 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Eye, Trash2, User, Calendar, Phone, Mail, MapPin, GraduationCap, FileText, DollarSign, CheckCircle, Clock, AlertTriangle } from "lucide-react";
-import { Student, Fee, Attendance } from "@shared/schema";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Search, Eye, Trash2, User, Calendar, Phone, Mail, MapPin, GraduationCap, FileText, DollarSign, CheckCircle, Clock, AlertTriangle, Plus, UserPlus } from "lucide-react";
+import { Student, Fee, Attendance, insertStudentSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const addStudentSchema = insertStudentSchema.extend({
+  dob: z.string().min(1, "Date of birth is required"),
+  admissionDate: z.string().min(1, "Admission date is required"),
+});
+
+type AddStudentForm = z.infer<typeof addStudentSchema>;
 
 export default function Students() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const { toast } = useToast();
+
+  const form = useForm<AddStudentForm>({
+    resolver: zodResolver(addStudentSchema),
+    defaultValues: {
+      name: "",
+      rollNumber: "",
+      class: "",
+      section: "",
+      division: "",
+      dob: "",
+      gender: "",
+      parentName: "",
+      parentPhone: "",
+      parentEmail: "",
+      address: "",
+      admissionDate: "",
+      admissionNumber: "",
+      previousSchool: "",
+      isActive: true,
+    },
+  });
 
   const { data: students = [], isLoading } = useQuery<Student[]>({
     queryKey: ["/api/students"],
@@ -50,6 +85,33 @@ export default function Students() {
     },
   });
 
+  const addStudentMutation = useMutation({
+    mutationFn: async (data: AddStudentForm) => {
+      const formattedData = {
+        ...data,
+        dob: new Date(data.dob),
+        admissionDate: new Date(data.admissionDate),
+      };
+      await apiRequest("POST", "/api/students", formattedData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
+      toast({
+        title: "Success",
+        description: "Student added successfully",
+      });
+      setIsAddModalOpen(false);
+      form.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add student",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     student.rollNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -65,6 +127,10 @@ export default function Students() {
   const handleViewStudent = (student: Student) => {
     setSelectedStudent(student);
     setIsViewModalOpen(true);
+  };
+
+  const onAddStudent = (data: AddStudentForm) => {
+    addStudentMutation.mutate(data);
   };
 
   const getStudentFees = (studentId: number) => {
@@ -121,8 +187,269 @@ export default function Students() {
           <h1 className="text-2xl font-bold text-[var(--edu-text)]">Students</h1>
           <p className="text-gray-600">Manage student information and records</p>
         </div>
-        <div className="text-sm text-muted-foreground">
-          Students are automatically added when admission applications are approved
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-muted-foreground">
+            Students are automatically added when admission applications are approved
+          </div>
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-[var(--edu-primary)] hover:bg-[var(--edu-primary)]/90">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Add Student
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Student</DialogTitle>
+                <DialogDescription>
+                  Enter student details to add them to the system. All fields marked with * are required.
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onAddStudent)} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Student Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter student name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="rollNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Roll Number *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter roll number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="class"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Class *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select class" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="1">Class 1</SelectItem>
+                              <SelectItem value="2">Class 2</SelectItem>
+                              <SelectItem value="3">Class 3</SelectItem>
+                              <SelectItem value="4">Class 4</SelectItem>
+                              <SelectItem value="5">Class 5</SelectItem>
+                              <SelectItem value="6">Class 6</SelectItem>
+                              <SelectItem value="7">Class 7</SelectItem>
+                              <SelectItem value="8">Class 8</SelectItem>
+                              <SelectItem value="9">Class 9</SelectItem>
+                              <SelectItem value="10">Class 10</SelectItem>
+                              <SelectItem value="11">Class 11</SelectItem>
+                              <SelectItem value="12">Class 12</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="section"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Section</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select section" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="A">Section A</SelectItem>
+                              <SelectItem value="B">Section B</SelectItem>
+                              <SelectItem value="C">Section C</SelectItem>
+                              <SelectItem value="D">Section D</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="division"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Division</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select division" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="A">Division A</SelectItem>
+                              <SelectItem value="B">Division B</SelectItem>
+                              <SelectItem value="C">Division C</SelectItem>
+                              <SelectItem value="D">Division D</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="dob"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date of Birth *</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gender *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select gender" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="male">Male</SelectItem>
+                              <SelectItem value="female">Female</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="admissionDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Admission Date *</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="admissionNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Admission Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter admission number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="parentName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Parent Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter parent name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="parentPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Parent Phone *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter parent phone" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="parentEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Parent Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="Enter parent email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="previousSchool"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Previous School</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter previous school" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address *</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Enter student address" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={addStudentMutation.isPending}>
+                      {addStudentMutation.isPending ? "Adding..." : "Add Student"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
