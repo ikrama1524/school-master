@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -537,30 +537,34 @@ export default function Attendance() {
       <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
-            Division-wise Attendance for {format(selectedDate, "MMMM d, yyyy")}
-            {(classFilter !== "all" || divisionFilter !== "all") && (
-              <span className="text-sm font-normal text-muted-foreground ml-2">
-                {classFilter !== "all" ? `Class ${classFilter}` : "All Classes"}
-                {divisionFilter !== "all" ? ` - Division ${divisionFilter}` : ""}
-              </span>
-            )}
+            Attendance Management for {format(selectedDate, "MMMM d, yyyy")}
           </CardTitle>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={markAllPresent}>
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Mark All Present
-            </Button>
             <Button variant="outline" size="sm" onClick={() => setIsBulkAttendanceOpen(true)}>
               <Users className="w-4 h-4 mr-2" />
-              Division Attendance
-            </Button>
-            <Button variant="outline" size="sm">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Send Notifications
+              Mark Attendance
             </Button>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Instructions */}
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              <h3 className="font-medium text-blue-900 dark:text-blue-100">How to Mark Attendance</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800 dark:text-blue-200">
+              <div>
+                <p className="font-medium mb-1">Step 1: Select Class & Division</p>
+                <p>Use the filters above to choose the specific class and division you want to mark attendance for.</p>
+              </div>
+              <div>
+                <p className="font-medium mb-1">Step 2: Mark Attendance</p>
+                <p>Click "Division Attendance" button to open the division-wise attendance marking interface.</p>
+              </div>
+            </div>
+          </div>
+
           {studentsLoading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
@@ -575,77 +579,112 @@ export default function Attendance() {
               ))}
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredRecords.map((record) => (
-                <div
-                  key={record.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
-                      {record.student.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{record.student.name}</h3>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>{record.student.rollNumber}</span>
-                        <span>{record.student.class}</span>
-                        {record.checkInTime && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            In: {record.checkInTime}
-                          </span>
-                        )}
-                        {record.checkOutTime && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            Out: {record.checkOutTime}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      {getMethodIcon(record.method)}
-                      <span className="capitalize">{record.method.replace('_', ' ')}</span>
-                    </div>
-                    <Badge className={`${getStatusColor(record.status)} flex items-center gap-1`}>
-                      {getStatusIcon(record.status)}
-                      {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+            /* Show filtered results only when filters are applied */
+            (classFilter !== "all" || divisionFilter !== "all") ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-primary/10">
+                      {classFilter !== "all" ? `Class ${classFilter}` : "All Classes"}
                     </Badge>
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant={record.status === "present" ? "default" : "outline"}
-                        onClick={() => updateAttendanceStatus(record.studentId, "present")}
-                      >
-                        Present
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={record.status === "absent" ? "destructive" : "outline"}
-                        onClick={() => updateAttendanceStatus(record.studentId, "absent")}
-                      >
-                        Absent
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={record.status === "late" ? "secondary" : "outline"}
-                        onClick={() => updateAttendanceStatus(record.studentId, "late")}
-                      >
-                        Late
-                      </Button>
-                    </div>
+                    {divisionFilter !== "all" && (
+                      <Badge variant="outline" className="bg-secondary/10">
+                        Division {divisionFilter}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {filteredRecords.length} student{filteredRecords.length !== 1 ? 's' : ''} found
                   </div>
                 </div>
-              ))}
-              {filteredRecords.length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No attendance records found for the selected criteria</p>
+                
+                {filteredRecords.length > 0 ? (
+                  <div className="space-y-3">
+                    {filteredRecords.map((record) => (
+                      <div
+                        key={record.id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                            {record.student.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{record.student.name}</h3>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>Roll No: {record.student.rollNumber}</span>
+                              <span>{record.student.class}</span>
+                              {record.student.division && <span>Division {record.student.division}</span>}
+                              {record.checkInTime && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  In: {record.checkInTime}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            {getMethodIcon(record.method)}
+                            <span className="capitalize">{record.method.replace('_', ' ')}</span>
+                          </div>
+                          <Badge className={`${getStatusColor(record.status)} flex items-center gap-1`}>
+                            {getStatusIcon(record.status)}
+                            {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                          </Badge>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant={record.status === "present" ? "default" : "outline"}
+                              onClick={() => updateAttendanceStatus(record.studentId, "present")}
+                            >
+                              Present
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={record.status === "absent" ? "destructive" : "outline"}
+                              onClick={() => updateAttendanceStatus(record.studentId, "absent")}
+                            >
+                              Absent
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={record.status === "late" ? "secondary" : "outline"}
+                              onClick={() => updateAttendanceStatus(record.studentId, "late")}
+                            >
+                              Late
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Users className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                    <p className="text-muted-foreground">No students found for the selected class and division</p>
+                    <p className="text-sm text-muted-foreground mt-2">Please check your filter selection</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Filter className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">Select Class and Division</h3>
+                <p className="text-muted-foreground mb-4">Please use the filters above to select a specific class and division to view and mark attendance</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <span>Choose your class from the dropdown</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-secondary rounded-full"></div>
+                    <span>Select the division you want to mark</span>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )
           )}
         </CardContent>
       </Card>
@@ -655,6 +694,9 @@ export default function Attendance() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Division-wise Attendance Marking</DialogTitle>
+            <DialogDescription>
+              Select a class and division to mark attendance for all students in that division.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {/* Division Selection */}
