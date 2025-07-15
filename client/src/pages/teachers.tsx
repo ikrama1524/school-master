@@ -4,16 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Search, Eye, Edit, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserPlus, Search, Eye, Edit, Trash2, User, Mail, Phone, Calendar, GraduationCap, BookOpen, DollarSign, MapPin, Clock } from "lucide-react";
 import TeacherModal from "@/components/modals/teacher-modal";
 import { Teacher } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 export default function Teachers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewTeacher, setViewTeacher] = useState<Teacher | null>(null);
   const { toast } = useToast();
 
   const { data: teachers = [], isLoading } = useQuery<Teacher[]>({
@@ -51,6 +56,11 @@ export default function Teachers() {
     setIsModalOpen(true);
   };
 
+  const handleView = (teacher: Teacher) => {
+    setViewTeacher(teacher);
+    setIsViewModalOpen(true);
+  };
+
   const handleDelete = (id: number) => {
     if (window.confirm("Are you sure you want to delete this teacher?")) {
       deleteTeacherMutation.mutate(id);
@@ -60,6 +70,11 @@ export default function Teachers() {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedTeacher(null);
+  };
+
+  const closeViewModal = () => {
+    setIsViewModalOpen(false);
+    setViewTeacher(null);
   };
 
   if (isLoading) {
@@ -135,7 +150,7 @@ export default function Teachers() {
                       {teacher.isActive ? "Active" : "Inactive"}
                     </Badge>
                     <div className="flex items-center space-x-1">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => handleView(teacher)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button 
@@ -167,6 +182,214 @@ export default function Teachers() {
         onClose={closeModal}
         teacher={selectedTeacher}
       />
+
+      {/* Teacher View Modal */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Teacher Details: {viewTeacher?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewTeacher && (
+            <Tabs defaultValue="personal" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="personal">Personal Info</TabsTrigger>
+                <TabsTrigger value="professional">Professional</TabsTrigger>
+                <TabsTrigger value="academic">Academic</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="personal" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <User className="w-5 h-5" />
+                        Personal Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Full Name</label>
+                          <p className="text-sm font-medium">{viewTeacher.name}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Employee ID</label>
+                          <p className="text-sm">{viewTeacher.employeeId}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Date of Birth</label>
+                          <p className="text-sm">{viewTeacher.dateOfBirth ? format(new Date(viewTeacher.dateOfBirth), 'PPP') : 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Gender</label>
+                          <p className="text-sm capitalize">{viewTeacher.gender || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Status</label>
+                          <Badge variant={viewTeacher.isActive ? "default" : "secondary"}>
+                            {viewTeacher.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Phone className="w-5 h-5" />
+                        Contact Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Email Address</label>
+                        <p className="text-sm">{viewTeacher.email || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Phone Number</label>
+                        <p className="text-sm">{viewTeacher.phone || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Address</label>
+                        <p className="text-sm">{viewTeacher.address || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">City</label>
+                        <p className="text-sm">{viewTeacher.city || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">State</label>
+                        <p className="text-sm">{viewTeacher.state || 'N/A'}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="professional" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <GraduationCap className="w-5 h-5" />
+                        Professional Details
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Primary Subject</label>
+                        <p className="text-sm font-medium">{viewTeacher.subject || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Qualification</label>
+                        <p className="text-sm">{viewTeacher.qualification || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Experience</label>
+                        <p className="text-sm">{viewTeacher.experience || 'N/A'} years</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Joining Date</label>
+                        <p className="text-sm">{viewTeacher.joiningDate ? format(new Date(viewTeacher.joiningDate), 'PPP') : 'N/A'}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <DollarSign className="w-5 h-5" />
+                        Employment Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Salary</label>
+                        <p className="text-sm">{viewTeacher.salary ? `₹${viewTeacher.salary}` : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Employment Type</label>
+                        <p className="text-sm">{viewTeacher.employmentType || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Department</label>
+                        <p className="text-sm">{viewTeacher.department || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Designation</label>
+                        <p className="text-sm">{viewTeacher.designation || 'N/A'}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="academic" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <BookOpen className="w-5 h-5" />
+                        Teaching Assignment
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Subject Taught</label>
+                        <p className="text-sm font-medium">{viewTeacher.subject || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Classes Assigned</label>
+                        <p className="text-sm">{viewTeacher.classesAssigned || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Class Teacher Of</label>
+                        <p className="text-sm">{viewTeacher.classTeacherOf || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Specialization</label>
+                        <p className="text-sm">{viewTeacher.specialization || 'N/A'}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Clock className="w-5 h-5" />
+                        Additional Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Blood Group</label>
+                        <p className="text-sm">{viewTeacher.bloodGroup || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Emergency Contact</label>
+                        <p className="text-sm">{viewTeacher.emergencyContact || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Aadhar Number</label>
+                        <p className="text-sm">{viewTeacher.aadharNumber || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">PAN Number</label>
+                        <p className="text-sm">{viewTeacher.panNumber || 'N/A'}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
