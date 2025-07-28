@@ -4,9 +4,21 @@ import { storage } from "./storage";
 import { insertStudentSchema, insertTeacherSchema, insertNoticeSchema, insertTimetableSchema, insertCalendarEventSchema, insertPeriodSchema } from "@shared/schema";
 import { z } from "zod";
 import { authenticateToken, generateToken, hashPassword, comparePassword, AuthenticatedRequest } from "./auth";
+import { registerRBACRoutes } from "./rbacRoutes";
+import { createTestUsers } from "./testUsers";
+import { createRBACDemoRoute } from "./rbacDemo";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Authentication Routes
+  // Initialize test users for RBAC demonstration
+  await createTestUsers();
+
+  // Register RBAC routes with role-based access control
+  registerRBACRoutes(app);
+  
+  // Create demo route to show RBAC system
+  createRBACDemoRoute(app);
+
+  // Legacy Authentication Routes (keeping for compatibility)
   app.post("/api/auth/register", async (req, res) => {
     try {
       const { username, password, name, email, role } = req.body;

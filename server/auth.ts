@@ -1,9 +1,11 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { storage } from './storage';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// Use a consistent JWT secret for the application
+const JWT_SECRET = process.env.JWT_SECRET || 'school_management_super_secret_key_2025_change_in_production';
 const JWT_EXPIRES_IN = '7d';
 
 export interface AuthenticatedRequest extends Request {

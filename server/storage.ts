@@ -782,6 +782,49 @@ export class DatabaseStorage implements IStorage {
   async getStudentDocuments(studentId: number): Promise<Document[]> {
     return await db.select().from(documents).where(eq(documents.studentId, studentId));
   }
+
+  // RBAC-specific methods for different modules
+  async getHomework(): Promise<any[]> {
+    return [
+      { id: 1, subject: "Mathematics", title: "Chapter 5 Exercises", dueDate: "2025-01-30", studentId: 1 },
+      { id: 2, subject: "English", title: "Essay on Climate Change", dueDate: "2025-02-01", studentId: 1 }
+    ];
+  }
+
+  async createHomework(homework: any): Promise<any> {
+    return { id: Date.now(), ...homework, createdAt: new Date() };
+  }
+
+  async getResults(): Promise<any[]> {
+    return [
+      { id: 1, subject: "Mathematics", marks: 85, total: 100, grade: "A", studentId: 1 },
+      { id: 2, subject: "English", marks: 78, total: 100, grade: "B+", studentId: 1 }
+    ];
+  }
+
+  async createResult(result: any): Promise<any> {
+    return { id: Date.now(), ...result, createdAt: new Date() };
+  }
+
+  async getNotices(): Promise<any[]> {
+    return [
+      { id: 1, title: "School Holiday Notice", content: "School will be closed on Jan 26th for Republic Day", date: "2025-01-25" },
+      { id: 2, title: "Parent-Teacher Meeting", content: "PTM scheduled for Feb 5th", date: "2025-01-28" }
+    ];
+  }
+
+  async getStudentAttendance(studentId: number): Promise<any[]> {
+    return [
+      { date: "2025-01-27", status: "present" },
+      { date: "2025-01-26", status: "absent" },
+      { date: "2025-01-25", status: "present" }
+    ];
+  }
+
+  async getStudentResults(studentId: number): Promise<any[]> {
+    const results = await this.getResults();
+    return results.filter((r: any) => r.studentId === studentId);
+  }
 }
 
 export const storage = new DatabaseStorage();

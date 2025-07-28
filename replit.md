@@ -28,11 +28,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Key Components
 
-### Authentication System
-- JWT-based authentication with 7-day expiration
-- Role-based access control with 9 distinct roles (student, parent, teachers, staff, admin, etc.)
-- Password hashing with bcrypt (12 salt rounds)
-- Protected routes with middleware authentication
+### Authentication & Authorization System
+- **JWT Authentication**: Token-based authentication with 7-day expiration and secure secret management
+- **9 User Roles**: student, parent, subject_teacher, class_teacher, non_teaching, accountant, principal, admin, super_admin
+- **Modular RBAC Architecture**: Clean separation with roles.ts, roleMiddleware.ts, and rbacRoutes.ts
+- **Access Matrix**: Detailed permissions for dashboard, timetable, homework, result, reports, fees, payroll, attendance modules
+- **Password Security**: bcrypt hashing with 12 salt rounds for all user credentials
+- **Middleware Protection**: Route-level protection with automatic token validation and role verification
+- **Test System**: Comprehensive test users with demo credentials for all roles
 
 ### Database Schema
 - **Users**: Core authentication and user management
@@ -48,16 +51,18 @@ Preferred communication style: Simple, everyday language.
 - **Calendar**: Events, academic calendar integration
 
 ### Recent Enhancements (January 2025)
+- **Complete RBAC System**: Implemented comprehensive Role-Based Access Control with JWT authentication and 9 distinct user roles
+- **Modular Authorization Architecture**: Created roles.ts, roleMiddleware.ts, and rbacRoutes.ts for clean separation of concerns
+- **JWT Authentication Flow**: 7-day token expiration with automatic secret generation and consistent token validation
+- **Test User System**: Created comprehensive test users for all roles with demo credentials for system testing
+- **Access Matrix Implementation**: Detailed permissions for 8 modules (dashboard, timetable, homework, result, reports, fees, payroll, attendance)
+- **Role-Specific Endpoints**: Protected routes with middleware validation ensuring proper access control
 - **Smart Fee Management**: Implemented comprehensive fee structure templates with automated fee generation for entire classes
 - **Fee Analytics Dashboard**: Real-time collection metrics with class-wise performance tracking
 - **Advanced Payment Processing**: Multiple payment methods (cash, card, UPI, online, cheque) with detailed tracking
-- **Tabbed Interface**: Organized overview, fees, structures, and analytics sections for better user experience
 - **Enhanced Admission Workflow**: Fixed disappearing approved applications issue and improved admission-to-student creation process
 - **Complete Module Hierarchy**: Fully implemented Admissions → Student → Division → Class workflow with all interconnected modules
-- **Database Schema Updates**: Added admission_number, division, and previous_school fields to student records
-- **Homework Module**: Implemented teacher-to-student homework assignment system with proper relationships
 - **Comprehensive Reports**: Added reports module for attendance, fees, results, and academic performance analysis
-- **Document Management**: Enhanced student-document relationship system for certificates and applications
 
 ### Permission System
 - Hierarchical role-based permissions
