@@ -1,225 +1,186 @@
-# School Management System - Complete Workflow Documentation
+# RBAC System Workflow Documentation
 
-## Overview
-This comprehensive school management system provides end-to-end workflow management for educational institutions, covering student lifecycle from admission to graduation, academic management, staff administration, and financial operations.
+## How the Role-Based Access Control System Works
 
-## 1. Student Admission & Enrollment Workflow
+### 1. User Login Flow
 
-### Admission Process
-1. **Application Submission**
-   - Prospective students submit applications through the Admissions module
-   - Required documents: Birth certificate, previous school records, photos
-   - Application includes: Student details, parent information, preferred class
-   - System generates unique application number
+```
+User enters credentials → Backend validates → JWT token generated → User redirected to dashboard
+```
 
-2. **Document Verification**
-   - Staff reviews submitted documents
-   - Documents marked as: Pending → Verified → Rejected
-   - System tracks document status and upload dates
+**Step-by-step process:**
+1. User visits the login page and enters username/password
+2. Frontend sends POST request to `/api/auth/login`
+3. Backend validates credentials against database
+4. If valid, backend generates JWT token with user info and role
+5. Token is sent back to frontend and stored (localStorage/sessionStorage)
+6. User is redirected to their role-appropriate dashboard
 
-3. **Interview Scheduling**
-   - Qualified applications get interview slots
-   - Calendar integration for interview management
-   - Automated notifications to parents
+### 2. Role-Based Navigation
 
-4. **Admission Decision**
-   - Applications reviewed and marked: Approved → Rejected → Document Review
-   - Only approved applications create actual student records
-   - Automatic fee structure assignment upon approval
+Each user role sees different navigation options:
 
-5. **Student Registration**
-   - Approved students get unique roll numbers
-   - Class and section assignment
-   - Parent portal access creation
+**Student/Parent:**
+- Dashboard (view only)
+- Timetable (view only)
+- Homework (view only)
+- Results (view only)
+- Reports (view only)
 
-## 2. Academic Management Workflow
+**Teacher (Subject/Class):**
+- Dashboard (view only)
+- Timetable (view only)
+- Homework (view/edit)
+- Results (view/edit)
+- Reports (view only)
+- Attendance (class teachers only)
+- Fees (class teachers can view)
 
-### Semester Setup
-1. **Academic Year Planning**
-   - Create academic semesters with start/end dates
-   - Set active semester for current operations
-   - Academic calendar integration
+**Accountant:**
+- Fees (full access)
+- Payroll (full access)
+- Attendance (view only)
 
-2. **Subject & Teacher Assignment**
-   - Define subjects with unique codes
-   - Assign qualified teachers to subjects
-   - Create class-wise subject mappings
+**Principal/Admin/Super Admin:**
+- All modules (full access)
 
-3. **Timetable Management**
-   - Create period schedules
-   - Assign subjects and teachers to time slots
-   - Generate class-wise and teacher-wise timetables
-   - Monthly and yearly timetable views
+### 3. Request Authentication Flow
 
-### Assessment & Results Workflow
-1. **Exam Scheduling**
-   - Create exam types: Unit Tests, Midterms, Finals
-   - Schedule exams with dates and locations
-   - Integration with calendar system
+```
+Frontend request → JWT validation → Role check → Access granted/denied
+```
 
-2. **Marks Entry**
-   - **Traditional Results**: Single exam marks entry
-   - **Semester Results**: Comprehensive semester-wise tracking
-     - Internal assessment marks
-     - External examination marks
-     - Automatic grade calculation (A+, A, B+, B, C, D, F)
-     - GPA computation
+**For every API request:**
+1. Frontend includes JWT token in Authorization header
+2. Backend middleware validates token signature and expiration
+3. If valid, user info is extracted from token
+4. Role-based permission check is performed
+5. Access is granted or denied with appropriate error message
 
-3. **Academic Progress Tracking**
-   - Student-wise performance analysis
-   - Subject-wise performance reports
-   - Semester comparison and trends
-   - Grade distribution analytics
+### 4. Permission Levels
 
-## 3. Daily Operations Workflow
+Each module has three permission levels:
+- **Read**: Can view data
+- **Write**: Can create/edit data
+- **Admin**: Can delete data and manage settings
 
-### Attendance Management
-1. **Daily Attendance**
-   - Class-wise attendance marking
-   - Real-time attendance tracking
-   - Absent student notifications
+### 5. Practical Usage Examples
 
-2. **Attendance Analytics**
-   - Monthly attendance reports
-   - Individual student attendance history
-   - Class-wise attendance statistics
+#### Example 1: Student Accessing Homework
+```
+1. Student logs in with credentials: student/student123
+2. Gets JWT token with role "student"
+3. Clicks on "Homework" in navigation
+4. Frontend sends GET /api/homework with token
+5. Backend validates token and checks permissions
+6. Student has "read" permission for homework
+7. Homework data is returned and displayed
+```
 
-### Fee Management
-1. **Fee Structure Setup**
-   - Define fee categories: Tuition, Transportation, Activities
-   - Class-wise fee configuration
-   - Payment terms and due dates
+#### Example 2: Student Trying to Access Payroll
+```
+1. Student tries to access payroll URL
+2. Frontend might redirect or show error
+3. If they bypass frontend, backend receives request
+4. Backend validates token and checks permissions
+5. Student has NO permission for payroll
+6. Backend returns 403 Forbidden with detailed error
+```
 
-2. **Fee Collection Process**
-   - Individual fee tracking
-   - Payment recording and receipts
-   - Overdue fee management
-   - Parent notifications for pending fees
+#### Example 3: Teacher Managing Homework
+```
+1. Teacher logs in with credentials: teacher/teacher123
+2. Gets JWT token with role "class_teacher"
+3. Accesses homework module
+4. Can view all homework (read permission)
+5. Can create new homework assignments (write permission)
+6. Can edit existing homework (write permission)
+7. Cannot delete homework (no admin permission)
+```
 
-### Communication & Notices
-1. **Notice Management**
-   - System-wide announcements
-   - Class-specific notices
-   - Event notifications
-   - Academic calendar updates
+### 6. Frontend Integration
 
-2. **Assignment & Homework**
-   - Teacher assignment posting
-   - Student submission tracking
-   - Grade recording and feedback
+The frontend adapts based on user role:
 
-## 4. Staff Management Workflow
+**Navigation Menu:**
+- Dynamically shows/hides menu items based on permissions
+- Uses role information from JWT token
 
-### Teacher Administration
-1. **Teacher Onboarding**
-   - Employee registration with unique IDs
-   - Qualification and certification tracking
-   - Subject specialization assignment
+**Page Content:**
+- Shows different content based on role
+- Hides action buttons if user lacks permissions
+- Displays appropriate error messages
 
-2. **Schedule Management**
-   - Teaching load distribution
-   - Substitute teacher arrangements
-   - Professional development tracking
+**Form Controls:**
+- Read-only fields for users with only read access
+- Edit buttons only for users with write access
+- Delete buttons only for users with admin access
 
-### Payroll Management
-1. **Salary Structure**
-   - Basic salary and allowances
-   - Deduction calculations
-   - Performance-based incentives
+### 7. Security Features
 
-2. **Payroll Processing**
-   - Monthly salary computation
-   - Tax calculations and compliance
-   - Salary slip generation
+**Token Security:**
+- 7-day expiration (automatically logout after expiration)
+- Secure secret for token signing
+- Token contains minimal necessary information
 
-## 5. Administrative Reports & Analytics
+**Route Protection:**
+- Every protected endpoint requires valid token
+- Role validation on every request
+- Detailed error messages for debugging
 
-### Academic Reports
-1. **Student Performance Reports**
-   - Individual student progress cards
-   - Class performance analysis
-   - Subject-wise achievement reports
-   - Semester comparison reports
+**Password Security:**
+- bcrypt hashing with 12 salt rounds
+- No plain text passwords stored
 
-2. **Attendance Reports**
-   - Daily attendance summaries
-   - Monthly attendance trends
-   - Student-wise attendance records
+### 8. Error Handling
 
-### Financial Reports
-1. **Fee Collection Reports**
-   - Daily collection summaries
-   - Outstanding dues reports
-   - Payment trend analysis
+**Frontend Errors:**
+- Invalid/expired token → Redirect to login
+- Insufficient permissions → Show access denied page
+- Network errors → Show retry options
 
-2. **Budget & Expense Tracking**
-   - Income vs expense analysis
-   - Category-wise spending reports
+**Backend Errors:**
+- 401 Unauthorized → Invalid/expired token
+- 403 Forbidden → Valid token but insufficient role
+- 404 Not Found → Resource doesn't exist
+- 500 Server Error → Internal server error
 
-## 6. System Integration Points
+### 9. Real-World Scenarios
 
-### Calendar Integration
-- Academic calendar with exam dates
-- Event scheduling and management
-- Deadline tracking for assignments
-- Parent-teacher meeting scheduling
+#### Scenario A: New Student Enrollment
+1. Admin logs in and accesses student management
+2. Creates new student record
+3. Student gets login credentials
+4. Student logs in and can only see their own data
+5. Parent gets separate login to monitor student progress
 
-### Database Architecture
-- PostgreSQL database with comprehensive schema
-- Student-centric data relationships
-- Academic performance tracking tables
-- Financial transaction records
+#### Scenario B: Teacher Grade Submission
+1. Subject teacher logs in
+2. Accesses results/grades module
+3. Can enter grades for their subjects only
+4. Cannot modify other teachers' grades
+5. Changes are logged for audit purposes
 
-### User Role Management
-- **Admin**: Full system access
-- **Teachers**: Class and subject management
-- **Parents**: Student progress viewing
-- **Students**: Assignment and grade viewing
+#### Scenario C: Fee Payment Processing
+1. Accountant logs in
+2. Accesses fee management system
+3. Can view all student fees
+4. Can mark payments as received
+5. Can generate fee reports
+6. Cannot access academic data
 
-## 7. Key Features & Benefits
+### 10. System Administration
 
-### For Administrators
-- Complete school oversight
-- Real-time analytics and reporting
-- Streamlined admission process
-- Efficient resource management
+**Super Admin capabilities:**
+- Manage all user accounts
+- Access all modules and data
+- Configure system settings
+- View audit logs
+- Backup/restore data
 
-### For Teachers
-- Easy attendance marking
-- Grade management system
-- Student progress tracking
-- Assignment distribution
+**Role Assignment:**
+- Users are assigned roles during account creation
+- Roles can be modified by admin users
+- Role changes take effect on next login
 
-### For Parents
-- Real-time student progress
-- Fee payment tracking
-- School communication updates
-- Academic calendar access
-
-### For Students
-- Assignment submissions
-- Grade viewing
-- Academic schedule access
-- School announcements
-
-## Technical Implementation
-
-### Frontend Architecture
-- React.js with TypeScript
-- Responsive design for mobile/desktop
-- Real-time data updates
-- Modern UI with animations
-
-### Backend Services
-- Express.js REST API
-- Database persistence with Drizzle ORM
-- Authentication and authorization
-- File upload and management
-
-### Data Security
-- Role-based access control
-- Secure authentication
-- Data encryption at rest
-- Regular backup procedures
-
-This workflow ensures complete academic and administrative management while maintaining data integrity and providing comprehensive tracking from student admission through graduation.
+This RBAC system ensures that each user can only access the information and functions appropriate to their role, maintaining data security and system integrity while providing a smooth user experience.
