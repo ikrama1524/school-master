@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   LayoutDashboard,
@@ -17,13 +18,16 @@ import {
   Users2,
   LogOut,
   User,
-  Shield
+  Shield,
+  Menu,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Drawer, DrawerContent, DrawerTrigger, DrawerClose } from "@/components/ui/drawer";
 
 // Define all possible navigation items with their module mappings
 const allNavigationItems = [
@@ -87,12 +91,18 @@ const getRoleLabel = (role: string) => {
   return labels[role as keyof typeof labels] || role;
 };
 
-export default function Sidebar() {
+interface MobileDrawerProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export default function MobileDrawer({ isOpen, onOpenChange }: MobileDrawerProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
+    onOpenChange(false);
   };
 
   // Filter navigation items based on user role
@@ -106,82 +116,104 @@ export default function Sidebar() {
   const navigationItems = getVisibleNavigationItems();
 
   return (
-    <aside className="w-64 bg-card border-r border-border hidden md:block fixed h-full z-30 animate-fade-in flex flex-col">
-      <div className="p-6 border-b border-border">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center shadow-lg">
-            <Shield className="text-white text-xl" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gradient">EduManage</h1>
-            <p className="text-sm text-muted-foreground">School Management</p>
-          </div>
-        </div>
-      </div>
-      
-      <ScrollArea className="flex-1 px-4">
-        <nav className="mt-6">
-          <div className="space-y-1">
-            {navigationItems.map((item, index) => {
-              const Icon = item.icon;
-              const isActive = location === item.href || 
-                (item.href !== "/" && location.startsWith(item.href));
-              
-              return (
-                <Link key={item.href} href={item.href}>
-                  <div
-                    className={cn(
-                      "flex items-center px-4 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer group",
-                      "hover:bg-muted/60 hover:shadow-sm hover:translate-x-1",
-                      isActive
-                        ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                    style={{
-                      animationDelay: `${index * 50}ms`,
-                    }}
-                  >
-                    <Icon className={cn(
-                      "mr-3 h-5 w-5 transition-all duration-200",
-                      isActive ? "text-primary" : "group-hover:text-primary/80"
-                    )} />
-                    <span className="transition-all duration-200">
-                      {item.label}
-                    </span>
-                    {isActive && (
-                      <div className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      </ScrollArea>
-
-      {/* User Profile and Logout */}
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center space-x-3 mb-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-            <User className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user?.name}</p>
-            <Badge variant="outline" className={`text-xs ${getRoleBadgeColor(user?.role || 'student')}`}>
-              {getRoleLabel(user?.role || 'student')}
-            </Badge>
-          </div>
-        </div>
+    <Drawer open={isOpen} onOpenChange={onOpenChange}>
+      <DrawerTrigger asChild>
         <Button 
-          onClick={handleLogout}
-          variant="outline"
-          size="sm"
-          className="w-full flex items-center justify-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+          variant="ghost" 
+          size="sm" 
+          className="md:hidden"
+          onClick={() => onOpenChange(true)}
         >
-          <LogOut className="w-4 h-4" />
-          Logout
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Open menu</span>
         </Button>
-      </div>
-    </aside>
+      </DrawerTrigger>
+      
+      <DrawerContent className="h-[90vh]">
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 gradient-primary rounded-lg flex items-center justify-center shadow-lg">
+                <Shield className="text-white text-lg" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gradient">EduManage</h1>
+                <p className="text-xs text-muted-foreground">School Management</p>
+              </div>
+            </div>
+            <DrawerClose asChild>
+              <Button variant="ghost" size="sm">
+                <X className="h-5 w-5" />
+                <span className="sr-only">Close menu</span>
+              </Button>
+            </DrawerClose>
+          </div>
+
+          {/* Navigation */}
+          <ScrollArea className="flex-1 px-4">
+            <nav className="py-4">
+              <div className="space-y-2">
+                {navigationItems.map((item, index) => {
+                  const Icon = item.icon;
+                  const isActive = location === item.href || 
+                    (item.href !== "/" && location.startsWith(item.href));
+                  
+                  return (
+                    <DrawerClose key={item.href} asChild>
+                      <Link href={item.href}>
+                        <div
+                          className={cn(
+                            "flex items-center px-4 py-3 rounded-lg font-medium transition-all duration-200 cursor-pointer",
+                            "hover:bg-muted/60",
+                            isActive
+                              ? "bg-primary/10 text-primary border border-primary/20"
+                              : "text-muted-foreground hover:text-foreground"
+                          )}
+                          onClick={() => onOpenChange(false)}
+                        >
+                          <Icon className={cn(
+                            "mr-3 h-5 w-5",
+                            isActive ? "text-primary" : ""
+                          )} />
+                          <span>{item.label}</span>
+                          {isActive && (
+                            <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
+                          )}
+                        </div>
+                      </Link>
+                    </DrawerClose>
+                  );
+                })}
+              </div>
+            </nav>
+          </ScrollArea>
+
+          {/* User Profile and Logout */}
+          <div className="p-4 border-t border-border">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user?.name}</p>
+                <Badge variant="outline" className={`text-xs ${getRoleBadgeColor(user?.role || 'student')}`}>
+                  {getRoleLabel(user?.role || 'student')}
+                </Badge>
+              </div>
+            </div>
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }

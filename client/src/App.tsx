@@ -21,7 +21,7 @@ import Students from "@/pages/students";
 import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
-import MobileMenu from "@/components/layout/mobile-menu";
+import MobileDrawer from "@/components/layout/mobile-drawer";
 import TopBar from "@/components/layout/top-bar";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
@@ -66,7 +66,7 @@ function AuthenticatedRouter() {
 }
 
 function AppContent() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -90,13 +90,13 @@ function AppContent() {
   return (
     <div className="min-h-screen flex bg-[var(--edu-bg)]">
       <Sidebar />
-      <MobileMenu 
-        isOpen={isMobileMenuOpen} 
-        onClose={() => setIsMobileMenuOpen(false)} 
+      <MobileDrawer 
+        isOpen={isMobileDrawerOpen} 
+        onOpenChange={setIsMobileDrawerOpen} 
       />
       
       <main className="flex-1 md:ml-64">
-        <TopBar onMobileMenuToggle={() => setIsMobileMenuOpen(true)} />
+        <TopBar onMobileMenuToggle={() => setIsMobileDrawerOpen(true)} />
         <div className="p-4 md:p-6">
           <Switch>
             <Route path="/" component={Dashboard} />
