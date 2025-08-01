@@ -13,7 +13,13 @@ import { Student, Notice, Fee, Teacher } from "@shared/schema";
 import { Link } from "wouter";
 
 export default function Dashboard() {
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats = {}, isLoading: statsLoading } = useQuery<{
+    totalStudents: number;
+    totalTeachers: number;
+    attendanceRate: number;
+    feeCollection: number;
+    pendingFees: number;
+  }>({
     queryKey: ["/api/stats"],
   });
 
@@ -25,9 +31,12 @@ export default function Dashboard() {
     queryKey: ["/api/teachers"],
   });
 
-  const { data: notices = [], isLoading: noticesLoading } = useQuery<Notice[]>({
+  const { data: noticesResponse = { notices: [] }, isLoading: noticesLoading } = useQuery<{ notices: Notice[] } | Notice[]>({
     queryKey: ["/api/notices"],
   });
+  
+  // Extract notices array from response
+  const notices: Notice[] = Array.isArray(noticesResponse) ? noticesResponse : (noticesResponse.notices || []);
 
   const { data: fees = [], isLoading: feesLoading } = useQuery<Fee[]>({
     queryKey: ["/api/fees"],
@@ -48,7 +57,7 @@ export default function Dashboard() {
     })
     .slice(0, 5);
 
-  const urgentNotices = notices.filter(notice => 
+  const urgentNotices = notices.filter((notice: Notice) => 
     notice.priority === "high" || notice.title.toLowerCase().includes("urgent")
   ).slice(0, 3);
 
@@ -244,7 +253,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {notices.slice(0, 4).map((notice) => (
+                {notices.slice(0, 4).map((notice: Notice) => (
                   <div key={notice.id} className="p-3 rounded-lg border bg-card hover:bg-accent transition-colors">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
