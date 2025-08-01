@@ -837,6 +837,58 @@ export class DatabaseStorage implements IStorage {
         class: "10th Grade A",
         status: "active",
         attachments: []
+      },
+      {
+        id: 5,
+        subject: "History",
+        title: "World War II Research Project",
+        description: "Research and prepare a presentation on the causes and consequences of World War II. Include timeline and key figures.",
+        assignedDate: "2025-01-22",
+        dueDate: "2025-02-05",
+        teacherId: 7,
+        teacherName: "Dr. Amanda Clark",
+        class: "10th Grade B",
+        status: "active",
+        attachments: ["research_guidelines.pdf", "citation_format.docx"]
+      },
+      {
+        id: 6,
+        subject: "Biology",
+        title: "Cell Structure Diagram",
+        description: "Draw and label detailed diagrams of plant and animal cells. Include functions of each organelle.",
+        assignedDate: "2025-01-28",
+        dueDate: "2025-02-02",
+        teacherId: 8,
+        teacherName: "Ms. Lisa Rodriguez",
+        class: "9th Grade A",
+        status: "active",
+        attachments: ["cell_template.pdf"]
+      },
+      {
+        id: 7,
+        subject: "Computer Science",
+        title: "Python Programming - Loops Practice",
+        description: "Complete exercises 5-12 from the Python workbook. Submit your code files.",
+        assignedDate: "2025-01-26",
+        dueDate: "2025-01-31",
+        teacherId: 9,
+        teacherName: "Mr. David Kumar",
+        class: "11th Grade A",
+        status: "active",
+        attachments: ["python_exercises.zip"]
+      },
+      {
+        id: 8,
+        subject: "Geography",
+        title: "Climate Zones Map Activity",
+        description: "Create a detailed map showing different climate zones of India with explanations.",
+        assignedDate: "2025-01-23",
+        dueDate: "2025-01-29",
+        teacherId: 10,
+        teacherName: "Mrs. Priya Sharma",
+        class: "8th Grade A",
+        status: "submitted_late",
+        attachments: ["india_outline_map.pdf"]
       }
     ];
   }
@@ -910,6 +962,70 @@ export class DatabaseStorage implements IStorage {
         teacherId: 3,
         teacherName: "Mr. Robert Johnson",
         remarks: "Needs more practice with complex problems"
+      },
+      {
+        id: 5,
+        studentId: 3,
+        studentName: "Carol Davis",
+        class: "9th Grade A",
+        subject: "Biology",
+        examType: "Monthly Test",
+        marks: 88,
+        totalMarks: 100,
+        grade: "A",
+        percentage: 88.0,
+        examDate: "2025-01-20",
+        teacherId: 8,
+        teacherName: "Ms. Lisa Rodriguez",
+        remarks: "Strong practical knowledge and lab skills"
+      },
+      {
+        id: 6,
+        studentId: 4,
+        studentName: "David Wilson",
+        class: "11th Grade A",
+        subject: "Computer Science",
+        examType: "Programming Test",
+        marks: 95,
+        totalMarks: 100,
+        grade: "A+",
+        percentage: 95.0,
+        examDate: "2025-01-18",
+        teacherId: 9,
+        teacherName: "Mr. David Kumar",
+        remarks: "Exceptional coding skills and logical thinking"
+      },
+      {
+        id: 7,
+        studentId: 5,
+        studentName: "Emma Thompson",
+        class: "8th Grade A",
+        subject: "Geography",
+        examType: "Unit Test 2",
+        marks: 82,
+        totalMarks: 100,
+        grade: "A",
+        percentage: 82.0,
+        examDate: "2025-01-19",
+        teacherId: 10,
+        teacherName: "Mrs. Priya Sharma",
+        remarks: "Good map reading skills, excellent project work"
+      },
+      {
+        id: 8,
+        studentId: 6,
+        studentName: "Frank Miller",
+        class: "10th Grade B",
+        subject: "History",
+        examType: "Quarterly Exam",
+        marks: 76,
+        totalMarks: 100,
+        grade: "B+",
+        percentage: 76.0,
+        examDate: "2025-01-21",
+        teacherId: 7,
+        teacherName: "Dr. Amanda Clark",
+        remarks: "Strong analytical skills, needs to improve essay writing"
       }
     ];
   }
@@ -1083,6 +1199,87 @@ export class DatabaseStorage implements IStorage {
         payDate: "2025-01-31",
         status: "pending",
         bankAccount: "****9012",
+        workingDays: 22,
+        presentDays: 22,
+        leavesTaken: 0
+      },
+      {
+        id: 4,
+        employeeId: 5,
+        employeeName: "Dr. Michael Brown",
+        designation: "Physics Teacher & Lab Coordinator",
+        department: "Academic",
+        basicSalary: 48000,
+        allowances: {
+          houseRent: 14400,
+          transport: 3500,
+          medical: 2500,
+          special: 2000
+        },
+        deductions: {
+          tax: 4800,
+          providentFund: 2400,
+          insurance: 900
+        },
+        netSalary: 62300,
+        payMonth: "January 2025",
+        payDate: "2025-01-31",
+        status: "processed",
+        bankAccount: "****3456",
+        workingDays: 22,
+        presentDays: 22,
+        leavesTaken: 0
+      },
+      {
+        id: 5,
+        employeeId: 8,
+        employeeName: "Ms. Lisa Rodriguez",
+        designation: "Biology Teacher",
+        department: "Academic",
+        basicSalary: 43000,
+        allowances: {
+          houseRent: 12900,
+          transport: 3000,
+          medical: 2000,
+          special: 1500
+        },
+        deductions: {
+          tax: 4000,
+          providentFund: 2150,
+          insurance: 800
+        },
+        netSalary: 55450,
+        payMonth: "January 2025",
+        payDate: "2025-01-31",
+        status: "processed",
+        bankAccount: "****7890",
+        workingDays: 22,
+        presentDays: 21,
+        leavesTaken: 1
+      },
+      {
+        id: 6,
+        employeeId: 11,
+        employeeName: "Mr. James Wilson",
+        designation: "Physical Education Teacher",
+        department: "Sports",
+        basicSalary: 35000,
+        allowances: {
+          houseRent: 10500,
+          transport: 2500,
+          medical: 1800,
+          special: 1000
+        },
+        deductions: {
+          tax: 2800,
+          providentFund: 1750,
+          insurance: 700
+        },
+        netSalary: 45550,
+        payMonth: "January 2025",
+        payDate: "2025-01-31",
+        status: "processed",
+        bankAccount: "****2468",
         workingDays: 22,
         presentDays: 22,
         leavesTaken: 0
