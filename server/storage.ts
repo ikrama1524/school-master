@@ -783,11 +783,61 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(documents).where(eq(documents.studentId, studentId));
   }
 
-  // RBAC-specific methods for different modules
+  // RBAC-specific methods for different modules with realistic data
   async getHomework(): Promise<any[]> {
     return [
-      { id: 1, subject: "Mathematics", title: "Chapter 5 Exercises", dueDate: "2025-01-30", studentId: 1 },
-      { id: 2, subject: "English", title: "Essay on Climate Change", dueDate: "2025-02-01", studentId: 1 }
+      {
+        id: 1,
+        subject: "Mathematics",
+        title: "Quadratic Equations - Practice Problems",
+        description: "Solve problems 1-15 from Chapter 4. Show all working steps.",
+        assignedDate: "2025-01-25",
+        dueDate: "2025-01-30",
+        teacherId: 3,
+        teacherName: "Mr. Robert Johnson",
+        class: "10th Grade A",
+        status: "active",
+        attachments: ["quadratic_problems.pdf"]
+      },
+      {
+        id: 2,
+        subject: "English",
+        title: "Essay on Climate Change",
+        description: "Write a 500-word essay on the effects of climate change on marine ecosystems.",
+        assignedDate: "2025-01-26",
+        dueDate: "2025-02-01",
+        teacherId: 4,
+        teacherName: "Ms. Sarah Wilson",
+        class: "10th Grade A",
+        status: "active",
+        attachments: []
+      },
+      {
+        id: 3,
+        subject: "Physics",
+        title: "Light and Optics Lab Report",
+        description: "Complete the reflection and refraction experiment report with observations.",
+        assignedDate: "2025-01-24",
+        dueDate: "2025-01-28",
+        teacherId: 5,
+        teacherName: "Dr. Michael Brown",
+        class: "10th Grade A",
+        status: "overdue",
+        attachments: ["lab_template.docx"]
+      },
+      {
+        id: 4,
+        subject: "Chemistry",
+        title: "Periodic Table Quiz Preparation",
+        description: "Study elements 1-36, their symbols, and atomic numbers for next week's quiz.",
+        assignedDate: "2025-01-27",
+        dueDate: "2025-02-03",
+        teacherId: 6,
+        teacherName: "Ms. Emily Davis",
+        class: "10th Grade A",
+        status: "active",
+        attachments: []
+      }
     ];
   }
 
@@ -797,8 +847,70 @@ export class DatabaseStorage implements IStorage {
 
   async getResults(): Promise<any[]> {
     return [
-      { id: 1, subject: "Mathematics", marks: 85, total: 100, grade: "A", studentId: 1 },
-      { id: 2, subject: "English", marks: 78, total: 100, grade: "B+", studentId: 1 }
+      {
+        id: 1,
+        studentId: 1,
+        studentName: "Alice Johnson",
+        class: "10th Grade A",
+        subject: "Mathematics",
+        examType: "Unit Test 1",
+        marks: 85,
+        totalMarks: 100,
+        grade: "A",
+        percentage: 85.0,
+        examDate: "2025-01-15",
+        teacherId: 3,
+        teacherName: "Mr. Robert Johnson",
+        remarks: "Excellent understanding of concepts"
+      },
+      {
+        id: 2,
+        studentId: 1,
+        studentName: "Alice Johnson",
+        class: "10th Grade A",
+        subject: "English",
+        examType: "Unit Test 1",
+        marks: 78,
+        totalMarks: 100,
+        grade: "B+",
+        percentage: 78.0,
+        examDate: "2025-01-16",
+        teacherId: 4,
+        teacherName: "Ms. Sarah Wilson",
+        remarks: "Good vocabulary, needs improvement in grammar"
+      },
+      {
+        id: 3,
+        studentId: 1,
+        studentName: "Alice Johnson",
+        class: "10th Grade A",
+        subject: "Physics",
+        examType: "Unit Test 1",
+        marks: 92,
+        totalMarks: 100,
+        grade: "A+",
+        percentage: 92.0,
+        examDate: "2025-01-17",
+        teacherId: 5,
+        teacherName: "Dr. Michael Brown",
+        remarks: "Outstanding performance in practical applications"
+      },
+      {
+        id: 4,
+        studentId: 2,
+        studentName: "Bob Smith",
+        class: "10th Grade B",
+        subject: "Mathematics",
+        examType: "Unit Test 1",
+        marks: 74,
+        totalMarks: 100,
+        grade: "B",
+        percentage: 74.0,
+        examDate: "2025-01-15",
+        teacherId: 3,
+        teacherName: "Mr. Robert Johnson",
+        remarks: "Needs more practice with complex problems"
+      }
     ];
   }
 
@@ -806,18 +918,391 @@ export class DatabaseStorage implements IStorage {
     return { id: Date.now(), ...result, createdAt: new Date() };
   }
 
+  async getTimetable(): Promise<any[]> {
+    return [
+      {
+        id: 1,
+        class: "10th Grade A",
+        day: "Monday",
+        periods: [
+          { period: 1, time: "8:00-8:45", subject: "Mathematics", teacher: "Mr. Robert Johnson", room: "101" },
+          { period: 2, time: "8:45-9:30", subject: "English", teacher: "Ms. Sarah Wilson", room: "102" },
+          { period: 3, time: "9:30-10:15", subject: "Physics", teacher: "Dr. Michael Brown", room: "Lab 1" },
+          { period: 4, time: "10:30-11:15", subject: "Chemistry", teacher: "Ms. Emily Davis", room: "Lab 2" },
+          { period: 5, time: "11:15-12:00", subject: "History", teacher: "Mr. David Lee", room: "103" },
+          { period: 6, time: "1:00-1:45", subject: "Geography", teacher: "Ms. Lisa Anderson", room: "104" },
+          { period: 7, time: "1:45-2:30", subject: "Physical Education", teacher: "Coach Mark Wilson", room: "Gym" }
+        ]
+      },
+      {
+        id: 2,
+        class: "10th Grade A",
+        day: "Tuesday",
+        periods: [
+          { period: 1, time: "8:00-8:45", subject: "English", teacher: "Ms. Sarah Wilson", room: "102" },
+          { period: 2, time: "8:45-9:30", subject: "Mathematics", teacher: "Mr. Robert Johnson", room: "101" },
+          { period: 3, time: "9:30-10:15", subject: "Biology", teacher: "Dr. Jennifer Clark", room: "Lab 3" },
+          { period: 4, time: "10:30-11:15", subject: "Computer Science", teacher: "Mr. Alex Kumar", room: "Computer Lab" },
+          { period: 5, time: "11:15-12:00", subject: "Art", teacher: "Ms. Maria Garcia", room: "Art Room" },
+          { period: 6, time: "1:00-1:45", subject: "Music", teacher: "Mr. James Rodriguez", room: "Music Room" },
+          { period: 7, time: "1:45-2:30", subject: "Study Hall", teacher: "Various", room: "Library" }
+        ]
+      }
+    ];
+  }
+
+  async getAttendanceRecords(): Promise<any[]> {
+    return [
+      {
+        id: 1,
+        studentId: 1,
+        studentName: "Alice Johnson",
+        class: "10th Grade A",
+        date: "2025-01-27",
+        status: "present",
+        period: "full_day",
+        markedBy: "Ms. Sarah Wilson",
+        markedAt: "2025-01-27T08:15:00Z",
+        remarks: ""
+      },
+      {
+        id: 2,
+        studentId: 1,
+        studentName: "Alice Johnson",
+        class: "10th Grade A",
+        date: "2025-01-26",
+        status: "absent",
+        period: "full_day",
+        markedBy: "Ms. Sarah Wilson",
+        markedAt: "2025-01-26T08:15:00Z",
+        remarks: "Sick leave - fever"
+      },
+      {
+        id: 3,
+        studentId: 2,
+        studentName: "Bob Smith",
+        class: "10th Grade B",
+        date: "2025-01-27",
+        status: "present",
+        period: "full_day",
+        markedBy: "Mr. Robert Johnson",
+        markedAt: "2025-01-27T08:10:00Z",
+        remarks: ""
+      },
+      {
+        id: 4,
+        studentId: 3,
+        studentName: "Carol Brown",
+        class: "9th Grade A",
+        date: "2025-01-27",
+        status: "late",
+        period: "full_day",
+        markedBy: "Dr. Michael Brown",
+        markedAt: "2025-01-27T09:30:00Z",
+        remarks: "Arrived at 9:30 AM due to transport delay"
+      }
+    ];
+  }
+
+  async getPayrollData(): Promise<any[]> {
+    return [
+      {
+        id: 1,
+        employeeId: 3,
+        employeeName: "Mr. Robert Johnson",
+        designation: "Mathematics Teacher",
+        department: "Academic",
+        basicSalary: 45000,
+        allowances: {
+          houseRent: 13500,
+          transport: 3000,
+          medical: 2000,
+          special: 1500
+        },
+        deductions: {
+          tax: 4200,
+          providentFund: 2250,
+          insurance: 800
+        },
+        netSalary: 58750,
+        payMonth: "January 2025",
+        payDate: "2025-01-31",
+        status: "processed",
+        bankAccount: "****1234",
+        workingDays: 22,
+        presentDays: 22,
+        leavesTaken: 0
+      },
+      {
+        id: 2,
+        employeeId: 4,
+        employeeName: "Ms. Sarah Wilson",
+        designation: "English Teacher",
+        department: "Academic",
+        basicSalary: 42000,
+        allowances: {
+          houseRent: 12600,
+          transport: 3000,
+          medical: 2000,
+          special: 1400
+        },
+        deductions: {
+          tax: 3800,
+          providentFund: 2100,
+          insurance: 800
+        },
+        netSalary: 54300,
+        payMonth: "January 2025",
+        payDate: "2025-01-31",
+        status: "processed",
+        bankAccount: "****5678",
+        workingDays: 22,
+        presentDays: 21,
+        leavesTaken: 1
+      },
+      {
+        id: 3,
+        employeeId: 7,
+        employeeName: "Ms. Jennifer Martinez",
+        designation: "Accountant",
+        department: "Administration",
+        basicSalary: 38000,
+        allowances: {
+          houseRent: 11400,
+          transport: 2500,
+          medical: 2000,
+          special: 1100
+        },
+        deductions: {
+          tax: 3200,
+          providentFund: 1900,
+          insurance: 750
+        },
+        netSalary: 49150,
+        payMonth: "January 2025",
+        payDate: "2025-01-31",
+        status: "pending",
+        bankAccount: "****9012",
+        workingDays: 22,
+        presentDays: 22,
+        leavesTaken: 0
+      }
+    ];
+  }
+
+  async getReportsData(): Promise<any[]> {
+    return [
+      {
+        id: 1,
+        reportType: "Academic Performance",
+        title: "Class 10A Mathematics Performance Analysis",
+        generatedBy: "Mr. Robert Johnson",
+        generatedDate: "2025-01-25",
+        period: "January 2025",
+        data: {
+          totalStudents: 35,
+          averageMarks: 78.5,
+          passPercentage: 94.3,
+          gradeDistribution: {
+            "A+": 8,
+            "A": 12,
+            "B+": 10,
+            "B": 3,
+            "C": 2,
+            "F": 0
+          }
+        },
+        status: "completed"
+      },
+      {
+        id: 2,
+        reportType: "Attendance Summary",
+        title: "Monthly Attendance Report - January 2025",
+        generatedBy: "Ms. Sarah Wilson",
+        generatedDate: "2025-01-27",
+        period: "January 2025",
+        data: {
+          totalStudents: 150,
+          averageAttendance: 92.8,
+          totalWorkingDays: 22,
+          presentDays: 3036,
+          absentDays: 234,
+          lateArrivals: 45
+        },
+        status: "completed"
+      },
+      {
+        id: 3,
+        reportType: "Fee Collection",
+        title: "Fee Collection Status - Q3 2024-25",
+        generatedBy: "Ms. Jennifer Martinez",
+        generatedDate: "2025-01-20",
+        period: "Q3 2024-25",
+        data: {
+          totalAmount: 2250000,
+          collectedAmount: 1980000,
+          pendingAmount: 270000,
+          collectionPercentage: 88.0,
+          overdueAccounts: 12
+        },
+        status: "completed"
+      }
+    ];
+  }
+
+  async getDashboardData(userRole: string): Promise<any> {
+    const baseData = {
+      totalStudents: 450,
+      totalTeachers: 28,
+      totalClasses: 18,
+      totalSubjects: 12
+    };
+
+    switch (userRole) {
+      case 'student':
+        return {
+          ...baseData,
+          myHomework: 3,
+          pendingAssignments: 1,
+          upcomingExams: 2,
+          attendancePercentage: 94.5,
+          recentResults: [
+            { subject: "Mathematics", marks: 85, grade: "A" },
+            { subject: "Physics", marks: 92, grade: "A+" }
+          ],
+          notices: [
+            { title: "Sports Day", date: "2025-02-05", type: "event" },
+            { title: "Parent-Teacher Meeting", date: "2025-02-10", type: "meeting" }
+          ]
+        };
+      
+      case 'class_teacher':
+      case 'subject_teacher':
+        return {
+          ...baseData,
+          myClasses: userRole === 'class_teacher' ? 2 : 4,
+          totalAssignments: 12,
+          pendingGrades: 8,
+          averageClassPerformance: 78.5,
+          todaySchedule: [
+            { period: 1, subject: "Mathematics", class: "10A", time: "8:00-8:45" },
+            { period: 3, subject: "Mathematics", class: "10B", time: "9:30-10:15" }
+          ],
+          recentSubmissions: 15
+        };
+      
+      case 'accountant':
+        return {
+          ...baseData,
+          totalFeeCollection: 1980000,
+          pendingFees: 270000,
+          collectionPercentage: 88.0,
+          overdueAccounts: 12,
+          monthlyPayroll: 156000,
+          pendingPayments: 3,
+          recentTransactions: [
+            { student: "Alice Johnson", amount: 15000, status: "paid", date: "2025-01-25" },
+            { student: "Bob Smith", amount: 15000, status: "pending", date: "2025-01-20" }
+          ]
+        };
+      
+      case 'principal':
+      case 'admin':
+      case 'super_admin':
+        return {
+          ...baseData,
+          overallAttendance: 92.8,
+          feeCollectionRate: 88.0,
+          staffCount: 35,
+          pendingAdmissions: 8,
+          recentActivities: [
+            { activity: "New teacher joined", time: "2 hours ago", type: "staff" },
+            { activity: "Fee payment received", time: "4 hours ago", type: "finance" },
+            { activity: "Exam results published", time: "1 day ago", type: "academic" }
+          ],
+          alerts: [
+            { message: "12 students have overdue fees", type: "warning", priority: "medium" },
+            { message: "Parent-teacher meeting scheduled", type: "info", priority: "low" }
+          ]
+        };
+      
+      default:
+        return baseData;
+    }
+  }
+
   async getNotices(): Promise<any[]> {
     return [
-      { id: 1, title: "School Holiday Notice", content: "School will be closed on Jan 26th for Republic Day", date: "2025-01-25" },
-      { id: 2, title: "Parent-Teacher Meeting", content: "PTM scheduled for Feb 5th", date: "2025-01-28" }
+      {
+        id: 1,
+        title: "Republic Day Celebration",
+        content: "School will celebrate Republic Day on January 26th. Flag hoisting ceremony at 8:00 AM. All students must attend in school uniform.",
+        type: "event",
+        priority: "high",
+        publishedDate: "2025-01-20",
+        publishedBy: "Principal",
+        targetAudience: ["all"],
+        status: "active",
+        attachments: ["republic_day_schedule.pdf"]
+      },
+      {
+        id: 2,
+        title: "Parent-Teacher Meeting",
+        content: "Parent-Teacher Meeting scheduled for February 10th, 2025 from 9:00 AM to 4:00 PM. Parents are requested to meet respective class teachers.",
+        type: "meeting",
+        priority: "medium",
+        publishedDate: "2025-01-22",
+        publishedBy: "Academic Coordinator",
+        targetAudience: ["parents", "teachers"],
+        status: "active",
+        attachments: []
+      },
+      {
+        id: 3,
+        title: "Annual Sports Day",
+        content: "Annual Sports Day will be held on February 15th, 2025. Practice sessions will start from February 1st. Interested students should register with PE teacher.",
+        type: "event",
+        priority: "medium",
+        publishedDate: "2025-01-18",
+        publishedBy: "Sports Coordinator",
+        targetAudience: ["students", "parents"],
+        status: "active",
+        attachments: ["sports_day_events.pdf"]
+      },
+      {
+        id: 4,
+        title: "Winter Break Holiday Homework",
+        content: "Holiday homework has been uploaded to the student portal. Students must complete and submit by January 30th, 2025.",
+        type: "academic",
+        priority: "high",
+        publishedDate: "2025-01-15",
+        publishedBy: "Academic Head",
+        targetAudience: ["students", "parents"],
+        status: "active",
+        attachments: ["holiday_homework_list.pdf"]
+      },
+      {
+        id: 5,
+        title: "Fee Payment Reminder",
+        content: "This is a reminder that Q3 fees are due by January 31st, 2025. Late payment charges will apply after the due date.",
+        type: "finance",
+        priority: "high",
+        publishedDate: "2025-01-24",
+        publishedBy: "Accounts Department",
+        targetAudience: ["parents"],
+        status: "active",
+        attachments: []
+      }
     ];
   }
 
   async getStudentAttendance(studentId: number): Promise<any[]> {
     return [
-      { date: "2025-01-27", status: "present" },
-      { date: "2025-01-26", status: "absent" },
-      { date: "2025-01-25", status: "present" }
+      { date: "2025-01-27", status: "present", period: "full_day", markedBy: "Ms. Sarah Wilson" },
+      { date: "2025-01-26", status: "absent", period: "full_day", markedBy: "Ms. Sarah Wilson", reason: "Sick leave" },
+      { date: "2025-01-25", status: "present", period: "full_day", markedBy: "Ms. Sarah Wilson" },
+      { date: "2025-01-24", status: "present", period: "full_day", markedBy: "Ms. Sarah Wilson" },
+      { date: "2025-01-23", status: "late", period: "full_day", markedBy: "Ms. Sarah Wilson", reason: "Transport delay" }
     ];
   }
 

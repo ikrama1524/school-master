@@ -186,7 +186,17 @@ export function registerRBACRoutes(app: Express) {
     authenticateToken,
     requireModuleAccess(MODULES.REPORTS, ACCESS_LEVELS.READ),
     async (req: any, res: any) => {
-      res.json({ message: "Reports endpoint - role-based access working!", user: req.user });
+      try {
+        const reportsData = await storage.getReportsData();
+        res.json({ 
+          message: "Reports endpoint - role-based access working!", 
+          user: req.user,
+          reportsData 
+        });
+      } catch (error) {
+        console.error('Reports error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
     }
   );
 
@@ -232,7 +242,17 @@ export function registerRBACRoutes(app: Express) {
     authenticateToken,
     requireRoles(ROLES.ACCOUNTANT, ROLES.PRINCIPAL, ROLES.ADMIN, ROLES.SUPER_ADMIN),
     async (req: any, res: any) => {
-      res.json({ message: "Payroll endpoint - restricted access working!", user: req.user });
+      try {
+        const payrollData = await storage.getPayrollData();
+        res.json({ 
+          message: "Payroll endpoint - restricted access working!", 
+          user: req.user,
+          payrollData 
+        });
+      } catch (error) {
+        console.error('Payroll error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
     }
   );
 
@@ -249,8 +269,17 @@ export function registerRBACRoutes(app: Express) {
     authenticateToken,
     requireModuleAccess(MODULES.ATTENDANCE, ACCESS_LEVELS.READ),
     async (req: any, res: any) => {
-      const attendance = await storage.getAttendance();
-      res.json(attendance);
+      try {
+        const attendanceData = await storage.getAttendanceRecords();
+        res.json({
+          message: "Attendance data retrieved successfully",
+          user: req.user,
+          attendanceData
+        });
+      } catch (error) {
+        console.error('Attendance error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
     }
   );
 
@@ -285,6 +314,43 @@ export function registerRBACRoutes(app: Express) {
     requireRoles(ROLES.PRINCIPAL, ROLES.ADMIN, ROLES.SUPER_ADMIN),
     (req: any, res: any) => {
       res.json({ message: "This is an admin only endpoint", user: req.user });
+    }
+  );
+
+  // Enhanced timetable endpoint
+  app.get("/api/timetable", 
+    authenticateToken,
+    requireModuleAccess(MODULES.TIMETABLE, ACCESS_LEVELS.READ),
+    async (req: any, res: any) => {
+      try {
+        const timetableData = await storage.getTimetable();
+        res.json({
+          message: "Timetable data retrieved successfully",
+          user: req.user,
+          timetableData
+        });
+      } catch (error) {
+        console.error('Timetable error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    }
+  );
+
+  // Notices endpoint - accessible to all authenticated users
+  app.get("/api/notices", 
+    authenticateToken,
+    async (req: any, res: any) => {
+      try {
+        const notices = await storage.getNotices();
+        res.json({
+          message: "Notices retrieved successfully",
+          user: req.user,
+          notices
+        });
+      } catch (error) {
+        console.error('Notices error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
     }
   );
 }
