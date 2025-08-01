@@ -7,6 +7,7 @@ This is a comprehensive school management system built with React (TypeScript) f
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Mobile app requirement: Create mobile application for school management system.
 
 ## System Architecture
 
