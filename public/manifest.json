@@ -1,0 +1,61 @@
+{
+  "name": "EduManage - School Management System",
+  "short_name": "EduManage",
+  "description": "Comprehensive school management system for students, teachers, and administrators",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/",
+      "description": "View dashboard and overview"
+    },
+    {
+      "name": "Students",
+      "url": "/students",
+      "description": "Manage student information"
+    },
+    {
+      "name": "Attendance",
+      "url": "/attendance", 
+      "description": "Track student attendance"
+    },
+    {
+      "name": "Fees",
+      "url": "/fees",
+      "description": "Manage fee collection"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "320x568",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop.png", 
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}

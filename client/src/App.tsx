@@ -24,6 +24,7 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileDrawer from "@/components/layout/mobile-drawer";
 import TopBar from "@/components/layout/top-bar";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import PWAInstallPrompt from "@/components/pwa-install-prompt";
 import { useState } from "react";
 
 function AuthenticatedRouter() {
@@ -127,6 +128,7 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <AppContent />
+          <PWAInstallPrompt />
           <Toaster />
         </TooltipProvider>
       </AuthProvider>
