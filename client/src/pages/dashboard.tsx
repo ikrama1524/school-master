@@ -11,8 +11,12 @@ import {
 } from "lucide-react";
 import { Student, Notice, Fee, Teacher } from "@shared/schema";
 import { Link } from "wouter";
+import { useMobile } from "@/hooks/use-mobile";
+import MobileDashboard from "@/components/mobile/mobile-dashboard";
 
 export default function Dashboard() {
+  const deviceInfo = useMobile();
+  
   const { data: stats = {}, isLoading: statsLoading } = useQuery<{
     totalStudents: number;
     totalTeachers: number;
@@ -91,6 +95,13 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Mobile Dashboard Section - Shows when on mobile app */}
+      {deviceInfo.isNative && (
+        <div className="lg:hidden">
+          <MobileDashboard />
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up" style={{ animationDelay: '100ms' }}>

@@ -25,7 +25,9 @@ import MobileDrawer from "@/components/layout/mobile-drawer";
 import TopBar from "@/components/layout/top-bar";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
-import { useState } from "react";
+import { useMobile } from "@/hooks/use-mobile";
+import { MobileNotificationService } from "@/services/mobile-notifications";
+import { useState, useEffect } from "react";
 
 function AuthenticatedRouter() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -61,6 +63,7 @@ function AuthenticatedRouter() {
       <Route path="/payroll" component={Payroll} />
       <Route path="/homework" component={Homework} />
       <Route path="/results" component={Results} />
+      <Route path="/mobile-test" component={lazy(() => import("@/pages/mobile-test"))} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -69,6 +72,15 @@ function AuthenticatedRouter() {
 function AppContent() {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const { isAuthenticated, isLoading } = useAuth();
+  const deviceInfo = useMobile();
+
+  // Initialize mobile features when authenticated
+  useEffect(() => {
+    if (isAuthenticated && deviceInfo.isNative) {
+      const notificationService = MobileNotificationService.getInstance();
+      notificationService.initialize();
+    }
+  }, [isAuthenticated, deviceInfo.isNative]);
 
   if (isLoading) {
     return (
