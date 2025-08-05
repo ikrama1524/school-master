@@ -93,11 +93,25 @@ function AppContent() {
     );
   }
 
+  // Handle mobile routes before authentication check
+  const currentPath = window.location.pathname;
+  if (!isAuthenticated && (currentPath === '/mobile-login' || currentPath === '/student-mobile' || currentPath === '/parent-mobile')) {
+    return (
+      <Switch>
+        <Route path="/mobile-login" component={lazy(() => import("@/pages/mobile-login"))} />
+        <Route path="/student-mobile" component={lazy(() => import("@/pages/student-mobile"))} />
+        <Route path="/parent-mobile" component={lazy(() => import("@/pages/parent-mobile"))} />
+        <Route component={lazy(() => import("@/pages/mobile-login"))} />
+      </Switch>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <Switch>
         <Route path="/register" component={Register} />
         <Route path="/login" component={Login} />
+        <Route path="/mobile-login" component={lazy(() => import("@/pages/mobile-login"))} />
         <Route component={Login} />
       </Switch>
     );
