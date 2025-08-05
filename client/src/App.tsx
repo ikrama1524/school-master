@@ -129,7 +129,6 @@ function AppContent() {
             <Route path="/homework" component={Homework} />
             <Route path="/results" component={Results} />
             <Route path="/users" component={Users} />
-            <Route path="/mobile-test" component={lazy(() => import("@/pages/mobile-test"))} />
             <Route path="/student-mobile" component={lazy(() => import("@/pages/student-mobile"))} />
             <Route path="/parent-mobile" component={lazy(() => import("@/pages/parent-mobile"))} />
             <Route path="/mobile-login" component={lazy(() => import("@/pages/mobile-login"))} />

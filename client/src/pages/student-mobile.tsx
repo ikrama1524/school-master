@@ -226,22 +226,21 @@ export default function StudentMobile() {
           </Card>
         )}
 
-        {/* Quick Actions */}
+        {/* Quick Actions - Student Only */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className="h-auto p-3 flex flex-col space-y-1">
+              <MobileShare
+                title="My Attendance Report"
+                text={`My attendance rate: ${attendanceRate.toFixed(1)}%`}
+                className="h-auto p-3 flex flex-col space-y-1 border rounded-lg cursor-pointer hover:bg-muted/50"
+              >
                 <Calendar className="w-5 h-5" />
-                <span className="text-xs">View Timetable</span>
-              </Button>
-              
-              <Button variant="outline" className="h-auto p-3 flex flex-col space-y-1">
-                <BookOpen className="w-5 h-5" />
-                <span className="text-xs">Homework</span>
-              </Button>
+                <span className="text-xs">Share Attendance</span>
+              </MobileShare>
               
               <MobileShare
                 title="Student Performance Summary"
@@ -254,7 +253,12 @@ export default function StudentMobile() {
               
               <Button variant="outline" className="h-auto p-3 flex flex-col space-y-1">
                 <Bell className="w-5 h-5" />
-                <span className="text-xs">Notifications</span>
+                <span className="text-xs">View Notices</span>
+              </Button>
+
+              <Button variant="outline" className="h-auto p-3 flex flex-col space-y-1">
+                <BookOpen className="w-5 h-5" />
+                <span className="text-xs">My Results</span>
               </Button>
             </div>
           </CardContent>

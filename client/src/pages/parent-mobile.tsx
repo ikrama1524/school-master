@@ -240,7 +240,7 @@ export default function ParentMobile() {
           </Card>
         )}
 
-        {/* Quick Actions */}
+        {/* Quick Actions - Parent Only */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Quick Actions</CardTitle>
@@ -253,8 +253,8 @@ export default function ParentMobile() {
               </Button>
               
               <Button variant="outline" className="h-auto p-3 flex flex-col space-y-1">
-                <Calendar className="w-5 h-5" />
-                <span className="text-xs">View Calendar</span>
+                <Bell className="w-5 h-5" />
+                <span className="text-xs">View Notices</span>
               </Button>
               
               <MobileShare
@@ -266,10 +266,14 @@ export default function ParentMobile() {
                 <span className="text-xs">Share Summary</span>
               </MobileShare>
               
-              <Button variant="outline" className="h-auto p-3 flex flex-col space-y-1">
-                <Mail className="w-5 h-5" />
-                <span className="text-xs">Messages</span>
-              </Button>
+              <MobileShare
+                title="Children Overview"
+                text={`Monitoring ${children.length} children. Overall status and attendance tracking.`}
+                className="h-auto p-3 flex flex-col space-y-1 border rounded-lg cursor-pointer hover:bg-muted/50"
+              >
+                <Users className="w-5 h-5" />
+                <span className="text-xs">Share Overview</span>
+              </MobileShare>
             </div>
           </CardContent>
         </Card>

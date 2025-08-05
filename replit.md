@@ -70,7 +70,8 @@ Mobile focus: Student and parent portal with essential features only - attendanc
 - **PWA Implementation**: Added Progressive Web App features with offline functionality, service workers, and mobile install prompts
 - **Mobile-Specific Components**: Built camera capture, notification service, sharing functionality, and device detection hooks
 - **Student & Parent Mobile App**: Created dedicated mobile app with minimal screens for students and parents only, focusing on essential features (attendance, fees, notices, results)
-- **Mobile-Specific API Endpoints**: Built specialized backend routes for student and parent mobile data access with role-based filtering
+- **Mobile-Specific API Endpoints**: Built specialized backend routes for student and parent mobile data access with strict role-based filtering
+- **Role-Based Mobile Access**: Implemented strict access controls ensuring only student and parent roles can access mobile endpoints
 
 ### Permission System
 - Hierarchical role-based permissions
