@@ -7,8 +7,9 @@ This is a comprehensive school management system built with React (TypeScript) f
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
-Mobile app requirement: Create mobile application for school management system.
+Mobile app requirement: Create mobile application specifically for students and parents only with minimal number of screens.
 Mobile development approach: Use Capacitor for native iOS and Android apps with camera, notifications, and offline features.
+Mobile focus: Student and parent portal with essential features only - attendance, fees, notices, results.
 
 ## System Architecture
 
@@ -68,6 +69,8 @@ Mobile development approach: Use Capacitor for native iOS and Android apps with 
 - **Native Mobile App Development**: Created Capacitor-based iOS and Android apps with camera integration, push notifications, offline support, native sharing, and mobile-optimized dashboard
 - **PWA Implementation**: Added Progressive Web App features with offline functionality, service workers, and mobile install prompts
 - **Mobile-Specific Components**: Built camera capture, notification service, sharing functionality, and device detection hooks
+- **Student & Parent Mobile App**: Created dedicated mobile app with minimal screens for students and parents only, focusing on essential features (attendance, fees, notices, results)
+- **Mobile-Specific API Endpoints**: Built specialized backend routes for student and parent mobile data access with role-based filtering
 
 ### Permission System
 - Hierarchical role-based permissions
