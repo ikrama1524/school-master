@@ -5,7 +5,9 @@ const config: CapacitorConfig = {
   appName: 'EduManage',
   webDir: 'dist/public',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    url: 'https://workspace.ikramashaikh.replit.app',
+    cleartext: true
   },
   plugins: {
     SplashScreen: {
