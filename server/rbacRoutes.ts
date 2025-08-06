@@ -124,7 +124,24 @@ export function registerRBACRoutes(app: Express) {
     }
   );
 
+  // Timetable routes
+  app.get("/api/timetable", 
+    authenticateToken,
+    requireModuleAccess(MODULES.TIMETABLE, ACCESS_LEVELS.READ),
+    async (req: any, res: any) => {
+      const timetables = await storage.getTimetables();
+      res.json(timetables);
+    }
+  );
 
+  app.post("/api/timetable", 
+    authenticateToken,
+    requireModuleAccess(MODULES.TIMETABLE, ACCESS_LEVELS.WRITE),
+    async (req: any, res: any) => {
+      const newTimetable = await storage.createTimetable(req.body);
+      res.status(201).json(newTimetable);
+    }
+  );
 
   // Homework routes
   app.get("/api/homework", 

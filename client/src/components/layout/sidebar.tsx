@@ -31,7 +31,7 @@ const allNavigationItems = [
   { href: "/students", label: "Students", icon: Users, module: "students" },
   { href: "/teachers", label: "Teachers", icon: UserCheck, module: "teachers" },
   { href: "/attendance", label: "Attendance", icon: Calendar, module: "attendance" },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays, module: "calendar" },
+  { href: "/timetable", label: "Timetable", icon: Clock, module: "timetable" },
   { href: "/homework", label: "Homework", icon: BookOpen, module: "homework" },
   { href: "/results", label: "Results", icon: Trophy, module: "results" },
   { href: "/reports", label: "Reports", icon: FileText, module: "reports" },
@@ -39,21 +39,21 @@ const allNavigationItems = [
   { href: "/payroll", label: "Payroll", icon: Banknote, module: "payroll" },
   { href: "/admissions", label: "Admissions", icon: UserPlus, module: "admissions" },
   { href: "/documents", label: "Documents", icon: FileCheck, module: "documents" },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays, module: "calendar" },
   { href: "/settings", label: "Settings", icon: Settings, module: "settings" },
   { href: "/users", label: "User Management", icon: Users2, module: "users" },
 ];
 
 // Role-based permission system
 const ROLE_PERMISSIONS = {
-  student: ["dashboard", "calendar", "homework", "results", "reports"],
-  parent: ["dashboard", "calendar", "homework", "results", "reports"],
-  subject_teacher: ["dashboard", "calendar", "homework", "results", "reports"],
-  class_teacher: ["dashboard", "attendance", "calendar", "homework", "results", "reports", "fees"],
+  student_parent: ["dashboard", "timetable", "homework", "results", "reports"],
+  subject_teacher: ["dashboard", "timetable", "homework", "results", "reports"],
+  class_teacher: ["dashboard", "attendance", "timetable", "homework", "results", "reports", "fees"],
   non_teaching_staff: ["dashboard"],
   accountant: ["fees", "payroll", "attendance"],
-  principal: ["dashboard", "students", "teachers", "attendance", "calendar", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "settings"],
-  admin: ["dashboard", "students", "teachers", "attendance", "calendar", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "settings"],
-  super_admin: ["dashboard", "students", "teachers", "attendance", "calendar", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "settings", "users"],
+  principal: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
+  admin: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
+  super_admin: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings", "users"],
 };
 
 const getRoleBadgeColor = (role: string) => {
@@ -65,8 +65,7 @@ const getRoleBadgeColor = (role: string) => {
     class_teacher: "bg-orange-100 text-orange-800 border-orange-200",
     subject_teacher: "bg-yellow-100 text-yellow-800 border-yellow-200",
     non_teaching_staff: "bg-gray-100 text-gray-800 border-gray-200",
-    parent: "bg-pink-100 text-pink-800 border-pink-200",
-    student: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    student_parent: "bg-indigo-100 text-indigo-800 border-indigo-200",
   };
   return colors[role as keyof typeof colors] || "bg-gray-100 text-gray-800 border-gray-200";
 };
@@ -80,8 +79,7 @@ const getRoleLabel = (role: string) => {
     class_teacher: "Class Teacher",
     subject_teacher: "Subject Teacher",
     non_teaching_staff: "Staff",
-    parent: "Parent",
-    student: "Student",
+    student_parent: "Student/Parent",
   };
   return labels[role as keyof typeof labels] || role;
 };
@@ -97,7 +95,7 @@ export default function Sidebar() {
   // Filter navigation items based on user role
   const getVisibleNavigationItems = () => {
     if (!user) return [];
-    const userRole = user.role || 'student';
+    const userRole = user.role || 'student_parent';
     const allowedModules = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS] || [];
     return allNavigationItems.filter(item => allowedModules.includes(item.module));
   };
@@ -166,8 +164,8 @@ export default function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{user?.name}</p>
-            <Badge variant="outline" className={`text-xs ${getRoleBadgeColor(user?.role || 'student')}`}>
-              {getRoleLabel(user?.role || 'student')}
+            <Badge variant="outline" className={`text-xs ${getRoleBadgeColor(user?.role || 'student_parent')}`}>
+              {getRoleLabel(user?.role || 'student_parent')}
             </Badge>
           </div>
         </div>

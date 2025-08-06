@@ -1,8 +1,7 @@
 // Role definitions and access matrix for the school management system
 
 export const ROLES = {
-  STUDENT: 'student',
-  PARENT: 'parent', 
+  STUDENT_PARENT: 'student_parent',
   SUBJECT_TEACHER: 'subject_teacher',
   CLASS_TEACHER: 'class_teacher',
   NON_TEACHING: 'non_teaching',
@@ -33,16 +32,8 @@ export const ACCESS_LEVELS = {
 
 // Role-based access control matrix
 export const ROLE_PERMISSIONS = {
-  [ROLES.STUDENT]: {
+  [ROLES.STUDENT_PARENT]: {
     [MODULES.DASHBOARD]: [ACCESS_LEVELS.READ], // Notices, Attendance graph, Result, Pending Fees, Current date Timetable
-    [MODULES.TIMETABLE]: [ACCESS_LEVELS.READ],
-    [MODULES.HOMEWORK]: [ACCESS_LEVELS.READ],
-    [MODULES.RESULT]: [ACCESS_LEVELS.READ],
-    [MODULES.REPORTS]: [ACCESS_LEVELS.READ] // Fees, Attendance only
-  },
-  
-  [ROLES.PARENT]: {
-    [MODULES.DASHBOARD]: [ACCESS_LEVELS.READ], // Same as student
     [MODULES.TIMETABLE]: [ACCESS_LEVELS.READ],
     [MODULES.HOMEWORK]: [ACCESS_LEVELS.READ],
     [MODULES.RESULT]: [ACCESS_LEVELS.READ],
@@ -112,25 +103,25 @@ export const ROLE_PERMISSIONS = {
 };
 
 // Helper function to check if a role has access to a module
-export function hasModuleAccess(userRole, module, requiredAccessLevel = ACCESS_LEVELS.READ) {
-  const rolePermissions = ROLE_PERMISSIONS[userRole];
+export function hasModuleAccess(userRole: string, module: string, requiredAccessLevel: string = ACCESS_LEVELS.READ) {
+  const rolePermissions = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS];
   if (!rolePermissions) return false;
   
-  const modulePermissions = rolePermissions[module];
+  const modulePermissions = rolePermissions[module as keyof typeof rolePermissions];
   if (!modulePermissions) return false;
   
   return modulePermissions.includes(requiredAccessLevel);
 }
 
 // Helper function to get all accessible modules for a role
-export function getAccessibleModules(userRole) {
-  const rolePermissions = ROLE_PERMISSIONS[userRole];
+export function getAccessibleModules(userRole: string) {
+  const rolePermissions = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS];
   if (!rolePermissions) return [];
   
   return Object.keys(rolePermissions);
 }
 
 // Helper function to check if user role is valid
-export function isValidRole(role) {
-  return Object.values(ROLES).includes(role);
+export function isValidRole(role: string) {
+  return Object.values(ROLES).includes(role as any);
 }
