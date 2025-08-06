@@ -127,7 +127,7 @@ export function requireAnyModuleAccess(module: string, ...accessLevels: string[]
 export function getUserPermissions(req: Request, res: Response, next: NextFunction) {
   if (req.user) {
     const userRole = req.user.role;
-    const permissions = {};
+    const permissions: Record<string, any> = {};
     
     // Check access for all modules
     Object.values(MODULES).forEach(module => {
