@@ -55,7 +55,7 @@ Preferred communication style: Simple, everyday language.
 - **Modular Authorization Architecture**: Created roles.ts, roleMiddleware.ts, and rbacRoutes.ts for clean separation of concerns
 - **JWT Authentication Flow**: 7-day token expiration with automatic secret generation and consistent token validation
 - **Test User System**: Created comprehensive test users for all roles with demo credentials for system testing
-- **Access Matrix Implementation**: Detailed permissions for 8 modules (dashboard, timetable, homework, result, reports, fees, payroll, attendance)
+- **Access Matrix Implementation**: Detailed permissions for 7 modules (dashboard, calendar, homework, result, reports, fees, payroll, attendance)
 - **Role-Specific Endpoints**: Protected routes with middleware validation ensuring proper access control
 - **Smart Fee Management**: Implemented comprehensive fee structure templates with automated fee generation for entire classes
 - **Fee Analytics Dashboard**: Real-time collection metrics with class-wise performance tracking
@@ -63,6 +63,7 @@ Preferred communication style: Simple, everyday language.
 - **Enhanced Admission Workflow**: Fixed disappearing approved applications issue and improved admission-to-student creation process
 - **Complete Module Hierarchy**: Fully implemented Admissions → Student → Division → Class workflow with all interconnected modules
 - **Comprehensive Reports**: Added reports module for attendance, fees, results, and academic performance analysis
+- **Timetable Module Removal**: Successfully decoupled and removed timetable module dependencies, replaced with standalone calendar module for academic event management
 
 ### Permission System
 - Hierarchical role-based permissions
@@ -75,7 +76,7 @@ Preferred communication style: Simple, everyday language.
 2. **Teacher Management**: Staff profiles, subject assignments
 3. **Attendance System**: Daily tracking, reports, multiple input methods
 4. **Fee Management**: Structure setup, payment processing, collection reports
-5. **Timetable**: Class scheduling, period management
+5. **Calendar System**: Academic events, exams, holidays, school activities scheduling
 6. **Results Management**: Exam results, grade management
 7. **Document Generation**: Certificates, applications, reports
 8. **Payroll**: Staff salary management, payslip generation

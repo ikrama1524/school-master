@@ -35,7 +35,7 @@ const allNavigationItems = [
   { href: "/students", label: "Students", icon: Users, module: "students" },
   { href: "/teachers", label: "Teachers", icon: UserCheck, module: "teachers" },
   { href: "/attendance", label: "Attendance", icon: Calendar, module: "attendance" },
-  { href: "/timetable", label: "Timetable", icon: Clock, module: "timetable" },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays, module: "calendar" },
   { href: "/homework", label: "Homework", icon: BookOpen, module: "homework" },
   { href: "/results", label: "Results", icon: Trophy, module: "results" },
   { href: "/reports", label: "Reports", icon: FileText, module: "reports" },
@@ -43,22 +43,21 @@ const allNavigationItems = [
   { href: "/payroll", label: "Payroll", icon: Banknote, module: "payroll" },
   { href: "/admissions", label: "Admissions", icon: UserPlus, module: "admissions" },
   { href: "/documents", label: "Documents", icon: FileCheck, module: "documents" },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays, module: "calendar" },
   { href: "/settings", label: "Settings", icon: Settings, module: "settings" },
   { href: "/users", label: "User Management", icon: Users2, module: "users" },
 ];
 
 // Role-based permission system
 const ROLE_PERMISSIONS = {
-  student: ["dashboard", "timetable", "homework", "results", "reports"],
-  parent: ["dashboard", "timetable", "homework", "results", "reports"],
-  subject_teacher: ["dashboard", "timetable", "homework", "results", "reports"],
-  class_teacher: ["dashboard", "attendance", "timetable", "homework", "results", "reports", "fees"],
+  student: ["dashboard", "calendar", "homework", "results", "reports"],
+  parent: ["dashboard", "calendar", "homework", "results", "reports"],
+  subject_teacher: ["dashboard", "calendar", "homework", "results", "reports"],
+  class_teacher: ["dashboard", "attendance", "calendar", "homework", "results", "reports", "fees"],
   non_teaching_staff: ["dashboard"],
   accountant: ["fees", "payroll", "attendance"],
-  principal: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
-  admin: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings"],
-  super_admin: ["dashboard", "students", "teachers", "attendance", "timetable", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "calendar", "settings", "users"],
+  principal: ["dashboard", "students", "teachers", "attendance", "calendar", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "settings"],
+  admin: ["dashboard", "students", "teachers", "attendance", "calendar", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "settings"],
+  super_admin: ["dashboard", "students", "teachers", "attendance", "calendar", "homework", "results", "reports", "fees", "payroll", "admissions", "documents", "settings", "users"],
 };
 
 const getRoleBadgeColor = (role: string) => {

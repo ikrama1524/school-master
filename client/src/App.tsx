@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
-import Timetable from "@/pages/timetable";
+
 import Teachers from "@/pages/teachers";
 import Attendance from "@/pages/attendance";
 import Fees from "@/pages/fees";
@@ -20,6 +20,7 @@ import Results from "@/pages/results";
 import Students from "@/pages/students";
 import Users from "@/pages/users";
 import NotFound from "@/pages/not-found";
+import Calendar from "@/pages/calendar";
 import Sidebar from "@/components/layout/sidebar";
 import MobileDrawer from "@/components/layout/mobile-drawer";
 import TopBar from "@/components/layout/top-bar";
@@ -103,7 +104,7 @@ function AppContent() {
             <Route path="/students" component={Students} />
             <Route path="/admissions" component={Admissions} />
             <Route path="/documents" component={Documents} />
-            <Route path="/calendar" component={Timetable} />
+            <Route path="/calendar" component={Calendar} />
             <Route path="/teachers" component={Teachers} />
             <Route path="/attendance" component={Attendance} />
             <Route path="/fees" component={Fees} />

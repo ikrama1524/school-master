@@ -695,71 +695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Timetable routes
-  app.get("/api/timetable", async (req, res) => {
-    try {
-      const { class: className, section } = req.query;
-      const timetables = await storage.getTimetables(
-        className as string, 
-        section as string
-      );
-      res.json(timetables);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch timetable" });
-    }
-  });
 
-  app.post("/api/timetable", async (req, res) => {
-    try {
-      const validatedData = insertTimetableSchema.parse(req.body);
-      const timetableEntry = await storage.createTimetable(validatedData);
-      res.status(201).json(timetableEntry);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create timetable entry" });
-    }
-  });
-
-  app.put("/api/timetable/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const updatedEntry = { id, ...req.body, updatedAt: new Date() };
-      res.json(updatedEntry);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update timetable entry" });
-    }
-  });
-
-  app.delete("/api/timetable/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      res.json({ message: "Timetable entry deleted", id });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete timetable entry" });
-    }
-  });
-
-  app.post("/api/timetable/bulk", async (req, res) => {
-    try {
-      const { entries } = req.body;
-      
-      if (!Array.isArray(entries) || entries.length === 0) {
-        return res.status(400).json({ message: "Invalid entries data" });
-      }
-      
-      const validatedEntries = entries.map(entry => insertTimetableSchema.parse(entry));
-      const savedEntries = await storage.bulkCreateTimetables(validatedEntries);
-
-      res.status(201).json(savedEntries);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to save timetable entries" });
-    }
-  });
 
   // Calendar routes
   app.get("/api/calendar", async (req, res) => {
@@ -931,114 +867,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Monthly Timetable routes
-  app.get("/api/monthly-timetable/:class/:month", async (req, res) => {
-    try {
-      const { class: className, month } = req.params;
-      // Mock response - return empty timetable for now
-      const mockTimetable = {
-        id: 1,
-        class: className,
-        month: month,
-        timetableData: "{}",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      res.json(mockTimetable);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch monthly timetable" });
-    }
-  });
 
-  app.post("/api/monthly-timetable", async (req, res) => {
-    try {
-      const { class: className, month, timetableData } = req.body;
-      
-      // Mock save - in real app, save to database
-      const savedTimetable = {
-        id: Math.floor(Math.random() * 1000),
-        class: className,
-        month: month,
-        timetableData: JSON.stringify(timetableData),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
 
-      res.status(201).json(savedTimetable);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to save monthly timetable" });
-    }
-  });
 
-  app.put("/api/monthly-timetable/:id", async (req, res) => {
-    try {
-      const timetableId = parseInt(req.params.id);
-      const { class: className, month, timetableData } = req.body;
-      
-      // Mock update - in real app, update in database
-      const updatedTimetable = {
-        id: timetableId,
-        class: className,
-        month: month,
-        timetableData: JSON.stringify(timetableData),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
 
-      res.json(updatedTimetable);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update monthly timetable" });
-    }
-  });
-
-  // Period management routes
-  app.get("/api/periods", async (req, res) => {
-    try {
-      const periods = await storage.getPeriods();
-      res.json(periods);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch periods" });
-    }
-  });
-
-  app.post("/api/periods", async (req, res) => {
-    try {
-      const validatedData = insertPeriodSchema.parse(req.body);
-      const period = await storage.createPeriod(validatedData);
-      res.status(201).json(period);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create period" });
-    }
-  });
-
-  app.put("/api/periods/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const period = await storage.updatePeriod(id, req.body);
-      if (!period) {
-        return res.status(404).json({ message: "Period not found" });
-      }
-      res.json(period);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update period" });
-    }
-  });
-
-  app.delete("/api/periods/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const deleted = await storage.deletePeriod(id);
-      if (!deleted) {
-        return res.status(404).json({ message: "Period not found" });
-      }
-      res.json({ message: "Period deleted successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete period" });
-    }
-  });
 
   // Results routes
   app.get("/api/results", async (req, res) => {
