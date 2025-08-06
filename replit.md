@@ -30,7 +30,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Authentication & Authorization System
 - **JWT Authentication**: Token-based authentication with 7-day expiration and secure secret management
-- **6 User Roles**: student_parent (merged), subject_teacher, class_teacher, non_teaching, accountant, principal, admin, super_admin
+- **9 User Roles**: student, parent, subject_teacher, class_teacher, non_teaching, accountant, principal, admin, super_admin
 - **Modular RBAC Architecture**: Clean separation with roles.ts, roleMiddleware.ts, and rbacRoutes.ts
 - **Access Matrix**: Detailed permissions for dashboard, timetable, homework, result, reports, fees, payroll, attendance modules
 - **Password Security**: bcrypt hashing with 12 salt rounds for all user credentials
@@ -51,7 +51,7 @@ Preferred communication style: Simple, everyday language.
 - **Calendar**: Events, academic calendar integration
 
 ### Recent Enhancements (January 2025)
-- **Complete RBAC System**: Implemented comprehensive Role-Based Access Control with JWT authentication and 6 distinct user roles (student/parent merged)
+- **Complete RBAC System**: Implemented comprehensive Role-Based Access Control with JWT authentication and 9 distinct user roles
 - **Modular Authorization Architecture**: Created roles.ts, roleMiddleware.ts, and rbacRoutes.ts for clean separation of concerns
 - **JWT Authentication Flow**: 7-day token expiration with automatic secret generation and consistent token validation
 - **Test User System**: Created comprehensive test users for all roles with demo credentials for system testing
