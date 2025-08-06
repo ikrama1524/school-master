@@ -43,16 +43,9 @@ export async function createTestUsers() {
     {
       username: "student",
       password: "student123",
-      name: "Alice Student",
-      email: "alice@school.edu",
-      role: ROLES.STUDENT
-    },
-    {
-      username: "parent",
-      password: "parent123",
-      name: "Bob Parent",
-      email: "parent@school.edu",
-      role: ROLES.PARENT
+      name: "Student/Parent User",
+      email: "student@school.edu",
+      role: ROLES.STUDENT_PARENT
     },
     {
       username: "staff",
@@ -91,8 +84,7 @@ export async function createTestUsers() {
   console.log("Class Teacher: teacher / teacher123");
   console.log("Subject Teacher: subject_teacher / subject123");
   console.log("Accountant: accountant / accountant123");
-  console.log("Student: student / student123");
-  console.log("Parent: parent / parent123");
+  console.log("Student/Parent: student / student123");
   console.log("Staff: staff / staff123");
   console.log("========================\n");
 }
