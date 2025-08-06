@@ -24,10 +24,7 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileDrawer from "@/components/layout/mobile-drawer";
 import TopBar from "@/components/layout/top-bar";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import PWAInstallPrompt from "@/components/pwa-install-prompt";
-import { useMobile } from "@/hooks/use-mobile";
-import { MobileNotificationService } from "@/services/mobile-notifications";
-import { useState, useEffect, lazy } from "react";
+import { useState } from "react";
 
 function AuthenticatedRouter() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -63,10 +60,6 @@ function AuthenticatedRouter() {
       <Route path="/payroll" component={Payroll} />
       <Route path="/homework" component={Homework} />
       <Route path="/results" component={Results} />
-      <Route path="/mobile-test" component={lazy(() => import("@/pages/mobile-test"))} />
-      <Route path="/student-mobile" component={lazy(() => import("@/pages/student-mobile"))} />
-      <Route path="/parent-mobile" component={lazy(() => import("@/pages/parent-mobile"))} />
-      <Route path="/mobile-login" component={lazy(() => import("@/pages/mobile-login"))} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -75,15 +68,6 @@ function AuthenticatedRouter() {
 function AppContent() {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const { isAuthenticated, isLoading } = useAuth();
-  const deviceInfo = useMobile();
-
-  // Initialize mobile features when authenticated
-  useEffect(() => {
-    if (isAuthenticated && deviceInfo.isNative) {
-      const notificationService = MobileNotificationService.getInstance();
-      notificationService.initialize();
-    }
-  }, [isAuthenticated, deviceInfo.isNative]);
 
   if (isLoading) {
     return (
@@ -93,25 +77,11 @@ function AppContent() {
     );
   }
 
-  // Handle mobile routes before authentication check
-  const currentPath = window.location.pathname;
-  if (!isAuthenticated && (currentPath === '/mobile-login' || currentPath === '/student-mobile' || currentPath === '/parent-mobile')) {
-    return (
-      <Switch>
-        <Route path="/mobile-login" component={lazy(() => import("@/pages/mobile-login"))} />
-        <Route path="/student-mobile" component={lazy(() => import("@/pages/student-mobile"))} />
-        <Route path="/parent-mobile" component={lazy(() => import("@/pages/parent-mobile"))} />
-        <Route component={lazy(() => import("@/pages/mobile-login"))} />
-      </Switch>
-    );
-  }
-
   if (!isAuthenticated) {
     return (
       <Switch>
         <Route path="/register" component={Register} />
         <Route path="/login" component={Login} />
-        <Route path="/mobile-login" component={lazy(() => import("@/pages/mobile-login"))} />
         <Route component={Login} />
       </Switch>
     );
@@ -143,9 +113,6 @@ function AppContent() {
             <Route path="/homework" component={Homework} />
             <Route path="/results" component={Results} />
             <Route path="/users" component={Users} />
-            <Route path="/student-mobile" component={lazy(() => import("@/pages/student-mobile"))} />
-            <Route path="/parent-mobile" component={lazy(() => import("@/pages/parent-mobile"))} />
-            <Route path="/mobile-login" component={lazy(() => import("@/pages/mobile-login"))} />
             <Route component={NotFound} />
           </Switch>
         </div>
@@ -160,7 +127,6 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <AppContent />
-          <PWAInstallPrompt />
           <Toaster />
         </TooltipProvider>
       </AuthProvider>

@@ -7,9 +7,6 @@ This is a comprehensive school management system built with React (TypeScript) f
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
-Mobile app requirement: Create mobile application specifically for students and parents only with minimal number of screens.
-Mobile development approach: Use Capacitor for native iOS and Android apps with camera, notifications, and offline features.
-Mobile focus: Student and parent portal with essential features only - attendance, fees, notices, results.
 
 ## System Architecture
 
@@ -66,14 +63,6 @@ Mobile focus: Student and parent portal with essential features only - attendanc
 - **Enhanced Admission Workflow**: Fixed disappearing approved applications issue and improved admission-to-student creation process
 - **Complete Module Hierarchy**: Fully implemented Admissions → Student → Division → Class workflow with all interconnected modules
 - **Comprehensive Reports**: Added reports module for attendance, fees, results, and academic performance analysis
-- **Native Mobile App Development**: Created Capacitor-based iOS and Android apps with camera integration, push notifications, offline support, native sharing, and mobile-optimized dashboard
-- **PWA Implementation**: Added Progressive Web App features with offline functionality, service workers, and mobile install prompts
-- **Mobile-Specific Components**: Built camera capture, notification service, sharing functionality, and device detection hooks
-- **Student & Parent Mobile App**: Created dedicated mobile app with minimal screens for students and parents only, focusing on essential features (attendance, fees, notices, results)
-- **Mobile-Specific API Endpoints**: Built specialized backend routes for student and parent mobile data access with strict role-based filtering
-- **Role-Based Mobile Access**: Implemented strict access controls ensuring only student and parent roles can access mobile endpoints
-- **Android Studio Integration**: Configured complete Android app setup with proper permissions, network security, and MainActivity for emulator testing
-- **Production-Ready Android Build**: Built and synced Android application with all Capacitor plugins and native features working in emulator environment
 
 ### Permission System
 - Hierarchical role-based permissions
@@ -129,11 +118,6 @@ Mobile focus: Student and parent portal with essential features only - attendanc
 - **Authentication**: jsonwebtoken, bcryptjs
 - **Security**: Input validation, password hashing
 - **Development**: tsx for TypeScript execution
-
-### Mobile Dependencies
-- **Capacitor Core**: @capacitor/core, @capacitor/cli for native app framework
-- **Native Plugins**: Camera, Push Notifications, Local Notifications, Device Info, Keyboard, Status Bar, Splash Screen
-- **Mobile Services**: Haptics, Filesystem, Share, App state management
 
 ### Build Tools
 - **Vite**: Frontend build tool with React plugin

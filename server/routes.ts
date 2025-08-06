@@ -7,7 +7,6 @@ import { authenticateToken, generateToken, hashPassword, comparePassword, Authen
 import { registerRBACRoutes } from "./rbacRoutes";
 import { createTestUsers } from "./testUsers";
 import { createRBACDemoRoute } from "./rbacDemo";
-import { registerMobileRoutes } from "./mobileRoutes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize test users for RBAC demonstration
@@ -18,9 +17,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Create demo route to show RBAC system
   createRBACDemoRoute(app);
-
-  // Register mobile-specific routes
-  registerMobileRoutes(app);
 
   // Legacy Authentication Routes (keeping for compatibility)
   app.post("/api/auth/register", async (req, res) => {
