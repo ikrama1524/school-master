@@ -1,6 +1,8 @@
 
 # School Management System - Modular Architecture
 
+⚠️ **IMPORTANT**: If you see "endpoint has been disabled" error, your Neon database needs to be re-enabled in the Replit Database tab.
+
 This project is split into two completely independent modules:
 
 ## 🗂️ Project Structure
