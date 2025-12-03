@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import { db } from '../config/database.js';
 import { teachers } from '../schemas/index.js';
@@ -21,11 +20,11 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const id = parseInt(req.params.id);
     const [teacher] = await db.select().from(teachers).where(eq(teachers.id, id));
-    
+
     if (!teacher) {
       return res.status(404).json({ message: 'Teacher not found' });
     }
-    
+
     res.json(teacher);
   } catch (error) {
     console.error('Error fetching teacher:', error);
@@ -47,11 +46,11 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const id = parseInt(req.params.id);
     const [teacher] = await db.update(teachers).set(req.body).where(eq(teachers.id, id)).returning();
-    
+
     if (!teacher) {
       return res.status(404).json({ message: 'Teacher not found' });
     }
-    
+
     res.json(teacher);
   } catch (error) {
     console.error('Error updating teacher:', error);

@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -59,7 +58,7 @@ router.post('/login', async (req, res) => {
 router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const [user] = await db.select().from(users).where(eq(users.id, req.user!.id));
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

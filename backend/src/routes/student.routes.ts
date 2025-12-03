@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import { db } from '../config/database.js';
 import { students } from '../schemas/index.js';
@@ -21,11 +20,11 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const id = parseInt(req.params.id);
     const [student] = await db.select().from(students).where(eq(students.id, id));
-    
+
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
-    
+
     res.json(student);
   } catch (error) {
     console.error('Error fetching student:', error);
@@ -47,11 +46,11 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const id = parseInt(req.params.id);
     const [student] = await db.update(students).set(req.body).where(eq(students.id, id)).returning();
-    
+
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
-    
+
     res.json(student);
   } catch (error) {
     console.error('Error updating student:', error);
