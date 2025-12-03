@@ -1,7 +1,20 @@
 
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env.js';
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: number;
+        username: string;
+        email: string;
+        role: string;
+      };
+    }
+  }
+}
 
 export interface AuthRequest extends Request {
   user?: {
@@ -12,12 +25,13 @@ export interface AuthRequest extends Request {
   };
 }
 
-export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticateToken: RequestHandler = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ message: 'Access token required' });
+    res.status(401).json({ message: 'Access token required' });
+    return;
   }
 
   try {
@@ -25,18 +39,21 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(403).json({ message: 'Invalid or expired token' });
+    res.status(403).json({ message: 'Invalid or expired token' });
+    return;
   }
 };
 
-export const requireRole = (...roles: string[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+export const requireRole = (...roles: string[]): RequestHandler => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      return res.status(401).json({ message: 'Authentication required' });
+      res.status(401).json({ message: 'Authentication required' });
+      return;
     }
 
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Insufficient permissions' });
+      res.status(403).json({ message: 'Insufficient permissions' });
+      return;
     }
 
     next();

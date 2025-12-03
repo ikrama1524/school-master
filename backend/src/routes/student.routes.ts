@@ -1,11 +1,11 @@
 
-import { Router } from 'express';
-import { studentService } from '../services/student.service';
-import { authenticateToken } from '../middleware/auth.middleware';
+import { Router, Request, Response } from 'express';
+import { studentService } from '../services/student.service.js';
+import { authenticateToken } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticateToken, async (req: Request, res: Response) => {
   try {
     const students = await studentService.getAll();
     res.json(students);
@@ -14,12 +14,13 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const student = await studentService.getById(id);
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      res.status(404).json({ message: 'Student not found' });
+      return;
     }
     res.json(student);
   } catch (error) {
@@ -27,7 +28,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, async (req: Request, res: Response) => {
   try {
     const student = await studentService.create(req.body);
     res.status(201).json(student);
@@ -36,12 +37,13 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const student = await studentService.update(id, req.body);
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      res.status(404).json({ message: 'Student not found' });
+      return;
     }
     res.json(student);
   } catch (error) {
@@ -49,12 +51,13 @@ router.put('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const deleted = await studentService.delete(id);
     if (!deleted) {
-      return res.status(404).json({ message: 'Student not found' });
+      res.status(404).json({ message: 'Student not found' });
+      return;
     }
     res.status(204).send();
   } catch (error) {

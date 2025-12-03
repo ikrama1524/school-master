@@ -1,6 +1,6 @@
 
-import { db } from '../config/database';
-import { students, type Student, type InsertStudent } from '../schemas';
+import { db } from '../config/database.js';
+import { students, type Student, type InsertStudent } from '../schemas/index.js';
 import { eq } from 'drizzle-orm';
 
 export class StudentService {

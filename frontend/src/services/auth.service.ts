@@ -21,14 +21,14 @@ export interface LoginResponse {
 }
 
 export const authService = {
-  async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await api.post<LoginResponse>('/auth/login', credentials);
+  async login(username: string, password: string): Promise<LoginResponse> {
+    const response = await api.post<LoginResponse>('/auth/login', { username, password });
     return response.data;
   },
 
-  async getCurrentUser(): Promise<User> {
+  async getCurrentUser(): Promise<{ user: User }> {
     const response = await api.get<User>('/auth/me');
-    return response.data;
+    return { user: response.data };
   },
 
   async logout(): Promise<void> {

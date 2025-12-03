@@ -5,9 +5,9 @@ import { authService } from '../services/auth.service';
 interface User {
   id: number;
   username: string;
-  fullName: string;
+  name: string;
   role: string;
-  email: string;
+  email: string | null;
 }
 
 interface AuthContextType {
