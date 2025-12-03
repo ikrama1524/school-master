@@ -4,15 +4,8 @@ import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { storage } from './storage';
 
-// Auto-generate a secure JWT secret
-const generateJwtSecret = (): string => {
-  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length >= 32) {
-    return process.env.JWT_SECRET;
-  }
-  return crypto.randomBytes(64).toString('hex');
-};
-
-const JWT_SECRET = generateJwtSecret();
+// Use a consistent JWT secret for the application
+const JWT_SECRET = process.env.JWT_SECRET || 'school_management_super_secret_key_2025_change_in_production';
 const JWT_EXPIRES_IN = '7d';
 
 export interface AuthenticatedRequest extends Request {

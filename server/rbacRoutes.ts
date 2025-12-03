@@ -78,7 +78,8 @@ export function registerRBACRoutes(app: Express) {
       let dashboardData = {};
       
       switch(userRole) {
-        case ROLES.STUDENT_PARENT:
+        case ROLES.STUDENT:
+        case ROLES.PARENT:
           dashboardData = {
             notices: await storage.getNotices(),
             attendanceGraph: await storage.getStudentAttendance(req.user.id),
@@ -294,7 +295,7 @@ export function registerRBACRoutes(app: Express) {
   // Role-specific test routes
   app.get("/api/test/student-only", 
     authenticateToken,
-    requireRoles(ROLES.STUDENT_PARENT),
+    requireRoles(ROLES.STUDENT, ROLES.PARENT),
     (req: any, res: any) => {
       res.json({ message: "This is a student/parent only endpoint", user: req.user });
     }
