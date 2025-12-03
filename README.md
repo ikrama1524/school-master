@@ -1,156 +1,257 @@
 
-# School Management System - Modular Architecture
+# School Management System - Local Development Setup
 
-This project is split into two completely independent modules that can be downloaded and run separately.
+A comprehensive school management system split into two independent modules for local development and mobile app integration.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 project/
-├── backend/          # Independent backend API
-└── frontend/         # Independent frontend app
+├── backend/          # Node.js/Express REST API
+│   ├── src/
+│   │   ├── routes/   # API endpoints
+│   │   ├── services/ # Business logic
+│   │   ├── schemas/  # Database models
+│   │   └── middleware/
+│   └── README.md
+└── frontend/         # React/TypeScript UI
+    ├── src/
+    │   ├── pages/
+    │   ├── components/
+    │   └── services/
+    └── README.md
 ```
-
-## 🚀 Complete Setup Guide
-
-### Prerequisites
-
-**Required Software:**
-- Node.js v18 or higher
-- npm (comes with Node.js)
-- PostgreSQL database (Supabase or local)
 
 ---
 
-## Backend Setup (Download & Run)
+## Prerequisites
 
-### 1. Navigate to backend folder
+- **Node.js** v18 or higher
+- **npm** (comes with Node.js)
+- **PostgreSQL** database (local, Neon, Supabase, or Railway)
+
+---
+
+## Quick Start (Both Apps)
+
+### Step 1: Backend Setup
+
 ```bash
+# Navigate to backend
 cd backend
-```
 
-### 2. Install dependencies
-```bash
+# Install dependencies
 npm install
-```
 
-### 3. Configure environment variables
-```bash
+# Create environment file
 cp .env.example .env
-```
 
-Edit `.env` file with your database credentials:
-```env
-DATABASE_URL=postgresql://user:password@host:5432/database
-JWT_SECRET=your_secure_random_secret_key
-PORT=5000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
-```
+# Edit .env with your database credentials:
+# DATABASE_URL=postgresql://user:password@localhost:5432/school_db
+# JWT_SECRET=your_secure_random_secret_key_here
+# PORT=5000
+# FRONTEND_URL=http://localhost:5173
 
-**Note:** You can use any PostgreSQL database (local, Neon, Supabase, Railway, etc.)
-
-### 4. Push database schema
-```bash
+# Push database schema
 npm run db:push
-```
 
-### 5. Create test users (optional)
-```bash
-npx tsx src/scripts/init-test-users.ts
-```
+# Initialize test users
+npm run db:init
 
-### 6. Start backend server
-```bash
+# Start backend
 npm run dev
 ```
 
-Backend will run on `http://localhost:5000`
+Backend runs at: `http://localhost:5000`
 
-**Test credentials:**
-- admin / admin123
-- principal / principal123
-- teacher / teacher123
-- student / student123
+### Step 2: Frontend Setup
 
----
+Open a new terminal:
 
-## Frontend Setup (Download & Run)
-
-### 1. Navigate to frontend folder
 ```bash
+# Navigate to frontend
 cd frontend
-```
 
-### 2. Install dependencies
-```bash
+# Install dependencies
 npm install
-```
 
-### 3. Configure environment variables
-```bash
+# Create environment file
 cp .env.example .env
-```
 
-Edit `.env` file:
-```env
-VITE_API_URL=http://localhost:5000/api
-```
+# Edit .env:
+# VITE_API_URL=http://localhost:5000/api
 
-### 4. Start frontend server
-```bash
+# Start frontend
 npm run dev
 ```
 
-Frontend will run on `http://localhost:5173`
+Frontend runs at: `http://localhost:5173`
 
 ---
 
-## 🔧 Available Scripts
+## Test Credentials
 
-### Backend
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run db:push` - Push schema to database
-
-### Frontend
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-
----
-
-## 📦 Complete Independence
-
-✅ **Frontend** can be deployed separately and connect to any backend instance  
-✅ **Backend** can serve any frontend or mobile app via REST API  
-✅ No shared code between frontend and backend  
-✅ Each module has its own dependencies and configuration
+| Role | Username | Password |
+|------|----------|----------|
+| Super Admin | admin | admin123 |
+| Principal | principal | principal123 |
+| Class Teacher | teacher | teacher123 |
+| Subject Teacher | subject_teacher | subject123 |
+| Accountant | accountant | accountant123 |
+| Student/Parent | student | student123 |
+| Staff | staff | staff123 |
 
 ---
 
-## 🐛 Troubleshooting
+## API Documentation (21 Endpoints)
+
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/login` | Login and get JWT token |
+| GET | `/api/auth/me` | Get current user |
+| POST | `/api/auth/logout` | Logout |
+
+### Students
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/students` | List all students |
+| GET | `/api/students/:id` | Get student by ID |
+| POST | `/api/students` | Create student |
+| PUT | `/api/students/:id` | Update student |
+| DELETE | `/api/students/:id` | Delete student |
+
+### Teachers
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/teachers` | List all teachers |
+| GET | `/api/teachers/:id` | Get teacher by ID |
+| POST | `/api/teachers` | Create teacher |
+| PUT | `/api/teachers/:id` | Update teacher |
+
+### Attendance
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/attendance` | Get attendance records |
+| POST | `/api/attendance` | Mark attendance |
+
+### Fees
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/fees` | List fee records |
+| GET | `/api/fees/student/:id` | Get student fees |
+| POST | `/api/fees` | Create fee record |
+
+### Timetable
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/timetable` | Get all timetables |
+| GET | `/api/timetable/class/:class` | Get class timetable |
+
+### Results
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/results/student/:id` | Get student results |
+
+---
+
+## Role-Based Access Control (RBAC)
+
+| Role | Access Level |
+|------|-------------|
+| super_admin | Full access to all modules |
+| admin | Full access to all modules |
+| principal | Full access to all modules |
+| class_teacher | Read/write to assigned class |
+| subject_teacher | Read/write to subject modules |
+| accountant | Full access to fees/payroll |
+| **student_parent** | **Read-only access to own data** |
+| non_teaching | Limited access |
+
+**Note for Mobile App:** The `student_parent` role is read-only and can only access their own data via the authenticated endpoints.
+
+---
+
+## Mobile App Integration
+
+The backend API is designed for mobile app integration:
+
+1. **Authentication**: Use `/api/auth/login` to get JWT token
+2. **Authorization**: Include token in `Authorization: Bearer <token>` header
+3. **Student Role**: Limited to read-only endpoints for their own data
+
+Example API call from mobile:
+```javascript
+// Login
+const response = await fetch('http://localhost:5000/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: 'student', password: 'student123' })
+});
+const { token } = await response.json();
+
+// Use token for subsequent requests
+const meResponse = await fetch('http://localhost:5000/api/auth/me', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+```
+
+---
+
+## Scripts Reference
+
+### Backend (`cd backend`)
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start with hot reload |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run db:push` | Push schema to database |
+| `npm run db:init` | Initialize test users |
+
+### Frontend (`cd frontend`)
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+
+---
+
+## Troubleshooting
 
 ### Database Connection Error
-- Ensure PostgreSQL/Supabase database is running
-- Verify `DATABASE_URL` in backend `.env`
-- Check if database endpoint is enabled (Replit users)
+1. Verify PostgreSQL is running
+2. Check `DATABASE_URL` format: `postgresql://user:password@host:port/database`
+3. Ensure the database exists
 
 ### CORS Error
-- Ensure `FRONTEND_URL` in backend `.env` matches frontend URL
-- Check backend CORS configuration in `src/index.ts`
+1. Set `FRONTEND_URL=http://localhost:5173` in backend `.env`
+2. Restart backend after changing `.env`
+
+### JWT Token Issues
+1. Ensure `JWT_SECRET` is set in backend `.env`
+2. Token format: `Authorization: Bearer <token>`
+3. Tokens expire after 7 days
 
 ### Port Already in Use
 ```bash
-# Kill process on port 5000
+# Find and kill process on port 5000
 lsof -i :5000
 kill -9 <PID>
 ```
 
-### Module Not Found
+### Clean Install
 ```bash
-# Delete node_modules and reinstall
 rm -rf node_modules package-lock.json
 npm install
 ```
+
+---
+
+## Project Independence
+
+- **Frontend** can connect to any backend instance
+- **Backend** can serve any frontend or mobile app
+- Each module has its own dependencies and configuration
+- No shared code between frontend and backend
