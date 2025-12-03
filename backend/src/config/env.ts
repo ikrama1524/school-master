@@ -1,7 +1,4 @@
-import dotenv from 'dotenv';
 import crypto from 'crypto';
-
-dotenv.config();
 
 // Auto-generate a secure JWT secret if not provided
 const generateJwtSecret = (): string => {
