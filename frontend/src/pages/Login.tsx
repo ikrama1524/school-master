@@ -1,6 +1,7 @@
-
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom'; // Assuming Link is from react-router-dom
+import { CardFooter } from './ui/card'; // Assuming CardFooter is a component
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -47,6 +48,14 @@ export default function Login() {
             Login
           </button>
         </form>
+        <CardFooter className="flex flex-col space-y-2">
+          <p className="text-sm text-muted-foreground text-center">
+            Don't have an account?{' '}
+            <Link href="/register" className="text-primary hover:underline">
+              Register here
+            </Link>
+          </p>
+        </CardFooter>
       </div>
     </div>
   );

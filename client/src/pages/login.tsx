@@ -41,7 +41,7 @@ export default function Login() {
 
     try {
       const result = await login(formData.username, formData.password);
-      
+
       if (result.success) {
         setLocation('/');
       } else {
@@ -81,7 +81,7 @@ export default function Login() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
+
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input
@@ -125,9 +125,9 @@ export default function Login() {
               </div>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
+            <Button
+              type="submit"
+              className="w-full"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -147,10 +147,8 @@ export default function Login() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link href="/register">
-                <a className="text-primary hover:underline font-medium">
-                  Create one here
-                </a>
+              <Link href="/register" className="text-primary hover:underline">
+                Register here
               </Link>
             </p>
           </div>
