@@ -1,70 +1,63 @@
+
 import { Router } from 'express';
-import { db } from '../config/database.js';
-import { teachers } from '../schemas/index.js';
-import { eq } from 'drizzle-orm';
-import { authenticateToken, AuthRequest } from '../middleware/auth.middleware.js';
+import { teacherService } from '../services/teacher.service';
+import { authenticateToken } from '../middleware/auth.middleware';
 
 const router = Router();
 
-router.get('/', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    const allTeachers = await db.select().from(teachers);
-    res.json(allTeachers);
+    const teachers = await teacherService.getAll();
+    res.json(teachers);
   } catch (error) {
-    console.error('Error fetching teachers:', error);
     res.status(500).json({ message: 'Failed to fetch teachers' });
   }
 });
 
-router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const [teacher] = await db.select().from(teachers).where(eq(teachers.id, id));
-
+    const teacher = await teacherService.getById(id);
     if (!teacher) {
       return res.status(404).json({ message: 'Teacher not found' });
     }
-
     res.json(teacher);
   } catch (error) {
-    console.error('Error fetching teacher:', error);
     res.status(500).json({ message: 'Failed to fetch teacher' });
   }
 });
 
-router.post('/', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/', authenticateToken, async (req, res) => {
   try {
-    const [teacher] = await db.insert(teachers).values(req.body).returning();
+    const teacher = await teacherService.create(req.body);
     res.status(201).json(teacher);
   } catch (error) {
-    console.error('Error creating teacher:', error);
     res.status(500).json({ message: 'Failed to create teacher' });
   }
 });
 
-router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const [teacher] = await db.update(teachers).set(req.body).where(eq(teachers.id, id)).returning();
-
+    const teacher = await teacherService.update(id, req.body);
     if (!teacher) {
       return res.status(404).json({ message: 'Teacher not found' });
     }
-
     res.json(teacher);
   } catch (error) {
-    console.error('Error updating teacher:', error);
     res.status(500).json({ message: 'Failed to update teacher' });
   }
 });
 
-router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    await db.delete(teachers).where(eq(teachers.id, id));
+    const deleted = await teacherService.delete(id);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Teacher not found' });
+    }
     res.status(204).send();
   } catch (error) {
-    console.error('Error deleting teacher:', error);
     res.status(500).json({ message: 'Failed to delete teacher' });
   }
 });
