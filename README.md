@@ -41,15 +41,14 @@ cp .env.example .env
 
 Edit `.env` file with your database credentials:
 ```env
-DATABASE_URL=your_postgresql_connection_string
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_KEY=your_supabase_service_key
+DATABASE_URL=postgresql://user:password@host:5432/database
 JWT_SECRET=your_secure_random_secret_key
 PORT=5000
 NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
 ```
+
+**Note:** You can use any PostgreSQL database (local, Neon, Supabase, Railway, etc.)
 
 ### 4. Push database schema
 ```bash
